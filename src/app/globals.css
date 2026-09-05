@@ -1,0 +1,116 @@
+@import "tailwindcss";
+@import "../../public/fonts/arimo.css";
+@import "../../public/fonts/tinos.css";
+
+/*
+ * Semantic design tokens — mirrors Figma variables (01 — Foundations · CURRENT).
+ * Components must reference these tokens (via Tailwind utilities below or var()) — never raw hex.
+ */
+:root {
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-subtle: #f1f5f9;
+  --bg-primary: #4f46e5;
+  --bg-primary-hover: #4338ca;
+  --bg-overlay: rgb(15 23 42 / 0.4);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-on-primary: #ffffff;
+
+  --border-default: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-focus: #4f46e5;
+
+  --status-success-bg: #f0fdf4;
+  --status-success-text: #16a34a;
+  --status-warning-bg: #fffbeb;
+  --status-warning-text: #d97706;
+  --status-error-bg: #fef2f2;
+  --status-error-text: #dc2626;
+  --status-info-bg: #eff6ff;
+  --status-info-text: #2563eb;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+
+  --font-ui: "Arimo", Arial, Helvetica, sans-serif;
+  --font-serif-slide: "Tinos", "Times New Roman", Times, serif;
+}
+
+@theme inline {
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-surface-subtle: var(--bg-surface-subtle);
+  --color-primary: var(--bg-primary);
+  --color-primary-hover: var(--bg-primary-hover);
+  --color-overlay: var(--bg-overlay);
+
+  --color-fg: var(--text-primary);
+  --color-fg-secondary: var(--text-secondary);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-on-primary: var(--text-on-primary);
+
+  --color-border: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-focus: var(--border-focus);
+
+  --color-success-bg: var(--status-success-bg);
+  --color-success-fg: var(--status-success-text);
+  --color-warning-bg: var(--status-warning-bg);
+  --color-warning-fg: var(--status-warning-text);
+  --color-error-bg: var(--status-error-bg);
+  --color-error-fg: var(--status-error-text);
+  --color-info-bg: var(--status-info-bg);
+  --color-info-fg: var(--status-info-text);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+
+  --font-sans: var(--font-ui);
+  --font-serif: var(--font-serif-slide);
+
+  /* Type scale from Figma foundations */
+  --text-display: 36px;
+  --text-display--line-height: 1.15;
+  --text-display--font-weight: 700;
+  --text-h1: 32px;
+  --text-h1--line-height: 1.15;
+  --text-h1--font-weight: 700;
+  --text-h2: 24px;
+  --text-h2--line-height: 1.2;
+  --text-h2--font-weight: 700;
+  --text-h3: 18px;
+  --text-h3--line-height: 1.25;
+  --text-h3--font-weight: 700;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-label: 14px;
+  --text-label--line-height: 20px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Keyboard focus is always visible and token-driven */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
