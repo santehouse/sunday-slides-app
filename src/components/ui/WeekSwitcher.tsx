@@ -30,7 +30,7 @@ export function WeekSwitcher({ date, onPrev, onNext, label, size = "md", classNa
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-1 rounded-md border border-border bg-surface p-1",
+        "flex items-center justify-center gap-1 rounded-[12px] border border-border bg-surface p-1",
         config.container,
         className,
       )}
@@ -38,6 +38,7 @@ export function WeekSwitcher({ date, onPrev, onNext, label, size = "md", classNa
       <IconButton
         icon={ArrowLeft}
         size={config.arrow}
+        radius={8}
         variant="ghost"
         aria-label={t("previousSunday")}
         onClick={onPrev}
@@ -51,6 +52,7 @@ export function WeekSwitcher({ date, onPrev, onNext, label, size = "md", classNa
       <IconButton
         icon={ArrowRight}
         size={config.arrow}
+        radius={8}
         variant="ghost"
         aria-label={t("nextSunday")}
         onClick={onNext}

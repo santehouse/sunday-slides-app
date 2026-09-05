@@ -17,7 +17,7 @@ export function SafeZonesAction({ active, onToggle, className }: SafeZonesAction
       aria-pressed={active}
       onClick={onToggle}
       className={cn(
-        "flex h-9 shrink-0 items-center gap-2 rounded-md px-2.5 text-label font-bold text-fg hover:bg-surface-subtle",
+        "flex h-9 shrink-0 items-center gap-2 rounded-[8px] px-2.5 text-label font-bold text-fg hover:bg-surface-subtle",
         className,
       )}
     >

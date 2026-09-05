@@ -25,14 +25,16 @@ export type SegmentedControlProps<T extends string> = {
   className?: string;
 };
 
+// Exact px from the Figma "Language Selector" master (node 83:1135):
+// SM container radius 12 / segment radius 8, MD container radius 14 / segment radius 10.
 const CONTAINER_SIZE: Record<SegmentedControlSize, string> = {
-  sm: "h-8 rounded-md",
-  md: "h-10 rounded-lg",
+  sm: "h-8 rounded-[12px]",
+  md: "h-10 rounded-[14px]",
 };
 
 const SEGMENT_SIZE: Record<SegmentedControlSize, string> = {
-  sm: "h-6 rounded-sm px-2.5 text-[13px]",
-  md: "h-8 rounded-md px-3 text-label",
+  sm: "h-6 rounded-[8px] px-2.5 text-[13px]",
+  md: "h-8 rounded-[10px] px-3 text-label",
 };
 
 /**

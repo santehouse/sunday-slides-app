@@ -46,6 +46,7 @@ export function DurationStepper({
             icon={Minus}
             size={config.button}
             variant="outlined"
+            radius={10}
             aria-label={t("decreaseDuration")}
             disabled={atMin}
             onClick={() => onChange(Math.max(min, value - step))}
@@ -54,6 +55,7 @@ export function DurationStepper({
             icon={Plus}
             size={config.button}
             variant="outlined"
+            radius={10}
             aria-label={t("increaseDuration")}
             disabled={atMax}
             onClick={() => onChange(Math.min(max, value + step))}

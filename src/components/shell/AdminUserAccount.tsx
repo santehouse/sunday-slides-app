@@ -51,7 +51,7 @@ export function AdminUserAccount({ user, onSignOut, className }: AdminUserAccoun
 
   return (
     <div ref={wrapperRef} className={cn("relative flex h-14 items-center gap-2.5 px-2 py-1.5", className)}>
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl border border-border bg-surface text-caption font-bold text-fg">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-[16px] border border-border bg-surface text-caption font-bold text-fg">
         {initials(user.displayName)}
       </span>
       <div className="flex min-w-0 flex-1 flex-col">

@@ -44,7 +44,7 @@ export function AdminNav({ user, onSignOut, className }: AdminNavProps) {
       )}
     >
       <Link href="/admin" className="flex h-8 shrink-0 items-center gap-2.5">
-        <span aria-hidden="true" className="size-7 shrink-0 rounded-[8px] bg-primary" />
+        <span aria-hidden="true" className="size-7 shrink-0 rounded-[7px] bg-primary" />
         <span className="whitespace-nowrap text-body font-bold text-fg">{brand("name")}</span>
       </Link>
       <ul className="flex flex-col gap-1.5">

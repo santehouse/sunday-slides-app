@@ -129,7 +129,7 @@ export function ColorSelect({
         <span className="flex min-w-0 items-center gap-2">
           {selected ? (
             <span
-              className="size-4 shrink-0 rounded-sm"
+              className="size-4 shrink-0 rounded-[4px]"
               style={{ backgroundColor: selected.hex }}
               aria-hidden="true"
             />
@@ -167,7 +167,7 @@ export function ColorSelect({
                 )}
               >
                 <span
-                  className="size-4 shrink-0 rounded-sm"
+                  className="size-4 shrink-0 rounded-[4px]"
                   style={{ backgroundColor: option.hex }}
                   aria-hidden="true"
                 />

@@ -17,6 +17,12 @@ export type IconButtonProps = Omit<
   icon: LucideIcon;
   size?: IconButtonSize;
   variant?: IconButtonVariant;
+  /**
+   * Exact corner radius in px. Different masters use different values for
+   * this same square-touch-target shape (e.g. Week Switcher arrows = 8,
+   * Duration Stepper buttons = 10) — pass the value the Figma instance uses.
+   */
+  radius?: number;
   "aria-label": string;
 };
 
@@ -28,20 +34,22 @@ export function IconButton({
   icon: Icon,
   size = 40,
   variant = "ghost",
+  radius = 10,
   className,
   disabled,
+  style,
   ...rest
 }: IconButtonProps) {
   return (
     <button
       type="button"
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-md transition-colors",
+        "inline-flex shrink-0 items-center justify-center transition-colors",
         "disabled:pointer-events-none disabled:opacity-50",
         VARIANT_CLASSES[variant],
         className,
       )}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, borderRadius: radius, ...style }}
       disabled={disabled}
       {...rest}
     >

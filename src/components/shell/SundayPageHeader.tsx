@@ -6,13 +6,19 @@ import { cn } from "@/lib/utils/cn";
 
 export type SundayPageHeaderTitleSize = "xl" | "lg" | "md";
 
-// xl (Dashboard, 32) and lg (Flow/Add/Upload, 30) both map to the h1 token
-// (32px) — the nearest allowed type-scale utility; lg is a deliberate 2px
-// deviation from the Figma spec rather than introducing an arbitrary size.
+// Exact px per screen from the Figma "Sunday Page Header" master (node 87:472):
+// xl = Dashboard (32), lg = Flow/Add Slide/Upload Run Sheet (30), md = Editor (24).
 const TITLE_CLASSES: Record<SundayPageHeaderTitleSize, string> = {
-  xl: "text-h1",
-  lg: "text-h1",
-  md: "text-h2",
+  xl: "text-[32px] leading-tight",
+  lg: "text-[30px] leading-tight",
+  md: "text-[24px] leading-tight",
+};
+
+// Dashboard subtitle is 14px, Flow's is 13px.
+const SUBTITLE_CLASSES: Record<SundayPageHeaderTitleSize, string> = {
+  xl: "text-[14px] leading-[20px]",
+  lg: "text-[13px] leading-[18px]",
+  md: "text-[14px] leading-[20px]",
 };
 
 export type SundayPageHeaderProps = {
@@ -44,7 +50,9 @@ export function SundayPageHeader({
         ) : null}
         <div className="flex min-w-0 flex-col gap-1.5">
           <h1 className={cn("truncate font-bold text-fg", TITLE_CLASSES[titleSize])}>{title}</h1>
-          {subtitle ? <p className="text-label font-normal text-fg-secondary">{subtitle}</p> : null}
+          {subtitle ? (
+            <p className={cn("font-normal text-fg-secondary", SUBTITLE_CLASSES[titleSize])}>{subtitle}</p>
+          ) : null}
         </div>
       </div>
       {actions ? <div className="flex shrink-0 items-start gap-2.5">{actions}</div> : null}
