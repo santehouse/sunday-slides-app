@@ -9,7 +9,8 @@
  */
 import { useEffect, useState } from "react";
 import type { Slide, Template } from "@/lib/domain/types";
-import { SlideCanvas, SlideFrame } from "@/lib/renderer/SlideCanvas";
+import { SlideCanvas } from "@/lib/renderer/SlideCanvas";
+import { SlideFrame } from "@/lib/renderer/SlideFrame";
 import { buildSlideLayoutInput, computeSlideLayout } from "@/lib/renderer/fitText";
 import { createCanvasMeasurer, ensureFontsLoaded } from "@/lib/renderer/measure";
 import type { ResolvedAsset, SlideLayoutMap } from "@/lib/renderer/types";

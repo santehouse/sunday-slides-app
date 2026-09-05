@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * The one slide layout implementation. `SlideCanvas` itself uses no hooks and reads no
  * browser globals — it is a pure function of `input` + a precomputed `layouts` map, so
@@ -8,13 +6,10 @@
  * `layouts` is *always* supplied by the caller (see `computeSlideLayout` in
  * `./engine.ts`) — this component never measures text itself.
  *
- * `"use client"` above only exists because `SlideFrame` (in this same file) uses
- * `useState`/`useEffect` for its ResizeObserver-driven scaling. It does not stop
- * `SlideCanvas` from being rendered with `react-dom/server` outside of Next's App
- * Router component graph, which is exactly what `src/lib/renderer/server.ts` does.
+ * This file is deliberately server-safe (no "use client", no hooks) so the JPG/MP4
+ * renderer in `./server.ts` can call `renderToStaticMarkup(<SlideCanvas />)` inside a
+ * Next route handler. The browser-only scaling wrapper lives in `./SlideFrame.tsx`.
  */
-import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
 import type { SafeZone } from "@/lib/domain/types";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./types";
 import type { RenderSlideInput, ResolvedFont, SlideLayoutMap } from "./types";
@@ -83,51 +78,6 @@ export function SlideCanvas({ input, layouts }: SlideCanvasProps) {
   );
 }
 
-/**
- * Client-only scaling wrapper: measures its own box with a `ResizeObserver` and scales a
- * fixed 1920×1080 child down (or up) via CSS `transform`, preserving 16:9 regardless of
- * the container's aspect ratio. Use around `<SlideCanvas />` anywhere it's shown at less
- * than full resolution (Sunday Flow cards, Slide Editor preview, template thumbnails).
- */
-export function SlideFrame({ children }: { children: ReactNode }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const update = () => {
-      const { width, height } = el.getBoundingClientRect();
-      if (width <= 0 || height <= 0) return;
-      setScale(Math.min(width / SLIDE_WIDTH, height / SLIDE_HEIGHT));
-    };
-
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={containerRef} style={{ width: "100%", height: "100%", position: "relative", overflow: "hidden" }}>
-      <div
-        style={{
-          width: SLIDE_WIDTH,
-          height: SLIDE_HEIGHT,
-          position: "absolute",
-          top: 0,
-          left: 0,
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
-          visibility: scale > 0 ? "visible" : "hidden",
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
 
 function fontFormat(url: string): string {
   const ext = url.split("?")[0]?.split(".").pop()?.toLowerCase();

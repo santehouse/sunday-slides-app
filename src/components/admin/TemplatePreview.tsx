@@ -6,7 +6,8 @@
  * (`src/lib/renderer/`), never a second hand-drawn preview (CLAUDE.md rule 6).
  */
 import { useEffect, useMemo, useState } from "react";
-import { SlideCanvas, SlideFrame } from "@/lib/renderer/SlideCanvas";
+import { SlideCanvas } from "@/lib/renderer/SlideCanvas";
+import { SlideFrame } from "@/lib/renderer/SlideFrame";
 import { computeSlideLayout } from "@/lib/renderer/engine";
 import { createCanvasMeasurer, ensureFontsLoaded } from "@/lib/renderer/measure";
 import type { RenderSlideInput, SlideLayoutMap } from "@/lib/renderer/types";
