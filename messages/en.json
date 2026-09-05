@@ -285,6 +285,7 @@
       "brand": "Brand & Fonts",
       "settings": "Settings",
       "account": "Account menu",
+      "menu": "Navigation menu",
       "roleLocale": "{role} · {locale}",
       "roles": { "owner": "Owner", "admin": "Admin" }
     },
@@ -545,6 +546,11 @@
       "enableAdmin": "Enable",
       "cannotDisableSelf": "You can't disable your own account.",
       "saved": "Settings saved"
+    }
+  },
+  "dev": {
+    "kit": {
+      "title": "Component kit"
     }
   }
 }

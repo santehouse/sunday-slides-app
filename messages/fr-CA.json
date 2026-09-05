@@ -285,6 +285,7 @@
       "brand": "Marque et polices",
       "settings": "Paramètres",
       "account": "Menu du compte",
+      "menu": "Menu de navigation",
       "roleLocale": "{role} · {locale}",
       "roles": { "owner": "Propriétaire", "admin": "Admin" }
     },
@@ -545,6 +546,11 @@
       "enableAdmin": "Activer",
       "cannotDisableSelf": "Vous ne pouvez pas désactiver votre propre compte.",
       "saved": "Paramètres enregistrés"
+    }
+  },
+  "dev": {
+    "kit": {
+      "title": "Trousse de composants"
     }
   }
 }
