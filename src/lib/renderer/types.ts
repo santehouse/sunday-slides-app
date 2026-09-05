@@ -44,6 +44,8 @@ export interface RenderedSlide {
   jpeg: Uint8Array;
   width: number;
   height: number;
+  /** Fit result for every field on the slide, computed with the same in-page measurer used to render it. */
+  fit: SlideFitResult;
 }
 
 export type TextFitStatus = "fits" | "tight" | "overflow";
@@ -102,3 +104,35 @@ export type FieldLayout = Pick<
   | "textTransform"
   | "required"
 >;
+
+/** One positioned, pre-measured line of text — ready to render as an absolutely positioned block. */
+export interface LayoutLine {
+  text: string;
+  /** Absolute x in the 1920×1080 canvas. */
+  x: number;
+  /** Absolute y in the 1920×1080 canvas. */
+  y: number;
+  /** Measured width of this line at the chosen font size. */
+  width: number;
+}
+
+/** Result of laying out a single field: the font size actually used and its positioned lines. */
+export interface FieldLayoutResult {
+  fontSize: number;
+  lines: LayoutLine[];
+}
+
+/** `layoutLines()` plus the fit verdict for the same field, at the same computed font size. */
+export interface SlideLayoutField extends FieldLayoutResult {
+  fit: TextFitResult;
+}
+
+/** Plain, JSON-serializable input to `computeSlideLayout` — safe to pass into a headless page via page.evaluate. */
+export interface SlideLayoutInput {
+  fields: FieldLayout[];
+  /** Field content keyed by fieldKey (the slide's `headline` is included under key "headline"). */
+  content: Record<string, string>;
+}
+
+/** `computeSlideLayout` output: one `SlideLayoutField` per field, keyed by fieldKey. */
+export type SlideLayoutMap = Record<string, SlideLayoutField>;
