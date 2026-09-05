@@ -3,7 +3,7 @@ import "server-only";
 /**
  * MP4 export (section 10 of BUILD_HANDOFF.md): FFmpeg over the renderer's exact JPG
  * frames — never a second visual implementation. Hard cuts, no transitions: each frame
- * is simply held for `holdSeconds` and concatenated via ffmpeg's concat demuxer.
+ * is simply held for `holdSeconds` via ffmpeg's image-sequence input.
  */
 import { execFile } from "node:child_process";
 import fsSync, { promises as fs } from "node:fs";
@@ -71,24 +71,13 @@ export interface BuildMp4Options {
   frames: Mp4Frame[];
   /** Seconds each frame is held on screen — the Sunday's default slide duration. */
   holdSeconds: number;
+  /** Output frame rate. Defaults to 25. */
   fps?: number;
-}
-
-function buildConcatList(frameFileNames: string[], holdSeconds: number): string {
-  const lines: string[] = [];
-  for (const fileName of frameFileNames) {
-    lines.push(`file '${fileName}'`);
-    lines.push(`duration ${holdSeconds}`);
-  }
-  // ffmpeg concat-demuxer quirk: the duration on the LAST entry is ignored unless that
-  // file is listed once more afterwards (with no duration of its own).
-  lines.push(`file '${frameFileNames[frameFileNames.length - 1]}'`);
-  return lines.join("\n");
 }
 
 /**
  * Encodes `frames` (already-rendered 1920×1080 JPEGs, in Sunday Flow order) into an
- * H.264 MP4 with `holdSeconds` per frame. Writes frames + a concat list to a temp
+ * H.264 MP4 with `holdSeconds` per frame. Writes numbered frames to a temp
  * directory under `os.tmpdir()`, always cleaned up afterwards, success or failure.
  */
 export async function buildMp4({ frames, holdSeconds, fps = 25 }: BuildMp4Options): Promise<Uint8Array> {
@@ -102,31 +91,31 @@ export async function buildMp4({ frames, holdSeconds, fps = 25 }: BuildMp4Option
 
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "church-panels-mp4-"));
   try {
-    const frameFileNames: string[] = [];
     for (let i = 0; i < frames.length; i += 1) {
       const fileName = `frame_${String(i + 1).padStart(5, "0")}.jpg`;
       await fs.writeFile(path.join(tmpDir, fileName), frames[i].jpeg);
-      frameFileNames.push(fileName);
     }
 
-    const listPath = path.join(tmpDir, "frames.txt");
-    await fs.writeFile(listPath, buildConcatList(frameFileNames, holdSeconds), "utf8");
-
+    // Image-sequence input: every frame is held exactly `holdSeconds` (global Sunday
+    // duration), so the output length is precisely frames.length × holdSeconds. This avoids
+    // the concat-demuxer trailing-frame quirk that over-extended the last slide.
     const outputPath = path.join(tmpDir, "output.mp4");
     await runFfmpeg(ffmpegPath, [
       "-y",
-      "-f",
-      "concat",
-      "-safe",
-      "0",
+      "-framerate",
+      `1/${holdSeconds}`,
       "-i",
-      listPath,
+      path.join(tmpDir, "frame_%05d.jpg"),
       "-vf",
-      "scale=1920:1080",
+      `scale=1920:1080,fps=${fps}`,
       "-r",
       String(fps),
       "-c:v",
       "libx264",
+      "-preset",
+      "medium",
+      "-crf",
+      "18",
       "-pix_fmt",
       "yuv420p",
       "-movflags",
