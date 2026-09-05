@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SignInForm } from "./SignInForm";
 
+// Reads settings/session at request time — never prerender against the database at build.
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {

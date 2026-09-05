@@ -4,6 +4,9 @@ import { getDb } from "@/lib/data";
 import { SundayShell } from "@/components/shell/SundayShell";
 import { PinForm } from "./PinForm";
 
+// Reads settings/session at request time — never prerender against the database at build.
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {
