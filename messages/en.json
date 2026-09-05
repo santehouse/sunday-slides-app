@@ -6,6 +6,7 @@
   "common": {
     "save": "Save",
     "saveChanges": "Save changes",
+    "today": "Today",
     "cancel": "Cancel",
     "continue": "Continue",
     "back": "Back",
@@ -83,6 +84,7 @@
     "inputLabel": "PIN digit {index}",
     "submit": "Open Sunday",
     "adminLink": "Admin? Sign in with email instead.",
+    "errorTitle": "Can't open Sunday",
     "invalid": "That PIN isn't right. Try again.",
     "rateLimited": "Too many attempts. Wait a minute and try again.",
     "incomplete": "Enter all {digits} digits."
@@ -249,6 +251,7 @@
       "processingFailedBody": "We couldn't read this file. Try again or upload a different file.",
       "emptyText": "No readable text was found in this file.",
       "readyToApply": "Ready to apply",
+      "applyToSunday": "Add to Sunday flow",
       "mergeUpdates": "Merge updates",
       "replaceDeck": "Replace deck",
       "replaceConfirmTitle": "Replace the whole deck?",
@@ -287,7 +290,10 @@
       "account": "Account menu",
       "menu": "Navigation menu",
       "roleLocale": "{role} · {locale}",
-      "roles": { "owner": "Owner", "admin": "Admin" }
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin"
+      }
     },
     "dashboard": {
       "title": "Admin dashboard",
@@ -322,14 +328,21 @@
         "scheduled": "Scheduled",
         "notConfigured": "Not configured",
         "error": "Error"
-      }
+      },
+      "noUpcomingSunday": "No upcoming Sunday yet. Create one to get started."
     },
     "sundays": {
       "title": "Sundays & run sheets",
       "subtitle": "Every intake source, parse result and Sunday deck in one place.",
       "uploadRunSheet": "Upload run sheet",
       "createSunday": "Create Sunday",
-      "columns": { "sunday": "Sunday", "source": "Source", "status": "Status", "slides": "Slides", "updated": "Updated" },
+      "columns": {
+        "sunday": "Sunday",
+        "source": "Source",
+        "status": "Status",
+        "slides": "Slides",
+        "updated": "Updated"
+      },
       "sourceEmail": "{file} · Email",
       "sourceManual": "{file} · Manual upload",
       "sourceNone": "No run sheet · Defaults",
@@ -344,7 +357,16 @@
       "runSheets": "Run sheets",
       "receivedAt": "Received {date, date, dateMedium}",
       "noRunSheets": "No run sheets for this Sunday.",
-      "deleteSunday": "Delete Sunday"
+      "deleteSunday": "Delete Sunday",
+      "replaceDeck": "Replace deck",
+      "mergeUpdates": "Merge updates",
+      "dropzoneTitle": "Drop Word or PDF run sheet here",
+      "dropzoneHint": "DOCX or PDF · up to {max} MB",
+      "chooseFile": "Choose file",
+      "uploadSummary": "{found} announcements found · {mapped} mapped · {needsReview} needs review",
+      "sourceTypeEmail": "Email",
+      "sourceTypeManual": "Manual upload",
+      "emptyTable": "No Sundays yet. Create one to get started."
     },
     "templates": {
       "title": "Template library",
@@ -421,7 +443,12 @@
       "published": "Template published",
       "archived": "Template archived",
       "cannotDelete": "This template is used by historical slides and can't be deleted. Archive it instead.",
-      "filters": { "all": "All", "published": "Published", "draft": "Draft", "archived": "Archived" },
+      "filters": {
+        "all": "All",
+        "published": "Published",
+        "draft": "Draft",
+        "archived": "Archived"
+      },
       "categories": {
         "general": "General",
         "events": "Events",
@@ -432,7 +459,8 @@
         "closing": "Closing"
       },
       "empty": "No templates match these filters.",
-      "newTemplateName": "New template"
+      "newTemplateName": "New template",
+      "noPublishedAssets": "No published assets yet."
     },
     "assets": {
       "title": "Asset library",
@@ -448,8 +476,17 @@
       "focalPointHelper": "Click the image to set the focal point used when cropping.",
       "allowedTemplates": "Allowed templates",
       "dimensions": "{width} × {height}",
-      "categories": { "photography": "Photography", "backgrounds": "Backgrounds", "special": "Special events" },
-      "filters": { "all": "All", "published": "Published", "draft": "Draft", "archived": "Archived" },
+      "categories": {
+        "photography": "Photography",
+        "backgrounds": "Backgrounds",
+        "special": "Special events"
+      },
+      "filters": {
+        "all": "All",
+        "published": "Published",
+        "draft": "Draft",
+        "archived": "Archived"
+      },
       "dropHere": "Drop an image here",
       "formats": "JPG, PNG or WebP · up to {max} MB",
       "saved": "Asset saved",
@@ -463,7 +500,12 @@
       "new": "New mapping",
       "infoLine1": "Mappings choose the design — the weekly run sheet still controls this week's copy.",
       "infoLine2": "Example: Étude biblique always maps to the Bible Study template, but the subcopy can change from a normal meeting time to \"on break this week\".",
-      "columns": { "canonical": "Canonical announcement", "aliases": "Aliases", "template": "Template", "status": "Status" },
+      "columns": {
+        "canonical": "Canonical announcement",
+        "aliases": "Aliases",
+        "template": "Template",
+        "status": "Status"
+      },
       "canonicalName": "Canonical announcement",
       "aliases": "Aliases",
       "aliasesHelper": "One per line. English and French aliases all point to the same mapping.",
@@ -475,7 +517,8 @@
       "dismiss": "Dismiss",
       "saved": "Mapping saved",
       "deleted": "Mapping deleted",
-      "empty": "No mappings yet."
+      "empty": "No mappings yet.",
+      "importEmpty": "No unmapped announcements in the latest run sheet."
     },
     "brand": {
       "title": "Brand & fonts",
@@ -506,7 +549,8 @@
       "colorNameFr": "Color name (FR)",
       "hex": "Hex",
       "interfaceLanguages": "Interface languages",
-      "saved": "Brand settings saved"
+      "saved": "Brand settings saved",
+      "googleFontsSource": "Google Fonts"
     },
     "settings": {
       "title": "Settings",
@@ -545,7 +589,9 @@
       "disableAdmin": "Disable",
       "enableAdmin": "Enable",
       "cannotDisableSelf": "You can't disable your own account.",
-      "saved": "Settings saved"
+      "saved": "Settings saved",
+      "configured": "Configured",
+      "notConfigured": "Not configured"
     }
   },
   "dev": {

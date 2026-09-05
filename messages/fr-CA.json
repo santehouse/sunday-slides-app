@@ -6,6 +6,7 @@
   "common": {
     "save": "Enregistrer",
     "saveChanges": "Enregistrer",
+    "today": "Aujourd’hui",
     "cancel": "Annuler",
     "continue": "Continuer",
     "back": "Retour",
@@ -83,6 +84,7 @@
     "inputLabel": "Chiffre {index} du NIP",
     "submit": "Ouvrir la présentation",
     "adminLink": "Admin? Connectez-vous plutôt par courriel.",
+    "errorTitle": "Impossible d'ouvrir la présentation",
     "invalid": "Ce NIP est incorrect. Réessayez.",
     "rateLimited": "Trop de tentatives. Attendez une minute et réessayez.",
     "incomplete": "Entrez les {digits} chiffres."
@@ -249,6 +251,7 @@
       "processingFailedBody": "Impossible de lire ce fichier. Réessayez ou importez un autre fichier.",
       "emptyText": "Aucun texte lisible n'a été trouvé dans ce fichier.",
       "readyToApply": "Prêt à appliquer",
+      "applyToSunday": "Ajouter au déroulement",
       "mergeUpdates": "Fusionner les mises à jour",
       "replaceDeck": "Remplacer la présentation",
       "replaceConfirmTitle": "Remplacer toute la présentation?",
@@ -287,7 +290,10 @@
       "account": "Menu du compte",
       "menu": "Menu de navigation",
       "roleLocale": "{role} · {locale}",
-      "roles": { "owner": "Propriétaire", "admin": "Admin" }
+      "roles": {
+        "owner": "Propriétaire",
+        "admin": "Admin"
+      }
     },
     "dashboard": {
       "title": "Tableau de bord admin",
@@ -322,14 +328,21 @@
         "scheduled": "Planifiée",
         "notConfigured": "Non configuré",
         "error": "Erreur"
-      }
+      },
+      "noUpcomingSunday": "Aucun dimanche à venir. Créez-en un pour commencer."
     },
     "sundays": {
       "title": "Dimanches et déroulements",
       "subtitle": "Chaque source, résultat d'analyse et présentation du dimanche au même endroit.",
       "uploadRunSheet": "Importer le déroulement",
       "createSunday": "Créer un dimanche",
-      "columns": { "sunday": "Dimanche", "source": "Source", "status": "État", "slides": "Diapositives", "updated": "Mis à jour" },
+      "columns": {
+        "sunday": "Dimanche",
+        "source": "Source",
+        "status": "État",
+        "slides": "Diapositives",
+        "updated": "Mis à jour"
+      },
       "sourceEmail": "{file} · Courriel",
       "sourceManual": "{file} · Importation manuelle",
       "sourceNone": "Aucun déroulement · Valeurs par défaut",
@@ -344,7 +357,16 @@
       "runSheets": "Feuilles de déroulement",
       "receivedAt": "Reçu le {date, date, dateMedium}",
       "noRunSheets": "Aucune feuille de déroulement pour ce dimanche.",
-      "deleteSunday": "Supprimer le dimanche"
+      "deleteSunday": "Supprimer le dimanche",
+      "replaceDeck": "Remplacer le diaporama",
+      "mergeUpdates": "Fusionner les mises à jour",
+      "dropzoneTitle": "Déposez le programme Word ou PDF ici",
+      "dropzoneHint": "DOCX ou PDF · jusqu’à {max} Mo",
+      "chooseFile": "Choisir un fichier",
+      "uploadSummary": "{found} annonces trouvées · {mapped} associées · {needsReview} à revoir",
+      "sourceTypeEmail": "Courriel",
+      "sourceTypeManual": "Téléversement manuel",
+      "emptyTable": "Aucun dimanche pour le moment. Créez-en un pour commencer."
     },
     "templates": {
       "title": "Bibliothèque de modèles",
@@ -421,7 +443,12 @@
       "published": "Modèle publié",
       "archived": "Modèle archivé",
       "cannotDelete": "Ce modèle est utilisé par des diapositives passées et ne peut pas être supprimé. Archivez-le plutôt.",
-      "filters": { "all": "Tous", "published": "Publié", "draft": "Brouillon", "archived": "Archivé" },
+      "filters": {
+        "all": "Tous",
+        "published": "Publié",
+        "draft": "Brouillon",
+        "archived": "Archivé"
+      },
       "categories": {
         "general": "Général",
         "events": "Événements",
@@ -432,7 +459,8 @@
         "closing": "Clôture"
       },
       "empty": "Aucun modèle ne correspond à ces filtres.",
-      "newTemplateName": "Nouveau modèle"
+      "newTemplateName": "Nouveau modèle",
+      "noPublishedAssets": "Aucun contenu visuel publié pour le moment."
     },
     "assets": {
       "title": "Bibliothèque de ressources",
@@ -448,8 +476,17 @@
       "focalPointHelper": "Cliquez sur l'image pour définir le point focal utilisé lors du recadrage.",
       "allowedTemplates": "Modèles permis",
       "dimensions": "{width} × {height}",
-      "categories": { "photography": "Photographie", "backgrounds": "Arrière-plans", "special": "Événements spéciaux" },
-      "filters": { "all": "Tous", "published": "Publié", "draft": "Brouillon", "archived": "Archivé" },
+      "categories": {
+        "photography": "Photographie",
+        "backgrounds": "Arrière-plans",
+        "special": "Événements spéciaux"
+      },
+      "filters": {
+        "all": "Tous",
+        "published": "Publié",
+        "draft": "Brouillon",
+        "archived": "Archivé"
+      },
       "dropHere": "Déposez une image ici",
       "formats": "JPG, PNG ou WebP · jusqu'à {max} Mo",
       "saved": "Ressource enregistrée",
@@ -463,7 +500,12 @@
       "new": "Nouvelle correspondance",
       "infoLine1": "Les correspondances choisissent le design — le déroulement hebdomadaire contrôle toujours le texte de la semaine.",
       "infoLine2": "Exemple : Étude biblique correspond toujours au modèle Étude biblique, mais le sous-texte peut passer de l'horaire habituel à « en pause cette semaine ».",
-      "columns": { "canonical": "Annonce canonique", "aliases": "Alias", "template": "Modèle", "status": "État" },
+      "columns": {
+        "canonical": "Annonce canonique",
+        "aliases": "Alias",
+        "template": "Modèle",
+        "status": "État"
+      },
       "canonicalName": "Annonce canonique",
       "aliases": "Alias",
       "aliasesHelper": "Un par ligne. Les alias anglais et français pointent tous vers la même correspondance.",
@@ -475,7 +517,8 @@
       "dismiss": "Ignorer",
       "saved": "Correspondance enregistrée",
       "deleted": "Correspondance supprimée",
-      "empty": "Aucune correspondance pour l'instant."
+      "empty": "Aucune correspondance pour l'instant.",
+      "importEmpty": "Aucune annonce non associée dans le dernier programme."
     },
     "brand": {
       "title": "Marque et polices",
@@ -506,7 +549,8 @@
       "colorNameFr": "Nom de la couleur (FR)",
       "hex": "Hex",
       "interfaceLanguages": "Langues de l'interface",
-      "saved": "Paramètres de marque enregistrés"
+      "saved": "Paramètres de marque enregistrés",
+      "googleFontsSource": "Google Fonts"
     },
     "settings": {
       "title": "Paramètres",
@@ -545,7 +589,9 @@
       "disableAdmin": "Désactiver",
       "enableAdmin": "Activer",
       "cannotDisableSelf": "Vous ne pouvez pas désactiver votre propre compte.",
-      "saved": "Paramètres enregistrés"
+      "saved": "Paramètres enregistrés",
+      "configured": "Configuré",
+      "notConfigured": "Non configuré"
     }
   },
   "dev": {

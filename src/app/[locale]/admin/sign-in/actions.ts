@@ -5,13 +5,7 @@ import { redirect } from "@/i18n/navigation";
 import { appUrl } from "@/lib/env";
 import { sendMagicLink, signInWithPassword } from "@/lib/auth/admin-session";
 
-export type SignInFormState =
-  | { mode: "idle" }
-  | { mode: "invalid_credentials" }
-  | { mode: "magic_link_sent"; email: string }
-  | { mode: "magic_link_error" };
-
-export const initialSignInFormState: SignInFormState = { mode: "idle" };
+import type { SignInFormState } from "./formState";
 
 /**
  * Single action backing both buttons on the sign-in form — the submit
