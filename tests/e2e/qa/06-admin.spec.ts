@@ -140,7 +140,8 @@ test.describe("Admin — assets", () => {
     await openSundaySession(sunday);
     await sunday.goto("/sunday/2026-09-06/flow");
     await sunday.locator("[data-slide-card]").first().waitFor();
-    await sunday.locator("[data-slide-card]").nth(1).click();
+    // Pick the Annual theme slide by title, not by position: other specs may reorder the deck.
+    await sunday.locator("[data-slide-card]", { hasText: "Je suis avec vous" }).first().click();
     await sunday.getByRole("button", { name: "Edit slide" }).click();
     await sunday.waitForURL(/\/slide\//);
     await sunday.getByRole("radiogroup", { name: "Background" }).getByRole("radio", { name: "Image" }).click();
@@ -155,7 +156,7 @@ test.describe("Admin — mappings", () => {
     await page.goto("/admin/mappings");
 
     const canonical = `QA annonce ${Date.now() % 100000}`;
-    await page.getByRole("button", { name: "New mapping" }).click();
+    await page.getByRole("button", { name: "Add mapping" }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Canonical announcement").fill(canonical);
     await dialog.getByLabel("Aliases").fill("QA announcement\nQA annonce");

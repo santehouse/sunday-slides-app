@@ -338,7 +338,8 @@
         "notConfigured": "Not configured",
         "error": "Error"
       },
-      "noUpcomingSunday": "No upcoming Sunday yet. Create one to get started."
+      "noUpcomingSunday": "No upcoming Sunday yet. Create one to get started.",
+      "newTemplate": "New template"
     },
     "sundays": {
       "title": "Sundays & run sheets",
@@ -527,7 +528,9 @@
       "saved": "Mapping saved",
       "deleted": "Mapping deleted",
       "empty": "No mappings yet.",
-      "importEmpty": "No unmapped announcements in the latest run sheet."
+      "importEmpty": "No unmapped announcements in the latest run sheet.",
+      "reviewSuggestions": "Review suggestions",
+      "addMapping": "Add mapping"
     },
     "brand": {
       "title": "Brand & fonts",

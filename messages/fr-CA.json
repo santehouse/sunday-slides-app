@@ -338,7 +338,8 @@
         "notConfigured": "Non configuré",
         "error": "Erreur"
       },
-      "noUpcomingSunday": "Aucun dimanche à venir. Créez-en un pour commencer."
+      "noUpcomingSunday": "Aucun dimanche à venir. Créez-en un pour commencer.",
+      "newTemplate": "Nouveau modèle"
     },
     "sundays": {
       "title": "Dimanches et déroulements",
@@ -527,7 +528,9 @@
       "saved": "Correspondance enregistrée",
       "deleted": "Correspondance supprimée",
       "empty": "Aucune correspondance pour l’instant.",
-      "importEmpty": "Aucune annonce non associée dans le dernier programme."
+      "importEmpty": "Aucune annonce non associée dans le dernier programme.",
+      "reviewSuggestions": "Vérifier les suggestions",
+      "addMapping": "Ajouter une correspondance"
     },
     "brand": {
       "title": "Marque et polices",

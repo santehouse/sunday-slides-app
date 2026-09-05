@@ -7,7 +7,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
-import { CreateSundayDialog } from "@/components/admin/CreateSundayDialog";
+import { createTemplateAction } from "./templates/actions";
 
 export async function generateMetadata({
   params,
@@ -126,7 +126,11 @@ export default async function AdminDashboardPage({
           <Button variant="secondary" href="/admin/sundays?upload=1">
             {t("uploadRunSheet")}
           </Button>
-          <CreateSundayDialog />
+          <form action={createTemplateAction}>
+            <Button type="submit" variant="primary">
+              {t("newTemplate")}
+            </Button>
+          </form>
         </div>
       </div>
 

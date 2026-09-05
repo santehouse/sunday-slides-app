@@ -112,11 +112,22 @@ export function MappingsClient({
           <p className="mt-1.5 text-caption text-fg-secondary">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="secondary" onClick={() => setImportOpen(true)}>
-            {t("importFromRunSheet")}
+          <Button
+            variant="secondary"
+            onClick={() => {
+              const el = document.getElementById("mapping-suggestions");
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+                el.focus();
+              } else {
+                setImportOpen(true);
+              }
+            }}
+          >
+            {t("reviewSuggestions")}
           </Button>
           <Button variant="primary" onClick={() => openCreate()}>
-            {t("new")}
+            {t("addMapping")}
           </Button>
         </div>
       </div>
@@ -166,8 +177,13 @@ export function MappingsClient({
                 ))
               )}
 
-              {suggestions.map((suggestion) => (
-                <tr key={suggestion.id} className="h-[64px] [&>td]:bg-info-bg [&>td:first-child]:rounded-l-[10px] [&>td:last-child]:rounded-r-[10px]">
+              {suggestions.map((suggestion, index) => (
+                <tr
+                  key={suggestion.id}
+                  id={index === 0 ? "mapping-suggestions" : undefined}
+                  tabIndex={index === 0 ? -1 : undefined}
+                  className="h-[64px] [&>td]:bg-info-bg [&>td:first-child]:rounded-l-[10px] [&>td:last-child]:rounded-r-[10px]"
+                >
                   <td className="px-5" colSpan={2}>
                     <div className="flex items-center gap-2">
                       <StatusBadge status="suggested" />
@@ -188,6 +204,11 @@ export function MappingsClient({
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="flex justify-end px-5 pb-4">
+          <Button variant="ghost" onClick={() => setImportOpen(true)}>
+            {t("importFromRunSheet")}
+          </Button>
         </div>
       </Card>
 

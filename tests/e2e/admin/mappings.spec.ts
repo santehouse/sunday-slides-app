@@ -7,7 +7,7 @@ test.describe("Announcement mappings", () => {
     await page.goto("/admin/mappings");
     await expect(page.getByRole("heading", { name: "Announcement mappings" })).toBeVisible();
 
-    await page.getByRole("button", { name: "New mapping" }).click();
+    await page.getByRole("button", { name: "Add mapping" }).click();
     await page.getByLabel("Canonical announcement").fill("Youth group night");
     await page.getByLabel("Template").selectOption({ index: 0 });
     await page.getByRole("button", { name: "Save changes" }).click();
