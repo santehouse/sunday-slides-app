@@ -28,11 +28,12 @@ export default async function AdminSignInPage({
 
   return (
     <div className="flex min-h-dvh bg-canvas">
-      <aside className="hidden w-[650px] shrink-0 flex-col justify-center gap-5 bg-primary px-16 text-fg-on-primary lg:flex">
-        <span aria-hidden="true" className="size-[42px] rounded-xl bg-white/15" />
+      {/* Figma 7:302 — top-aligned, 72px padding, 20px gaps, white 42px rounded mark. */}
+      <aside className="hidden w-[650px] shrink-0 flex-col items-start gap-5 bg-primary p-[72px] text-fg-on-primary lg:flex">
+        <span aria-hidden="true" className="size-[42px] shrink-0 rounded-[12px] bg-fg-on-primary" />
         <span className="text-h1 font-bold">{tBrand("name")}</span>
-        <h1 className="text-[40px] font-bold leading-tight">{t("heroTitle")}</h1>
-        <p className="max-w-[420px] text-body text-fg-on-primary/85">{t("heroBody")}</p>
+        <h1 className="max-w-[480px] text-[28px] font-bold leading-[1.25]">{t("heroTitle")}</h1>
+        <p className="max-w-[470px] text-[15px] leading-[22px]">{t("heroBody")}</p>
       </aside>
 
       <main className="flex flex-1 items-center justify-center px-6 py-12">

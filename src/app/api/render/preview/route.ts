@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { getSundaySession } from "@/lib/auth/sunday-session";
+import { getAdminSession } from "@/lib/auth/admin-session";
 import { renderSlideToJpeg } from "@/lib/renderer/server";
 import type { RenderSlideInput } from "@/lib/renderer/types";
 
@@ -8,6 +10,10 @@ import type { RenderSlideInput } from "@/lib/renderer/types";
  * through the full JPG/MP4 export pipeline. Headless Chromium needs the Node runtime and
  * can take a few seconds on a cold start, hence the generous `maxDuration` — see
  * docs/RENDERING.md.
+ *
+ * Session-gated like `/api/render/slide/[slideId]` and `/api/export`: the body is an
+ * arbitrary `RenderSlideInput` (including background image URLs) that this route hands to
+ * headless Chromium, so it must never be reachable by an anonymous caller.
  */
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -17,6 +23,11 @@ interface PreviewRequestBody {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const [sundaySession, adminSession] = await Promise.all([getSundaySession(), getAdminSession()]);
+  if (!sundaySession && !adminSession) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   let body: PreviewRequestBody;
   try {
     body = (await request.json()) as PreviewRequestBody;

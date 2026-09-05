@@ -27,11 +27,38 @@ describe("DurationStepper", () => {
 
   it("calls onChange with value + 1 / - 1 within bounds", () => {
     const onChange = vi.fn();
-    renderStepper(5, onChange);
+    const { rerender } = renderStepper(5, onChange);
     fireEvent.click(screen.getByRole("button", { name: "Increase duration" }));
     expect(onChange).toHaveBeenCalledWith(6);
+
+    // The parent commits the new value, which re-syncs the control.
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DurationStepper value={6} onChange={onChange} min={1} max={30} />
+      </NextIntlClientProvider>,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Decrease duration" }));
-    expect(onChange).toHaveBeenCalledWith(4);
+    expect(onChange).toHaveBeenCalledWith(5);
+  });
+
+  it("compounds taps that land before the parent re-renders (no dropped steps)", () => {
+    const onChange = vi.fn();
+    renderStepper(5, onChange);
+    const plus = screen.getByRole("button", { name: "Increase duration" });
+    fireEvent.click(plus);
+    fireEvent.click(plus);
+    fireEvent.click(plus);
+    expect(onChange.mock.calls.map((c) => c[0])).toEqual([6, 7, 8]);
+  });
+
+  it("clamps compounded taps at the maximum", () => {
+    const onChange = vi.fn();
+    renderStepper(29, onChange);
+    const plus = screen.getByRole("button", { name: "Increase duration" });
+    fireEvent.click(plus);
+    fireEvent.click(plus);
+    fireEvent.click(plus);
+    expect(onChange.mock.calls.map((c) => c[0])).toEqual([30]);
   });
 
   it("formats the value using the plural seconds message", () => {

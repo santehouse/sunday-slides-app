@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Eye, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, Plus, Trash2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -168,13 +168,19 @@ export function StudioClient({
     [fields, safeZone],
   );
 
-  function handleSave() {
+  /**
+   * Persists the studio. Publish / Unpublish / Archive / Restore pass their target
+   * status so they act immediately — previously they only staged local state, and the
+   * lifecycle change was silently lost unless the admin also pressed "Save changes".
+   */
+  function handleSave(nextStatus?: TemplateStatus) {
+    if (nextStatus) setStatus(nextStatus);
     startTransition(async () => {
       const patch = {
         nameEn,
         nameFr,
         category,
-        status,
+        status: nextStatus ?? status,
         backgroundType,
         backgroundValue: backgroundType === "color" ? backgroundColorHex : backgroundAssetId,
         overlayColor,
@@ -206,29 +212,29 @@ export function StudioClient({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/templates" className="text-fg-secondary hover:text-fg">
-            ←
+          <Link href="/admin/templates" aria-label={tCommon("back")} className="text-fg-secondary hover:text-fg">
+            <ArrowLeft aria-hidden="true" size={24} />
           </Link>
           <h1 className="text-h2 font-bold text-fg">{name}</h1>
           <StatusBadge status={TEMPLATE_STATUS_BADGE[status]} />
         </div>
         <div className="flex items-center gap-2.5">
           {status === "archived" ? (
-            <Button variant="secondary" onClick={() => setStatus("draft")}>
+            <Button variant="secondary" loading={isPending} onClick={() => handleSave("draft")}>
               {t("restore")}
             </Button>
           ) : (
             <>
               {status !== "published" ? (
-                <Button variant="secondary" onClick={() => setStatus("published")}>
+                <Button variant="secondary" loading={isPending} onClick={() => handleSave("published")}>
                   {t("publish")}
                 </Button>
               ) : (
-                <Button variant="secondary" onClick={() => setStatus("draft")}>
+                <Button variant="secondary" loading={isPending} onClick={() => handleSave("draft")}>
                   {t("unpublish")}
                 </Button>
               )}
-              <Button variant="secondary" onClick={() => setStatus("archived")}>
+              <Button variant="secondary" loading={isPending} onClick={() => handleSave("archived")}>
                 {t("archive")}
               </Button>
             </>
@@ -236,7 +242,7 @@ export function StudioClient({
           <Button variant="secondary" leadingIcon={Eye} aria-pressed={showSafeZone} onClick={() => setShowSafeZone((s) => !s)}>
             {t("preview")}
           </Button>
-          <Button variant="primary" loading={isPending} onClick={handleSave}>
+          <Button variant="primary" loading={isPending} onClick={() => handleSave()}>
             {tCommon("saveChanges")}
           </Button>
         </div>
@@ -541,36 +547,38 @@ export function StudioClient({
               {[...fields]
                 .sort((a, b) => a.sortOrder - b.sortOrder)
                 .map((field) => (
-                  <button
+                  // A <button> may not contain another <button> — the row is a plain
+                  // container with a select button and a separate remove button.
+                  <div
                     key={field.key}
-                    type="button"
-                    onClick={() => setSelectedKey(field.key)}
-                    className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2.5 text-left transition-colors ${
+                    className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2.5 transition-colors ${
                       selectedKey === field.key ? "border-primary bg-surface-subtle" : "border-border hover:bg-surface-subtle"
                     }`}
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-label font-bold text-fg">{field.labelEn}</p>
-                      <p className="truncate text-caption text-fg-secondary">
+                    <button
+                      type="button"
+                      aria-pressed={selectedKey === field.key}
+                      onClick={() => setSelectedKey(field.key)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <span className="block truncate text-label font-bold text-fg">{field.labelEn}</span>
+                      <span className="block truncate text-caption text-fg-secondary">
                         {field.teamEditable ? t("fieldMetaEditable") : t("fieldMetaAdminOnly")} ·{" "}
                         {field.overflowMode === "fixed"
                           ? t("fieldMetaFixed")
                           : field.overflowMode === "auto_fit"
                             ? t("fieldMetaAutoFit")
                             : t("fieldMetaMaxLines", { count: field.maxLines })}
-                      </p>
-                    </div>
+                      </span>
+                    </button>
                     <IconButton
                       icon={Trash2}
                       variant="ghost"
                       size={36}
                       aria-label={t("removeField")}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeField(field.key);
-                      }}
+                      onClick={() => removeField(field.key)}
                     />
-                  </button>
+                  </div>
                 ))}
             </div>
           </Card>

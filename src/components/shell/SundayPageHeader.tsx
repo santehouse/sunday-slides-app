@@ -40,8 +40,13 @@ export function SundayPageHeader({
   className,
 }: SundayPageHeaderProps) {
   const t = useTranslations("common");
+  // Figma "Sunday Page Header" frame heights: Dashboard 59, Flow 72,
+  // Add Slide / Upload Run Sheet 64, Editor 56.
+  const minHeight =
+    titleSize === "md" ? "min-h-14" : titleSize === "xl" ? "min-h-[59px]" : subtitle ? "min-h-[72px]" : "min-h-16";
+
   return (
-    <div className={cn("flex items-center justify-between gap-4", className)}>
+    <div className={cn("flex items-center justify-between gap-4", minHeight, className)}>
       <div className="flex min-w-0 items-center gap-2.5">
         {backHref ? (
           <Link href={backHref} aria-label={t("back")} className="shrink-0 text-fg">

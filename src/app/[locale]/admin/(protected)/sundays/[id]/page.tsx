@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
+import { ArrowLeft } from "lucide-react";
 import { getDb } from "@/lib/data";
+import { serviceDateToDate } from "@/lib/utils/serviceDate";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
@@ -52,7 +54,7 @@ export default async function SundayDetailPage({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-h1 font-bold text-fg">
-            {format.dateTime(new Date(`${sunday.serviceDate}T00:00:00`), "dateMedium")}
+            {format.dateTime(serviceDateToDate(sunday.serviceDate), "dateMedium")}
           </h1>
           <StatusBadge status={SUNDAY_STATUS_MAP[sunday.status] ?? "draft"} />
         </div>
@@ -77,8 +79,12 @@ export default async function SundayDetailPage({
       </Card>
 
       <div>
-        <Link href="/admin/sundays" className="text-label text-fg-secondary hover:underline">
-          ← {t("title")}
+        <Link
+          href="/admin/sundays"
+          className="inline-flex items-center gap-2 text-label text-fg-secondary hover:underline"
+        >
+          <ArrowLeft aria-hidden="true" size={16} />
+          {t("title")}
         </Link>
       </div>
     </div>

@@ -19,6 +19,11 @@ export type AdminUserAccountProps = {
   className?: string;
 };
 
+/** "en" -> "EN", "fr-CA" -> "FR" (matches the Language Selector's segment labels). */
+function localeShortLabel(locale: string) {
+  return locale.split("-")[0]!.toUpperCase();
+}
+
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "";
@@ -57,7 +62,7 @@ export function AdminUserAccount({ user, onSignOut, className }: AdminUserAccoun
       <div className="flex min-w-0 flex-1 flex-col">
         <p className="truncate text-[13px] font-bold text-fg">{user.displayName}</p>
         <p className="truncate text-[11px] text-fg-secondary">
-          {t("roleLocale", { role: t(`roles.${user.role}`), locale: user.locale })}
+          {t("roleLocale", { role: t(`roles.${user.role}`), locale: localeShortLabel(user.locale) })}
         </p>
       </div>
       <IconButton

@@ -12,6 +12,10 @@ export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 60_000,
   fullyParallel: false,
+  // One worker: every spec shares a single mock-data process (CP_MOCK_DATA=1 keeps the
+  // store in memory), so specs that mutate global state — the Settings spec rotates the
+  // Sunday PIN, the Sunday specs sign in with it — must not run against each other.
+  workers: 1,
   retries: 0,
   reporter: [["list"]],
   use: {

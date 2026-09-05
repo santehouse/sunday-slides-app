@@ -171,13 +171,14 @@ export function ExportPopover({
     >
       {({ close }) => (
         <div className="flex flex-col gap-4">
-          <h2 className="text-h2 font-bold text-fg">{t("title")}</h2>
+          <h2 className="text-h3 font-bold text-fg">{t("title")}</h2>
 
           <div className="flex flex-col gap-1.5">
-            <p className="text-caption font-bold text-fg-secondary">{t("format")}</p>
+            <p className="text-[11px] leading-4 text-fg-secondary">{t("format")}</p>
             <SegmentedControl
               ariaLabel={t("format")}
-              size="sm"
+              size="lg"
+              variant="solid"
               equalWidth
               value={format}
               onChange={setFormat}
@@ -189,7 +190,7 @@ export function ExportPopover({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <p className="text-caption font-bold text-fg-secondary">{t("slides")}</p>
+            <p className="text-[11px] leading-4 text-fg-secondary">{t("slides")}</p>
             <div role="radiogroup" aria-label={t("slides")} className="flex flex-col gap-1">
               {(["current", "all", "custom"] as ExportScope[]).map((option) => (
                 <button
@@ -199,8 +200,8 @@ export function ExportPopover({
                   aria-checked={scope === option}
                   onClick={() => setScope(option)}
                   className={cn(
-                    "flex h-[34px] items-center rounded-[8px] px-2.5 text-left text-label font-bold",
-                    scope === option ? "border border-primary bg-surface-subtle text-fg" : "text-fg-secondary hover:bg-surface-subtle",
+                    "flex h-[34px] items-center rounded-[8px] px-3 text-left text-caption text-fg",
+                    scope === option ? "bg-primary-subtle font-bold" : "hover:bg-surface-subtle",
                   )}
                 >
                   {option === "current" ? t("currentSlide") : option === "all" ? t("allSlides") : t("customSlides")}
@@ -218,7 +219,7 @@ export function ExportPopover({
                 onChange={(event) => applyRangeText(event.target.value)}
                 error={rangeErrorMessage}
               />
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-x-2 gap-y-2.5">
                 {slides.map((slide, index) => {
                   const number = index + 1;
                   const selected = selectedNumbers.includes(number);
@@ -232,8 +233,8 @@ export function ExportPopover({
                       aria-label={t("selectSlideThumb", { number })}
                       onClick={() => toggleThumb(number)}
                       className={cn(
-                        "relative h-11 w-[76px] overflow-hidden rounded-[6px] border",
-                        selected ? "border-2 border-primary bg-surface-subtle" : "border-border",
+                        "relative h-11 w-[76px] overflow-hidden rounded-[6px]",
+                        selected ? "border-[3px] border-primary" : "border border-border",
                         muted && "opacity-40",
                       )}
                     >

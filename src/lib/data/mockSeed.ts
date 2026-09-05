@@ -435,7 +435,9 @@ export const TEMPLATE_SEEDS: TemplateSeed[] = [
     overlayColor: "none",
     overlayOpacity: 0,
     includeInVideoDefault: true,
-    allowTeamBackgroundChoice: false,
+    // Figma's Slide Editor frame (6:160) shows this template with the Background
+    // segmented control and an "Approved color: Coral" select.
+    allowTeamBackgroundChoice: true,
     fields: standardFields("#ffffff"),
     allowedAssetSlugs: [],
   },

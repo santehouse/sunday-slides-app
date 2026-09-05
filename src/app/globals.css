@@ -12,6 +12,7 @@
   --bg-surface-subtle: #f1f5f9;
   --bg-primary: #4f46e5;
   --bg-primary-hover: #4338ca;
+  --bg-primary-subtle: #f2f0ff;
   --bg-overlay: rgb(15 23 42 / 0.4);
 
   --text-primary: #0f172a;
@@ -23,12 +24,19 @@
   --border-strong: #cbd5e1;
   --border-focus: #4f46e5;
 
+  /*
+   * Status text is one Tailwind step darker than the Figma foundations extract
+   * (green-600 #16a34a / amber-600 #d97706 / red-600 #dc2626). Those values fail
+   * WCAG AA for normal text — 3.15 / 3.07 / 4.41 against their own badge fills —
+   * and BUILD_HANDOFF section 40 requires an accessible contrast set. The values
+   * below keep the same hue family and reach 4.79 / 4.84 / 5.91.
+   */
   --status-success-bg: #f0fdf4;
-  --status-success-text: #16a34a;
+  --status-success-text: #15803d;
   --status-warning-bg: #fffbeb;
-  --status-warning-text: #d97706;
+  --status-warning-text: #b45309;
   --status-error-bg: #fef2f2;
-  --status-error-text: #dc2626;
+  --status-error-text: #b91c1c;
   --status-info-bg: #eff6ff;
   --status-info-text: #2563eb;
 
@@ -48,6 +56,7 @@
   --color-surface-subtle: var(--bg-surface-subtle);
   --color-primary: var(--bg-primary);
   --color-primary-hover: var(--bg-primary-hover);
+  --color-primary-subtle: var(--bg-primary-subtle);
   --color-overlay: var(--bg-overlay);
 
   --color-fg: var(--text-primary);

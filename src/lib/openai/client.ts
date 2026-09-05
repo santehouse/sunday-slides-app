@@ -3,13 +3,12 @@
  * BUILD_HANDOFF.md). The actual model call is injected (`callModel`) so this
  * module is fully unit-testable offline — no network in tests.
  *
- * Note: deliberately does NOT `import "server-only"` — this keeps it
- * importable from Vitest (the `server-only` package throws unconditionally
- * outside of Next's webpack build). The API key is only ever read inside
- * `createResponsesCallModel()`, which nothing in the client bundle can reach
- * (this module lives under `src/lib/openai`, never imported by a Client
- * Component), and unit tests never invoke it — they always inject a fake.
+ * `import "server-only"` makes an accidental import from a Client Component a build
+ * error (CLAUDE.md rule 10 — the API key is read in `createResponsesCallModel()`).
+ * Vitest and `scripts/tsconfig.json` alias `server-only` to a no-op stub, so this
+ * module stays importable offline; unit tests always inject a fake `callModel`.
  */
+import "server-only";
 
 import OpenAI from "openai";
 import type { ParsedRunSheet, TemplateCategory } from "@/lib/domain/types";

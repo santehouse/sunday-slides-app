@@ -1,11 +1,10 @@
 "use client";
 
-import type { CSSProperties, HTMLAttributes, KeyboardEvent } from "react";
-import { GripVertical, MoreHorizontal } from "lucide-react";
+import type { CSSProperties, HTMLAttributes } from "react";
+import { GripVertical } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/cn";
 import type { Slide, Template } from "@/lib/domain/types";
-import { IconButton } from "@/components/ui/IconButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { SlidePreview } from "./SlidePreview";
 import type { ResolvedAsset } from "@/lib/renderer/types";
@@ -19,10 +18,9 @@ export type SlideFlowCardProps = {
   selected: boolean;
   onSelect: () => void;
   onOpen: () => void;
-  onRemove: () => void;
   dragHandleProps?: HTMLAttributes<HTMLButtonElement>;
   style?: CSSProperties;
-  setNodeRef?: (el: HTMLDivElement | null) => void;
+  setNodeRef?: (el: HTMLLIElement | null) => void;
 };
 
 /** Figma "Slide Flow Card" (Sunday Flow list variant, h88). */
@@ -35,7 +33,6 @@ export function SlideFlowCard({
   selected,
   onSelect,
   onOpen,
-  onRemove,
   dragHandleProps,
   style,
   setNodeRef,
@@ -49,67 +46,58 @@ export function SlideFlowCard({
     return slide.includeInVideo ? t("includedInMp4") : t("excludedFromMp4");
   }
 
-  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      onOpen();
-    }
-  }
-
   return (
-    <div
+    <li
       ref={setNodeRef}
       style={style}
-      role="option"
-      aria-selected={selected}
-      tabIndex={0}
-      onClick={onSelect}
-      onDoubleClick={onOpen}
-      onKeyDown={handleKeyDown}
+      data-slide-card=""
+      aria-current={selected ? "true" : undefined}
       className={cn(
-        "flex h-[88px] items-center gap-2.5 rounded-lg border bg-surface p-5",
-        selected ? "border-2 border-primary" : "border-border",
+        // Figma 6:19 — 12px side padding, 10px gaps. Selected keeps the same background
+        // and gains a 2px primary edge; the inset shadow avoids a 1px content shift.
+        "flex h-[88px] items-center gap-2.5 rounded-[12px] border bg-surface px-3",
+        selected
+          ? "border-primary shadow-[inset_0_0_0_1px_var(--bg-primary)]"
+          : "border-border",
       )}
     >
       <button
         type="button"
         aria-label={t("dragHandle", { number: index + 1 })}
         className="flex shrink-0 cursor-grab items-center justify-center text-fg-secondary active:cursor-grabbing"
-        onClick={(event) => event.stopPropagation()}
         {...dragHandleProps}
       >
         <GripVertical aria-hidden="true" size={24} />
       </button>
 
-      <div className="h-[50px] w-[88px] shrink-0 overflow-hidden rounded-[6px] border border-border">
-        <SlidePreview
-          template={template}
-          slide={slide}
-          backgroundColorHex={backgroundColorHex}
-          assets={assets}
-        />
-      </div>
+      {/* One control selects the card. A row-level `role="option"` may not contain
+          focusable children (axe `nested-interactive`), so the row is a plain list item. */}
+      <button
+        type="button"
+        data-slide-select=""
+        aria-pressed={selected}
+        onClick={onSelect}
+        onDoubleClick={onOpen}
+        className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+      >
+        <span className="h-[50px] w-[88px] shrink-0 overflow-hidden rounded-[6px] border border-border">
+          <SlidePreview
+            template={template}
+            slide={slide}
+            backgroundColorHex={backgroundColorHex}
+            assets={assets}
+          />
+        </span>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <p className="truncate text-label font-bold text-fg">
-          {number} {slide.headline}
-        </p>
-        <p className="truncate text-caption text-fg-secondary">{metaText()}</p>
-      </div>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-label font-bold text-fg">
+            {number} {slide.headline}
+          </span>
+          <span className="truncate text-caption text-fg-secondary">{metaText()}</span>
+        </span>
+      </button>
 
       <StatusBadge status={slide.status === "needs_review" ? "needsReview" : slide.status === "invalid" ? "invalid" : "ready"} />
-
-      <IconButton
-        icon={MoreHorizontal}
-        variant="ghost"
-        size={36}
-        radius={8}
-        aria-label={t("removeSlide")}
-        onClick={(event) => {
-          event.stopPropagation();
-          onRemove();
-        }}
-      />
-    </div>
+    </li>
   );
 }

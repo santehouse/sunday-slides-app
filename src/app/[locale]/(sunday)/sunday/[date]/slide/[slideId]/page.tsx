@@ -14,7 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "sunday.editor" });
-  return { title: t("content") };
+  return { title: t("pageTitle") };
 }
 
 export default async function SlideEditorPage({

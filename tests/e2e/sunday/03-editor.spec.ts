@@ -1,12 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { loginPin } from "./helpers";
+import { loginPin, openFlowFromDashboard } from "./helpers";
 
 test("Slide Editor shows a text-fit message and saves changes", async ({ page }) => {
   await loginPin(page);
-  await page.getByRole("link", { name: /open flow/i }).click();
-  await expect(page).toHaveURL(/\/flow$/);
+  await openFlowFromDashboard(page);
 
-  await page.getByRole("option").first().dblclick();
+  await page.locator("[data-slide-card] [data-slide-select]").first().dblclick();
   await expect(page).toHaveURL(/\/slide\/[^/]+/);
 
   // The live text-fit MessageState renders once the client canvas measurer resolves.

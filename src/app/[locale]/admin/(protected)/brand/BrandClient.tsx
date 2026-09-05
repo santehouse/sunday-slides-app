@@ -233,7 +233,7 @@ function FontLibraryCard({ fonts }: { fonts: FontRecord[] }) {
       <p className="text-caption text-fg-secondary">{t("fontLibraryHelper")}</p>
       <div className="flex flex-col gap-2">
         {groups.map((group) => (
-          <div key={group.family} className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
+          <div key={group.family} className="flex min-h-[92px] items-center justify-between gap-3 rounded-[10px] bg-surface-subtle px-3.5 py-3">
             <div className="min-w-0">
               <p className="truncate text-label font-bold text-fg">{group.family}</p>
               <p className="truncate text-caption text-fg-secondary">

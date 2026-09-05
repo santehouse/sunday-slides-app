@@ -57,12 +57,13 @@ export function AdminNav({ user, onSignOut, className }: AdminNavProps) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-[42px] items-center gap-2.5 rounded-[8px] px-3 text-label",
+                  // min-h, not a fixed height: the longer fr-CA labels wrap instead of clipping.
+                  "flex min-h-[42px] items-center gap-2.5 rounded-[8px] px-3 py-1.5 text-label",
                   active ? "bg-surface-subtle font-bold text-fg" : "font-normal text-fg-secondary hover:bg-surface-subtle",
                 )}
               >
                 <Icon aria-hidden="true" size={20} className="shrink-0" />
-                <span className="truncate">{t(item.labelKey)}</span>
+                <span>{t(item.labelKey)}</span>
               </Link>
             </li>
           );

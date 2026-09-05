@@ -1,10 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { loginPin } from "./helpers";
+import { loginPin, openFlowFromDashboard } from "./helpers";
 
 test("Upload Run Sheet page renders the manual upload and preview panels", async ({ page }) => {
   await loginPin(page);
-  await page.getByRole("link", { name: /open flow/i }).click();
-  await expect(page).toHaveURL(/\/flow$/);
+  await openFlowFromDashboard(page);
 
   await page.getByRole("link", { name: /upload run sheet/i }).click();
   await expect(page).toHaveURL(/\/upload$/);

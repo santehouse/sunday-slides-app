@@ -121,16 +121,16 @@ export function MappingsClient({
         </div>
       </div>
 
-      <Card className="flex flex-col gap-1.5">
-        <p className="text-label text-fg-secondary">{t("infoLine1")}</p>
+      <div className="flex flex-col gap-1.5 rounded-lg bg-info-bg px-5 py-4">
+        <p className="text-label font-bold text-info-fg">{t("infoLine1")}</p>
         <p className="text-caption text-fg-secondary">{t("infoLine2")}</p>
-      </Card>
+      </div>
 
       <Card padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-left">
+          <table className="w-full min-w-[640px] border-separate border-spacing-y-2 text-left">
             <thead>
-              <tr className="border-b border-border">
+              <tr>
                 {(["canonical", "aliases", "template", "status"] as const).map((col) => (
                   <th key={col} className="px-5 py-3 text-caption font-bold text-fg-secondary">
                     {t(`columns.${col}`)}
@@ -149,12 +149,12 @@ export function MappingsClient({
                 mappings.map((mapping) => (
                   <tr
                     key={mapping.id}
-                    className="h-[64px] cursor-pointer border-b border-border last:border-b-0 hover:bg-surface-subtle"
+                    className="h-[64px] cursor-pointer [&>td]:bg-surface-subtle [&>td:first-child]:rounded-l-[10px] [&>td:last-child]:rounded-r-[10px] hover:[&>td]:bg-border/60"
                     onClick={() => openEdit(mapping)}
                   >
                     <td className="px-5 text-label font-bold text-fg">{mapping.canonicalName}</td>
                     <td className="px-5 text-label text-fg-secondary">{mapping.aliases.map((a) => a.alias).join(" · ")}</td>
-                    <td className="px-5 text-label text-fg-secondary">
+                    <td className="px-5 text-label font-bold text-fg">
                       {mapping.templateName
                         ? `${(isFr ? mapping.templateName.fr : mapping.templateName.en) || ""}`
                         : "—"}
@@ -167,7 +167,7 @@ export function MappingsClient({
               )}
 
               {suggestions.map((suggestion) => (
-                <tr key={suggestion.id} className="h-[64px] border-b border-border last:border-b-0 bg-info-bg/40">
+                <tr key={suggestion.id} className="h-[64px] [&>td]:bg-info-bg [&>td:first-child]:rounded-l-[10px] [&>td:last-child]:rounded-r-[10px]">
                   <td className="px-5" colSpan={2}>
                     <div className="flex items-center gap-2">
                       <StatusBadge status="suggested" />

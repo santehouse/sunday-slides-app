@@ -37,7 +37,8 @@
     "required": "Required",
     "seconds": "{count, plural, one {# sec} other {# sec}}",
     "slidesCount": "{count, plural, one {# slide} other {# slides}}",
-    "pagesCount": "{count, plural, one {# page} other {# pages}}"
+    "pagesCount": "{count, plural, one {# page} other {# pages}}",
+    "chooseFile": "Choose file"
   },
   "language": {
     "label": "Language",
@@ -71,8 +72,8 @@
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
-    "network": "We couldn't reach the server. Check your connection and try again.",
-    "notFound": "We couldn't find that page.",
+    "network": "We couldn’t reach the server. Check your connection and try again.",
+    "notFound": "We couldn’t find that page.",
     "unauthorized": "You need to sign in to continue.",
     "validation": "Please check the highlighted fields.",
     "fileTooLarge": "That file is larger than {max} MB.",
@@ -80,12 +81,12 @@
   },
   "pin": {
     "title": "Sunday team access",
-    "description": "Enter the shared {digits}-digit PIN to open this Sunday's deck.",
+    "description": "Enter the shared {digits}-digit PIN to open this Sunday’s deck.",
     "inputLabel": "PIN digit {index}",
     "submit": "Open Sunday",
     "adminLink": "Admin? Sign in with email instead.",
-    "errorTitle": "Can't open Sunday",
-    "invalid": "That PIN isn't right. Try again.",
+    "errorTitle": "Can’t open Sunday",
+    "invalid": "That PIN isn’t right. Try again.",
     "rateLimited": "Too many attempts. Wait a minute and try again.",
     "incomplete": "Enter all {digits} digits."
   },
@@ -120,7 +121,7 @@
     },
     "flow": {
       "title": "Sunday flow",
-      "subtitle": "{date, date, dateMedium} · {slides} · {seconds} global hold · order controls the MP4 loop",
+      "subtitle": "{date, date, monthDay} · {slides} · {seconds} global hold · order controls the MP4 loop",
       "uploadRunSheet": "Upload run sheet",
       "addSlide": "Add slide",
       "export": "Export",
@@ -140,7 +141,13 @@
       "removeSlide": "Remove slide",
       "removeConfirmTitle": "Remove this slide?",
       "removeConfirmBody": "\"{title}\" will be removed from the Sunday flow.",
-      "cannotRemoveStructural": "This slide is always included and can't be removed."
+      "cannotRemoveStructural": "This slide is always included and can’t be removed.",
+      "dndInstructions": "To pick up a slide, press space or enter. While dragging, use the arrow keys to move it. Press space or enter again to drop it, or press escape to cancel.",
+      "dndPickedUp": "Picked up slide {number}.",
+      "dndOver": "Slide moved to position {number}.",
+      "dndDropped": "Slide dropped at position {number}.",
+      "dndCancelled": "Reorder cancelled. The slide returned to its original position.",
+      "listLabel": "Sunday flow slides"
     },
     "safeZones": {
       "show": "Show safe zones",
@@ -165,7 +172,7 @@
       "exportMp4": "Export MP4",
       "selectSlideThumb": "Slide {number}",
       "excludedNotice": "{count, plural, one {# selected slide is not included in MP4 and will be skipped.} other {# selected slides are not included in MP4 and will be skipped.}}",
-      "blockedByTextFit": "{count, plural, one {# slide has text that doesn't fit. Fix it before exporting.} other {# slides have text that doesn't fit. Fix them before exporting.}}",
+      "blockedByTextFit": "{count, plural, one {# slide has text that doesn’t fit. Fix it before exporting.} other {# slides have text that doesn’t fit. Fix them before exporting.}}",
       "blockedByMissingField": "Some slides are missing required content.",
       "preparing": "Preparing export…",
       "rendering": "Rendering {current} of {total}…",
@@ -173,7 +180,7 @@
       "download": "Download",
       "done": "Export ready",
       "failed": "Export failed",
-      "mp4Failed": "The MP4 couldn't be created. JPG export is still available.",
+      "mp4Failed": "The MP4 couldn’t be created. JPG export is still available.",
       "nothingToExport": "No slides to export."
     },
     "editor": {
@@ -191,13 +198,13 @@
       "includeInMp4": "Include in MP4",
       "livePreview": "Live preview",
       "textFitGood": "Text fit looks good",
-      "textFitGoodBody": "Headline fits at the template's preferred size with no wrapping warnings.",
+      "textFitGoodBody": "Headline fits at the template’s preferred size with no wrapping warnings.",
       "textFitWarning": "Text needs attention",
       "textFitWarningBody": "Copy is close to the template limit. Review wrapping before export.",
       "textTooLong": "Text is too long",
       "textTooLongBody": "Shorten the text before exporting.",
       "templateNote": "Template note",
-      "templateNoteBody": "This field uses the published template's locked text-fit rules.",
+      "templateNoteBody": "This field uses the published template’s locked text-fit rules.",
       "requiredField": "This field is required.",
       "saved": "Slide saved",
       "duplicated": "Slide duplicated",
@@ -207,11 +214,12 @@
       "keepEditing": "Keep editing",
       "rememberMapping": "Remember this template for \"{name}\"",
       "mappingRemembered": "Mapping saved for future run sheets.",
-      "untitledSlide": "Untitled slide"
+      "untitledSlide": "Untitled slide",
+      "pageTitle": "Edit slide"
     },
     "addSlide": {
       "title": "Add slide",
-      "helper": "Choose a published template. Styling is locked; you'll only edit the content fields that template exposes.",
+      "helper": "Choose a published template. Styling is locked; you’ll only edit the content fields that template exposes.",
       "chooseTemplate": "Choose a published template",
       "noTemplates": "No published templates in this category.",
       "categories": {
@@ -230,7 +238,7 @@
     "upload": {
       "title": "Upload run sheet",
       "manualUpload": "Manual upload",
-      "helper": "Use this if the pastor's email did not arrive or you received a revised file Sunday morning.",
+      "helper": "Use this if the pastor’s email did not arrive or you received a revised file Sunday morning.",
       "dropHere": "Drop Word or PDF run sheet here",
       "formats": "DOCX or PDF · up to {max} MB",
       "chooseFile": "Choose file",
@@ -248,19 +256,20 @@
       "processing": "Processing",
       "processingBody": "Reading the document and detecting announcements…",
       "processingFailed": "Processing failed",
-      "processingFailedBody": "We couldn't read this file. Try again or upload a different file.",
+      "processingFailedBody": "We couldn’t read this file. Try again or upload a different file.",
       "emptyText": "No readable text was found in this file.",
       "readyToApply": "Ready to apply",
       "applyToSunday": "Add to Sunday flow",
       "mergeUpdates": "Merge updates",
       "replaceDeck": "Replace deck",
       "replaceConfirmTitle": "Replace the whole deck?",
-      "replaceConfirmBody": "All slides for this Sunday, including manual edits, will be regenerated from this run sheet. This can't be undone.",
+      "replaceConfirmBody": "All slides for this Sunday, including manual edits, will be regenerated from this run sheet. This can’t be undone.",
       "applied": "Run sheet added to flow",
       "merged": "Updates merged into the Sunday flow",
       "replaced": "Deck replaced from the new run sheet",
       "sourceEmail": "Received by email",
-      "sourceManual": "Uploaded manually"
+      "sourceManual": "Uploaded manually",
+      "emptyPreviewTitle": "No file yet"
     }
   },
   "adminAuth": {
@@ -273,7 +282,7 @@
     "magicLink": "Email me a magic link",
     "magicLinkSent": "Check your inbox",
     "magicLinkSentBody": "We sent a sign-in link to {email}.",
-    "invalidCredentials": "That email or password isn't right.",
+    "invalidCredentials": "That email or password isn’t right.",
     "signOut": "Sign out",
     "heroTitle": "Design control stays with the brand team. Sunday stays simple.",
     "heroBody": "Manage published templates, assets, announcement mappings, fonts, defaults and admin access."
@@ -442,7 +451,7 @@
       "saved": "Template saved",
       "published": "Template published",
       "archived": "Template archived",
-      "cannotDelete": "This template is used by historical slides and can't be deleted. Archive it instead.",
+      "cannotDelete": "This template is used by historical slides and can’t be deleted. Archive it instead.",
       "filters": {
         "all": "All",
         "published": "Published",
@@ -498,7 +507,7 @@
       "subtitle": "Teach the parser which approved template belongs to recurring announcements.",
       "importFromRunSheet": "Import from run sheet",
       "new": "New mapping",
-      "infoLine1": "Mappings choose the design — the weekly run sheet still controls this week's copy.",
+      "infoLine1": "Mappings choose the design — the weekly run sheet still controls this week’s copy.",
       "infoLine2": "Example: Étude biblique always maps to the Bible Study template, but the subcopy can change from a normal meeting time to \"on break this week\".",
       "columns": {
         "canonical": "Canonical announcement",
@@ -511,7 +520,7 @@
       "aliasesHelper": "One per line. English and French aliases all point to the same mapping.",
       "template": "Template",
       "active": "Active",
-      "suggestedBody": "\"{text}\" was seen in this week's run sheet.",
+      "suggestedBody": "\"{text}\" was seen in this week’s run sheet.",
       "suggestedHint": "Sunday team can correct the template and choose \"Remember this mapping\".",
       "createFromSuggestion": "Create mapping",
       "dismiss": "Dismiss",
@@ -539,7 +548,7 @@
       "weights": "Weights",
       "enable": "Enable",
       "disable": "Disable",
-      "fontInUse": "This font is used by a published template and can't be removed.",
+      "fontInUse": "This font is used by a published template and can’t be removed.",
       "brandDefaults": "Brand defaults",
       "churchName": "Church name",
       "approvedColors": "Approved colors",
@@ -588,7 +597,7 @@
       "notInvited": "Not invited",
       "disableAdmin": "Disable",
       "enableAdmin": "Enable",
-      "cannotDisableSelf": "You can't disable your own account.",
+      "cannotDisableSelf": "You can’t disable your own account.",
       "saved": "Settings saved",
       "configured": "Configured",
       "notConfigured": "Not configured"

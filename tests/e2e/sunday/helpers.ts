@@ -16,3 +16,12 @@ export async function loginPin(page: Page, opts: { locale?: "en" | "fr" } = {}) 
   await page.getByRole("button", { name: /open sunday|ouvrir la présentation/i }).click();
   await page.waitForURL(/\/(fr\/)?sunday\/\d{4}-\d{2}-\d{2}$/);
 }
+
+/**
+ * Dashboard -> Sunday Flow. The Figma dashboard (node 5:14) has no "Open flow"
+ * button — its flow panel rows are the link into the flow screen.
+ */
+export async function openFlowFromDashboard(page: Page) {
+  await page.locator(`a[href*="/flow?slide="]`).first().click();
+  await page.waitForURL(/\/flow\?/);
+}

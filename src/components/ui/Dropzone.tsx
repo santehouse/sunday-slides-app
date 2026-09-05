@@ -64,11 +64,14 @@ export function Dropzone({
       <Button variant="secondary" onClick={() => inputRef.current?.click()} disabled={disabled}>
         {chooseFileLabel}
       </Button>
+      {/* Hidden but still a labelled form control (axe `label`): the visible
+          "Choose file" button forwards the click to it. */}
       <input
         ref={inputRef}
         id={inputId}
         type="file"
         tabIndex={-1}
+        aria-label={chooseFileLabel}
         accept={accept}
         disabled={disabled}
         className="sr-only"

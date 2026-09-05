@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { RunSheet } from "@/lib/domain/types";
 import type { RunSheetPreview } from "@/lib/sunday/contracts";
@@ -103,8 +104,8 @@ function UploadClientInner({ date, hasSlides, currentRunSheet }: UploadClientPro
   const remaining = preview ? Math.max(0, preview.items.length - PREVIEW_ROW_LIMIT) : 0;
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] gap-4">
-      <Card padding="md" className="flex flex-col gap-4">
+    <div className="grid grid-cols-[620px_minmax(0,1fr)] gap-[18px]">
+      <Card padding="none" className="flex min-h-[820px] flex-col gap-3.5 p-[22px]">
         <div className="flex flex-col gap-1">
           <h3 className="text-h3 font-bold text-fg">{t("manualUpload")}</h3>
           <p className="text-[13px] text-fg-secondary">{t("helper")}</p>
@@ -121,9 +122,11 @@ function UploadClientInner({ date, hasSlides, currentRunSheet }: UploadClientPro
         />
 
         {currentRunSheet ? (
-          <div className="flex flex-col gap-1 rounded-[10px] bg-surface-subtle p-3">
-            <p className="text-label font-bold text-fg">{t("current", { file: currentRunSheet.originalFilename })}</p>
-            <p className="text-caption text-fg-secondary">
+          <div className="flex h-[78px] items-center gap-3 rounded-[10px] bg-surface-subtle px-3.5">
+            <FileText aria-hidden="true" size={24} className="shrink-0 text-fg-secondary" />
+            <div className="flex min-w-0 flex-col gap-1">
+            <p className="truncate text-label font-bold text-fg">{t("current", { file: currentRunSheet.originalFilename })}</p>
+            <p className="truncate text-caption text-fg-secondary">
               {t("currentMeta", {
                 source: currentRunSheet.sourceType === "email" ? t("sourceEmail") : t("sourceManual"),
                 status: tStatus(
@@ -137,18 +140,21 @@ function UploadClientInner({ date, hasSlides, currentRunSheet }: UploadClientPro
                 ),
               })}
             </p>
+            </div>
           </div>
         ) : null}
       </Card>
 
-      <Card padding="md" className="flex flex-col gap-4">
-        <CardHeader title={t("preview")} />
+      <Card padding="none" className="flex min-h-[820px] flex-col items-start gap-3.5 p-[22px]">
+        <CardHeader title={t("preview")} className="w-full" />
         <p className="text-caption text-fg-secondary">{t("previewHelper")}</p>
 
-        {stage === "idle" ? <MessageState state="info" title={t("preview")} message={t("emptyPreview")} /> : null}
+        {stage === "idle" ? (
+          <MessageState state="info" title={t("emptyPreviewTitle")} message={t("emptyPreview")} className="w-full" />
+        ) : null}
 
         {stage === "uploading" || stage === "processing" ? (
-          <div className="flex items-center gap-3 rounded-[10px] bg-surface-subtle p-4">
+          <div className="flex w-full items-center gap-3 rounded-[10px] bg-surface-subtle p-4">
             <Spinner label={t("processing")} />
             <div className="flex flex-col gap-0.5">
               <p className="text-label font-bold text-fg">{t("processing")}</p>
@@ -159,7 +165,7 @@ function UploadClientInner({ date, hasSlides, currentRunSheet }: UploadClientPro
 
         {stage === "failed" ? (
           <>
-            <MessageState state="error" title={t("processingFailed")} message={t("processingFailedBody")} />
+            <MessageState state="error" title={t("processingFailed")} message={t("processingFailedBody")} className="w-full" />
             <Button variant="secondary" onClick={handleRetry} loading={reprocessing} className="w-fit">
               {tCommon("tryAgain")}
             </Button>
@@ -168,7 +174,7 @@ function UploadClientInner({ date, hasSlides, currentRunSheet }: UploadClientPro
 
         {stage === "ready" && preview ? (
           <>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col items-start gap-2.5">
               <p className="text-label font-bold text-fg">{preview.runSheet.originalFilename}</p>
               {statusBadge ? <StatusBadge status={statusBadge} /> : null}
             </div>
@@ -180,7 +186,7 @@ function UploadClientInner({ date, hasSlides, currentRunSheet }: UploadClientPro
               })}
             </p>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex w-full flex-col gap-2.5">
               {visibleItems.map((item, index) => (
                 <div key={index} className="flex h-16 items-center justify-between gap-3 rounded-[10px] bg-surface-subtle px-3.5">
                   <div className="flex min-w-0 flex-col gap-0.5">

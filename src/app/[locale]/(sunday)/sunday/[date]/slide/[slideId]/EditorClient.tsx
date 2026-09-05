@@ -10,6 +10,7 @@ import type { ResolvedAsset, SlideFitResult } from "@/lib/renderer/types";
 import { fitSlide } from "@/lib/renderer/fitText";
 import { createCanvasMeasurer, ensureFontsLoaded } from "@/lib/renderer/measure";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { ColorSelect } from "@/components/ui/ColorSelect";
 import { ConfirmDialog } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
@@ -45,6 +46,7 @@ function fitKind(fit: SlideFitResult | null): "success" | "warning" | "error" {
 function EditorClientInner({ date, slide, templates, assetsByTemplateId, colors, safeZone }: EditorClientProps) {
   const t = useTranslations("sunday.editor");
   const tCommon = useTranslations("common");
+  const tSafeZones = useTranslations("sunday.safeZones");
   const locale = useLocale() as AppLocale;
   const router = useRouter();
   const { showToast } = useToast();
@@ -189,8 +191,8 @@ function EditorClientInner({ date, slide, templates, assetsByTemplateId, colors,
         : { title: t("textTooLong"), message: t("textTooLongBody") };
 
   return (
-    <div className="flex flex-col gap-7">
-      <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col gap-[22px]">
+      <div className="flex min-h-14 items-center justify-between gap-4">
         <div className="flex items-center gap-2.5">
           <button type="button" aria-label={tCommon("back")} onClick={handleBack} className="text-fg">
             <ArrowLeft aria-hidden="true" size={24} />
@@ -207,8 +209,8 @@ function EditorClientInner({ date, slide, templates, assetsByTemplateId, colors,
         </div>
       </div>
 
-      <div className="grid grid-cols-[420px_1fr] gap-6">
-        <div className="flex w-full flex-col gap-5">
+      <div className="grid grid-cols-[420px_1fr] gap-5">
+        <Card padding="none" className="flex min-h-[850px] w-full flex-col gap-3.5 p-5">
           <h3 className="text-h3 font-bold text-fg">{t("content")}</h3>
 
           <Select
@@ -235,29 +237,30 @@ function EditorClientInner({ date, slide, templates, assetsByTemplateId, colors,
 
           {template.allowTeamBackgroundChoice ? (
             <div className="flex flex-col gap-2">
-              <p className="text-caption font-bold text-fg-secondary">{t("background")}</p>
+              <p className="text-caption text-fg-secondary">{t("background")}</p>
               <SegmentedControl
                 ariaLabel={t("background")}
                 size="sm"
                 value={backgroundMode}
                 onChange={setBackgroundMode}
-                options={
-                  availableAssets.length > 0
-                    ? [
-                        { value: "color" as BackgroundMode, label: t("color") },
-                        { value: "image" as BackgroundMode, label: t("image") },
-                      ]
-                    : [{ value: "color" as BackgroundMode, label: t("color") }]
-                }
+                // Figma 35:570 always shows both segments; Image is inert when the
+                // template has no approved assets rather than disappearing.
+                options={[
+                  { value: "color" as BackgroundMode, label: t("color") },
+                  { value: "image" as BackgroundMode, label: t("image"), disabled: availableAssets.length === 0 },
+                ]}
               />
 
               {backgroundMode === "color" ? (
-                <ColorSelect
-                  aria-label={t("approvedColor")}
-                  options={colorOptions}
-                  value={approvedColorId}
-                  onChange={setApprovedColorId}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-caption text-fg-secondary">{t("approvedColor")}</p>
+                  <ColorSelect
+                    aria-label={t("approvedColor")}
+                    options={colorOptions}
+                    value={approvedColorId}
+                    onChange={setApprovedColorId}
+                  />
+                </div>
               ) : availableAssets.length === 0 ? (
                 <MessageState state="info" title={t("templateNote")} message={t("noImagesForTemplate")} />
               ) : (
@@ -291,24 +294,28 @@ function EditorClientInner({ date, slide, templates, assetsByTemplateId, colors,
           ) : null}
 
           <MessageState state={messageKind} title={messageCopy.title} message={messageCopy.message} />
-        </div>
+        </Card>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-3">
+        <Card padding="none" className="flex min-h-[850px] flex-col gap-3.5 p-5">
+          <div className="flex h-10 items-center justify-between gap-3">
             <h3 className="text-h3 font-bold text-fg">{t("livePreview")}</h3>
             <SafeZonesAction active={showSafeZone} onToggle={() => setShowSafeZone((v) => !v)} />
           </div>
-          <div className="mx-auto aspect-video w-full max-w-[800px] overflow-hidden rounded-[12px] border border-border bg-surface-subtle">
-            <SlidePreview
-              template={template}
-              slide={{ id: slide.id, headline: content.headline ?? "", content, backgroundMode, assetId }}
-              backgroundColorHex={approvedColorId ? (colorOptions.find((c) => c.id === approvedColorId)?.hex ?? null) : null}
-              assets={availableAssets}
-              safeZone={safeZone}
-              showSafeZone={showSafeZone}
-            />
+          {/* Figma 6:221 — a 590-tall subtle stage with the 800x450 render centred inside. */}
+          <div className="flex h-[590px] w-full items-center justify-center rounded-[12px] bg-surface-subtle">
+            <div className="aspect-video w-full max-w-[800px] overflow-hidden rounded-[12px]">
+              <SlidePreview
+                template={template}
+                slide={{ id: slide.id, headline: content.headline ?? "", content, backgroundMode, assetId }}
+                backgroundColorHex={approvedColorId ? (colorOptions.find((c) => c.id === approvedColorId)?.hex ?? null) : null}
+                assets={availableAssets}
+                safeZone={safeZone}
+                showSafeZone={showSafeZone}
+                safeZoneLabel={tSafeZones("label")}
+              />
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       <ConfirmDialog

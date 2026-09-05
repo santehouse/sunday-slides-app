@@ -31,7 +31,6 @@ export type SlideFlowListProps = {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onOpen: (id: string) => void;
-  onRemove: (slide: Slide) => void;
   onReorder: (orderedIds: string[]) => void;
 };
 
@@ -44,7 +43,6 @@ function SortableRow({
   selected,
   onSelect,
   onOpen,
-  onRemove,
 }: {
   slide: Slide;
   index: number;
@@ -54,7 +52,6 @@ function SortableRow({
   selected: boolean;
   onSelect: () => void;
   onOpen: () => void;
-  onRemove: () => void;
 }) {
   const t = useTranslations("sunday.flow");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slide.id });
@@ -69,7 +66,6 @@ function SortableRow({
       selected={selected}
       onSelect={onSelect}
       onOpen={onOpen}
-      onRemove={onRemove}
       setNodeRef={setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
@@ -89,11 +85,28 @@ export function SlideFlowList({
   selectedId,
   onSelect,
   onOpen,
-  onRemove,
   onReorder,
 }: SlideFlowListProps) {
+  const t = useTranslations("sunday.flow");
   const [order, setOrder] = useState(() => slides.map((s) => s.id));
   const byId = new Map(slides.map((s) => [s.id, s]));
+
+  // dnd-kit ships English screen-reader instructions/announcements by default — they
+  // are read out verbatim in the FR interface unless they are supplied per locale.
+  const position = (id: string | number | undefined) =>
+    id === undefined ? 0 : order.indexOf(String(id)) + 1;
+  const accessibility = {
+    screenReaderInstructions: { draggable: t("dndInstructions") },
+    announcements: {
+      onDragStart: ({ active }: { active: { id: string | number } }) =>
+        t("dndPickedUp", { number: position(active.id) }),
+      onDragOver: ({ over }: { over: { id: string | number } | null }) =>
+        over ? t("dndOver", { number: position(over.id) }) : undefined,
+      onDragEnd: ({ over }: { over: { id: string | number } | null }) =>
+        over ? t("dndDropped", { number: position(over.id) }) : undefined,
+      onDragCancel: () => t("dndCancelled"),
+    },
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -127,10 +140,13 @@ export function SlideFlowList({
 
   const orderedSlides = order.map((id) => byId.get(id)).filter((s): s is Slide => Boolean(s));
 
+  // Explicit DndContext `id`: dnd-kit otherwise derives its aria-describedby ids from a
+  // global counter that drifts between the server render and the client, which React
+  // reports as a hydration mismatch on every Sunday Flow load.
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext id="sunday-flow" accessibility={accessibility} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={order} strategy={verticalListSortingStrategy}>
-        <div role="listbox" className="flex flex-col gap-2.5">
+        <ul aria-label={t("listLabel")} className="flex flex-col gap-2.5">
           {orderedSlides.map((slide, index) => {
             const template = templatesById[slide.templateId];
             if (!template) return null;
@@ -146,11 +162,10 @@ export function SlideFlowList({
                 selected={slide.id === selectedId}
                 onSelect={() => onSelect(slide.id)}
                 onOpen={() => onOpen(slide.id)}
-                onRemove={() => onRemove(slide)}
               />
             );
           })}
-        </div>
+        </ul>
       </SortableContext>
     </DndContext>
   );

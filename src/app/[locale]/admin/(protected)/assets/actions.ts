@@ -8,6 +8,9 @@ import { readImageDimensions } from "@/components/admin/imageDimensions";
 import type { Asset, AssetCategory } from "@/lib/domain/types";
 import type { UpdateAssetPatch } from "@/lib/data";
 
+/** Mirrors the Dropzone's client-side limit — a crafted request must not bypass it. */
+const MAX_ASSET_BYTES = 10 * 1024 * 1024;
+
 const MIME_EXT: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -26,6 +29,9 @@ export async function uploadAssetAction(formData: FormData): Promise<UploadAsset
 
   if (!(file instanceof File) || file.size === 0) {
     return { status: "error", message: "missing_file" };
+  }
+  if (file.size > MAX_ASSET_BYTES) {
+    return { status: "error", message: "file_too_large" };
   }
   const ext = MIME_EXT[file.type];
   if (!ext) {

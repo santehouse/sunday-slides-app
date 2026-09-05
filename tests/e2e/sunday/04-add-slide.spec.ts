@@ -1,10 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { loginPin } from "./helpers";
+import { loginPin, openFlowFromDashboard } from "./helpers";
 
 test("Add Slide creates a slide and opens its editor", async ({ page }) => {
   await loginPin(page);
-  await page.getByRole("link", { name: /open flow/i }).click();
-  await expect(page).toHaveURL(/\/flow$/);
+  await openFlowFromDashboard(page);
 
   await page.getByRole("link", { name: /^add slide$/i }).click();
   await expect(page).toHaveURL(/\/add$/);

@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { FilterChips } from "@/components/ui/FilterChips";
-import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge";
 import { TemplatePreview } from "@/components/admin/TemplatePreview";
 import { createTemplateAction } from "./actions";
 import type { TemplateWithFields } from "@/lib/data";
@@ -23,10 +22,11 @@ const CATEGORY_FILTERS: (TemplateCategory | "all")[] = [
   "closing",
 ];
 
-const TEMPLATE_STATUS_BADGE: Record<TemplateStatus, StatusBadgeStatus> = {
-  published: "published",
-  draft: "draft",
-  archived: "archived",
+// Figma 8:317 shows the lifecycle state as coloured text under the category, not a pill.
+const TEMPLATE_STATUS_TEXT: Record<TemplateStatus, string> = {
+  published: "text-success-fg",
+  draft: "text-fg",
+  archived: "text-fg-secondary",
 };
 
 function TemplateCard({
@@ -40,21 +40,19 @@ function TemplateCard({
   isFr: boolean;
   categoryLabel: string;
 }) {
+  const tStatus = useTranslations("status");
   const name = isFr ? template.nameFr : template.nameEn;
-  const sampleContent = useMemo(() => {
-    const content: Record<string, string> = {};
-    for (const field of template.fields) {
-      content[field.fieldKey] = field.fieldKey === "headline" ? name.toUpperCase() : field.labelEn;
-    }
-    return content;
-  }, [template.fields, name]);
+  // Figma 8:317 renders the template name alone in the thumbnail; filling the other
+  // fields with their labels put English "Line 1 / Line 2" into the FR thumbnails.
+  const sampleContent = useMemo(() => ({ headline: name.toUpperCase() }), [name]);
 
   return (
     <Link
       href={`/admin/templates/${template.id}`}
-      className="flex w-[257px] flex-col gap-3 rounded-lg border border-border bg-surface p-3 transition-colors hover:border-border-strong"
+      className="flex w-[257px] flex-col overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-border-strong"
     >
-      <div className="aspect-video w-full overflow-hidden rounded-md border border-border bg-surface-subtle">
+      {/* Figma 8:317 — the render is flush to the card, three text lines below. */}
+      <div className="aspect-video w-full overflow-hidden bg-surface-subtle">
         <TemplatePreview
           rendererKey={template.rendererKey}
           fields={template.fields}
@@ -66,10 +64,10 @@ function TemplateCard({
           overlayOpacity={template.overlayOpacity}
         />
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 p-3">
         <p className="truncate text-label font-bold text-fg">{name}</p>
         <p className="text-caption text-fg-secondary">{categoryLabel}</p>
-        <StatusBadge status={TEMPLATE_STATUS_BADGE[template.status]} className="w-fit" />
+        <p className={`text-caption font-bold ${TEMPLATE_STATUS_TEXT[template.status]}`}>{tStatus(template.status)}</p>
       </div>
     </Link>
   );
@@ -131,7 +129,8 @@ export function TemplatesClient({
               template={template}
               assetUrls={assetUrls}
               isFr={isFr}
-              categoryLabel={`${t(`categories.${template.category}`)} · ${t(`filters.${template.status}`)}`}
+              // Figma 8:317: line 2 is the category alone; the status is line 3.
+              categoryLabel={t(`categories.${template.category}`)}
             />
           ))}
         </div>

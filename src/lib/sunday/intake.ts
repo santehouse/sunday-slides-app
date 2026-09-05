@@ -11,7 +11,7 @@
 import { randomUUID } from "node:crypto";
 import { getDb, type Db, type MappingWithDetails, type TemplateWithFields, type CreateSlideInput } from "@/lib/data";
 import { DEFAULT_TEMPLATE_SLUG } from "@/lib/data/mockSeed";
-import { hasOpenAI } from "@/lib/env";
+import { hasOpenAI, isMockMode } from "@/lib/env";
 import { keys, getObjectStore } from "@/lib/r2/client";
 import { extractText, MAX_RUN_SHEET_BYTES } from "@/lib/run-sheets/extract";
 import { processRunSheet, type ProcessRunSheetContext } from "@/lib/run-sheets/pipeline";
@@ -143,7 +143,11 @@ function buildProcessContext(
 
 /** Real OpenAI when configured; the deterministic offline fallback otherwise (mock mode, missing key, tests). */
 function selectParser(): typeof parseRunSheetText {
-  return hasOpenAI() ? parseRunSheetText : heuristicParseRunSheetText;
+  // Mock mode is the offline demo/QA mode (docs/INTAKE.md: the heuristic parser exists so
+  // the product works with zero external dependencies when "no OpenAI key configured,
+  // CP_MOCK_DATA=1, or every unit test"). Without this guard a stray OPENAI_API_KEY in
+  // .env.local made every mock-mode run-sheet upload fail on an unreachable API call.
+  return hasOpenAI() && !isMockMode() ? parseRunSheetText : heuristicParseRunSheetText;
 }
 
 async function resolveDefaultTemplate(db: Db, templatesHint?: TemplateWithFields[]): Promise<TemplateWithFields> {

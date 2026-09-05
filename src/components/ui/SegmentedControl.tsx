@@ -7,10 +7,12 @@ export type SegmentedControlOption<T extends string> = {
   value: T;
   label: ReactNode;
   "aria-label"?: string;
+  /** Rendered but not selectable — e.g. Background/Image with no approved assets. */
+  disabled?: boolean;
 };
 
-export type SegmentedControlSize = "sm" | "md";
-export type SegmentedControlVariant = "default" | "primary";
+export type SegmentedControlSize = "sm" | "md" | "lg";
+export type SegmentedControlVariant = "default" | "primary" | "solid";
 
 export type SegmentedControlProps<T extends string> = {
   options: SegmentedControlOption<T>[];
@@ -27,14 +29,17 @@ export type SegmentedControlProps<T extends string> = {
 
 // Exact px from the Figma "Language Selector" master (node 83:1135):
 // SM container radius 12 / segment radius 8, MD container radius 14 / segment radius 10.
+// `lg` is the Export Popover "Format Select" (node 52:694): h38 container / h30 segments.
 const CONTAINER_SIZE: Record<SegmentedControlSize, string> = {
   sm: "h-8 rounded-[12px]",
   md: "h-10 rounded-[14px]",
+  lg: "h-[38px] rounded-[8px]",
 };
 
 const SEGMENT_SIZE: Record<SegmentedControlSize, string> = {
   sm: "h-6 rounded-[8px] px-2.5 text-[13px]",
   md: "h-8 rounded-[10px] px-3 text-label",
+  lg: "h-[30px] rounded-[6px] px-3 text-caption",
 };
 
 /**
@@ -55,11 +60,16 @@ export function SegmentedControl<T extends string>({
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
   function focusAndSelect(index: number) {
-    const wrapped = (index + options.length) % options.length;
-    const option = options[wrapped];
-    if (!option) return;
-    onChange(option.value);
-    refs.current[wrapped]?.focus();
+    // Skip over disabled segments so arrow keys can never land on one.
+    for (let step = 0; step < options.length; step++) {
+      const wrapped = (index + step * Math.sign(index) + options.length * 2) % options.length;
+      const option = options[wrapped];
+      if (option && !option.disabled) {
+        onChange(option.value);
+        refs.current[wrapped]?.focus();
+        return;
+      }
+    }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -109,18 +119,23 @@ export function SegmentedControl<T extends string>({
             role="radio"
             aria-checked={selected}
             aria-label={option["aria-label"]}
+            aria-disabled={option.disabled || undefined}
+            disabled={option.disabled}
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(option.value)}
             onKeyDown={(event) => handleKeyDown(event, index)}
             className={cn(
               "flex items-center justify-center whitespace-nowrap font-bold transition-colors",
+              "disabled:cursor-not-allowed disabled:opacity-50",
               SEGMENT_SIZE[size],
               equalWidth && "flex-1",
               selected
-                ? variant === "primary"
-                  ? "bg-primary text-fg-on-primary"
-                  : "border border-border bg-surface text-fg"
-                : "border border-transparent text-fg-secondary",
+                ? variant === "default"
+                  ? "border border-border bg-surface text-fg"
+                  : "border border-primary bg-primary text-fg-on-primary"
+                : variant === "solid"
+                  ? "border border-border bg-surface text-fg"
+                  : "border border-transparent text-fg-secondary",
             )}
           >
             {option.label}

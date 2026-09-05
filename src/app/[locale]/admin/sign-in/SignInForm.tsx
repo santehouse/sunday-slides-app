@@ -34,9 +34,9 @@ export function SignInForm() {
   return (
     <Card padding="none" className="w-full max-w-[430px] p-8">
       <form action={formAction} className="flex flex-col gap-5">
-        <div>
-          <h1 className="text-h2 font-bold text-fg">{t("title")}</h1>
-          <p className="mt-1 text-caption text-fg-secondary">{t("helper")}</p>
+        <div className="w-full">
+          <h1 className="text-[26px] font-bold leading-8 text-fg">{t("title")}</h1>
+          <p className="mt-2 text-[13px] text-fg-secondary">{t("helper")}</p>
         </div>
 
         {showError ? (
@@ -58,16 +58,13 @@ export function SignInForm() {
           value="password"
           variant="primary"
           loading={pending}
-          style={{ width: "100%" }}
         >
           {t("signIn")}
         </Button>
 
-        <div className="flex items-center gap-3 text-caption text-fg-secondary" aria-hidden="true">
-          <span className="h-px flex-1 bg-border" />
+        <p className="flex h-6 items-center justify-center text-caption text-fg-secondary" aria-hidden="true">
           {t("or")}
-          <span className="h-px flex-1 bg-border" />
-        </div>
+        </p>
 
         <Button
           type="submit"
@@ -75,12 +72,11 @@ export function SignInForm() {
           value="magic-link"
           variant="secondary"
           loading={pending}
-          style={{ width: "100%" }}
         >
           {t("magicLink")}
         </Button>
 
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-start pt-2">
           <LanguageSelector size="md" />
         </div>
       </form>

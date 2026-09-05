@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Minus, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/cn";
@@ -26,7 +27,7 @@ export function DurationStepper({
   onChange,
   min = 1,
   max = 30,
-  step = 1,
+  step: stepBy = 1,
   size = "md",
   className,
 }: DurationStepperProps) {
@@ -35,6 +36,22 @@ export function DurationStepper({
   const config = SIZE_CONFIG[size];
   const atMin = value <= min;
   const atMax = value >= max;
+
+  // Taps that land before the parent has re-rendered would otherwise all read the same
+  // stale `value` prop and emit the same number, silently dropping steps. `emitted`
+  // carries the last value this control emitted so consecutive taps compound, and
+  // re-syncs to whatever the parent commits.
+  const emitted = useRef(value);
+  useEffect(() => {
+    emitted.current = value;
+  }, [value]);
+
+  function step(delta: number) {
+    const next = Math.min(max, Math.max(min, emitted.current + delta));
+    if (next === emitted.current) return;
+    emitted.current = next;
+    onChange(next);
+  }
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
@@ -49,7 +66,7 @@ export function DurationStepper({
             radius={10}
             aria-label={t("decreaseDuration")}
             disabled={atMin}
-            onClick={() => onChange(Math.max(min, value - step))}
+            onClick={() => step(-stepBy)}
           />
           <IconButton
             icon={Plus}
@@ -58,7 +75,7 @@ export function DurationStepper({
             radius={10}
             aria-label={t("increaseDuration")}
             disabled={atMax}
-            onClick={() => onChange(Math.min(max, value + step))}
+            onClick={() => step(stepBy)}
           />
         </div>
       </div>

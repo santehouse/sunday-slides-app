@@ -3,6 +3,7 @@
 import { useFormatter } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { WeekSwitcher, type WeekSwitcherSize } from "@/components/ui/WeekSwitcher";
+import { serviceDateToDate } from "@/lib/utils/serviceDate";
 
 export type SundayWeekSwitcherProps = {
   date: string;
@@ -15,7 +16,7 @@ export type SundayWeekSwitcherProps = {
 export function SundayWeekSwitcher({ date, prevDate, nextDate, size = "md" }: SundayWeekSwitcherProps) {
   const router = useRouter();
   const format = useFormatter();
-  const dateObj = new Date(`${date}T00:00:00`);
+  const dateObj = serviceDateToDate(date);
 
   return (
     <WeekSwitcher

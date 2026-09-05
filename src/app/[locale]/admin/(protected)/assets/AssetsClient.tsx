@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { FilterChips } from "@/components/ui/FilterChips";
-import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge";
 import { Dialog } from "@/components/ui/Dialog";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Input } from "@/components/ui/Input";
@@ -17,12 +16,6 @@ import type { Asset, AssetCategory, AssetStatus } from "@/lib/domain/types";
 
 const STATUS_FILTERS: (AssetStatus | "all")[] = ["all", "published", "draft", "archived"];
 const CATEGORY_FILTERS: (AssetCategory | "all")[] = ["all", "photography", "backgrounds", "special"];
-const ASSET_STATUS_BADGE: Record<AssetStatus, StatusBadgeStatus> = {
-  published: "published",
-  draft: "draft",
-  archived: "archived",
-};
-
 function UploadAssetDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useTranslations("admin.assets");
   const tCommon = useTranslations("common");
@@ -64,7 +57,7 @@ function UploadAssetDialog({ open, onClose }: { open: boolean; onClose: () => vo
         <Dropzone
           title={t("dropHere")}
           hint={t("formats", { max: 10 })}
-          chooseFileLabel={tCommon("upload")}
+          chooseFileLabel={tCommon("chooseFile")}
           accept="image/jpeg,image/png,image/webp"
           maxSizeMb={10}
           onFile={setFile}
@@ -149,9 +142,10 @@ export function AssetsClient({
               key={asset.id}
               type="button"
               onClick={() => setSelectedAsset(asset)}
-              className="flex w-[257px] flex-col gap-2 rounded-lg border border-border bg-surface p-3 text-left transition-colors hover:border-border-strong"
+              className="flex w-[257px] flex-col overflow-hidden rounded-lg border border-border bg-surface text-left transition-colors hover:border-border-strong"
             >
-              <div className="h-[160px] w-[255px] overflow-hidden rounded-md border border-border bg-surface-subtle">
+              {/* Figma 9:413 — the image is flush to the card, three text lines below. */}
+              <div className="h-[160px] w-full overflow-hidden bg-surface-subtle">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={assetUrls[asset.id]}
@@ -160,11 +154,13 @@ export function AssetsClient({
                   style={{ objectPosition: `${asset.focalX * 100}% ${asset.focalY * 100}%` }}
                 />
               </div>
-              <p className="truncate text-label font-bold text-fg">{isFr ? asset.nameFr : asset.nameEn}</p>
-              <p className="text-caption text-fg-secondary">
-                {t("meta", { category: t(`categories.${asset.category}`), status: t(`filters.${asset.status}`) })}
-              </p>
-              <StatusBadge status={ASSET_STATUS_BADGE[asset.status]} className="w-fit" />
+              <div className="flex flex-col gap-1 p-3">
+                <p className="truncate text-label font-bold text-fg">{isFr ? asset.nameFr : asset.nameEn}</p>
+                <p className="text-caption text-fg-secondary">
+                  {t("meta", { category: t(`categories.${asset.category}`), status: t(`filters.${asset.status}`) })}
+                </p>
+                <p className="text-caption text-fg-muted">{t("focalPointSaved")}</p>
+              </div>
             </button>
           ))}
         </div>

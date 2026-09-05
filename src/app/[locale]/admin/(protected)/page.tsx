@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { getDb } from "@/lib/data";
+import { serviceDateToDate, todayInTimezone } from "@/lib/utils/serviceDate";
 import { hasOpenAI, hasR2, hasResend, hasSupabase, isMockMode } from "@/lib/env";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
@@ -20,20 +21,18 @@ export async function generateMetadata({
 
 type Tone = "success" | "warning" | "error" | "info" | "subtle";
 
+// Figma 7:326 renders System health values as bold coloured *text*, not badge pills.
+// The wording ("Connected", "Ready", …) carries the meaning; colour only reinforces it.
 const TONE_CLASSES: Record<Tone, string> = {
-  success: "bg-success-bg text-success-fg",
-  warning: "bg-warning-bg text-warning-fg",
-  error: "bg-error-bg text-error-fg",
-  info: "bg-info-bg text-info-fg",
-  subtle: "bg-surface-subtle text-fg-secondary",
+  success: "text-success-fg",
+  warning: "text-warning-fg",
+  error: "text-error-fg",
+  info: "text-info-fg",
+  subtle: "text-fg-secondary",
 };
 
-function HealthChip({ label, tone }: { label: string; tone: Tone }) {
-  return (
-    <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-caption font-bold ${TONE_CLASSES[tone]}`}>
-      {label}
-    </span>
-  );
+function HealthValue({ label, tone }: { label: string; tone: Tone }) {
+  return <span className={`whitespace-nowrap text-label font-bold ${TONE_CLASSES[tone]}`}>{label}</span>;
 }
 
 export default async function AdminDashboardPage({
@@ -48,7 +47,8 @@ export default async function AdminDashboardPage({
   const isFr = locale.startsWith("fr");
 
   const db = getDb();
-  const todayIso = new Date().toISOString().slice(0, 10);
+  // "Today" in the church timezone, not the server's (see lib/utils/serviceDate).
+  const todayIso = todayInTimezone(process.env.APP_TIMEZONE ?? "America/Toronto");
 
   const [nextSunday, sundays, publishedTemplates, publishedAssets, mappings, structuralDefaults, settings, systemChecks] =
     await Promise.all([
@@ -132,12 +132,13 @@ export default async function AdminDashboardPage({
 
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          value={upcoming ? format.dateTime(new Date(`${upcoming.serviceDate}T00:00:00`), "dateMedium") : "—"}
+          className="h-[120px]"
+          value={upcoming ? format.dateTime(serviceDateToDate(upcoming.serviceDate), "sundayShort") : "—"}
           label={t("nextService")}
         />
-        <StatCard value={publishedTemplates.length} label={t("publishedTemplates")} />
-        <StatCard value={publishedAssets.length} label={t("publishedAssets")} />
-        <StatCard value={mappings.length} label={t("mappings")} />
+        <StatCard className="h-[120px]" value={publishedTemplates.length} label={t("publishedTemplates")} />
+        <StatCard className="h-[120px]" value={publishedAssets.length} label={t("publishedAssets")} />
+        <StatCard className="h-[120px]" value={mappings.length} label={t("mappings")} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_376px]">
@@ -148,14 +149,14 @@ export default async function AdminDashboardPage({
               <p className="text-caption text-fg-secondary">
                 {upcoming.latestRunSheet
                   ? t("upcomingSubtitle", {
-                      date: new Date(`${upcoming.serviceDate}T00:00:00`),
+                      date: serviceDateToDate(upcoming.serviceDate),
                       file: upcoming.latestRunSheet.originalFilename,
                     })
-                  : t("upcomingSubtitleNoFile", { date: new Date(`${upcoming.serviceDate}T00:00:00`) })}
+                  : t("upcomingSubtitleNoFile", { date: serviceDateToDate(upcoming.serviceDate) })}
               </p>
-              <div className="flex flex-col divide-y divide-border">
-                <div className="flex h-[58px] items-center justify-between">
-                  <span className="text-label text-fg-secondary">{t("runSheet")}</span>
+              <div className="flex flex-col gap-2.5">
+                <div className="flex h-[58px] items-center justify-between rounded-[10px] bg-surface-subtle px-3.5">
+                  <span className="text-label font-bold text-fg">{t("runSheet")}</span>
                   {upcoming.latestRunSheet ? (
                     <StatusBadge
                       status={
@@ -174,8 +175,8 @@ export default async function AdminDashboardPage({
                     <StatusBadge status="waiting" />
                   )}
                 </div>
-                <div className="flex h-[58px] items-center justify-between">
-                  <span className="text-label text-fg-secondary">{t("slides")}</span>
+                <div className="flex h-[58px] items-center justify-between rounded-[10px] bg-surface-subtle px-3.5">
+                  <span className="text-label font-bold text-fg">{t("slides")}</span>
                   <span className="text-label font-bold text-fg">
                     {t("slidesValue", {
                       prepared: upcoming.slideCounts.total,
@@ -183,19 +184,19 @@ export default async function AdminDashboardPage({
                     })}
                   </span>
                 </div>
-                <div className="flex h-[58px] items-center justify-between">
-                  <span className="text-label text-fg-secondary">{t("videoLoop")}</span>
+                <div className="flex h-[58px] items-center justify-between rounded-[10px] bg-surface-subtle px-3.5">
+                  <span className="text-label font-bold text-fg">{t("videoLoop")}</span>
                   <span className="text-label font-bold text-fg">
                     {t("videoLoopValue", { included: includedInVideo, seconds: videoSeconds })}
                   </span>
                 </div>
-                <div className="flex min-h-[58px] items-center justify-between gap-4 py-3">
-                  <span className="shrink-0 text-label text-fg-secondary">{t("structuralDefaults")}</span>
-                  <span className="text-right text-label font-bold text-fg">{structuralNames || "—"}</span>
+                <div className="flex min-h-[58px] items-center justify-between gap-4 rounded-[10px] bg-surface-subtle px-3.5 py-3">
+                  <span className="shrink-0 text-label font-bold text-fg">{t("structuralDefaults")}</span>
+                  <span className="text-right text-label text-fg-secondary">{structuralNames || "—"}</span>
                 </div>
               </div>
               <div>
-                <Button variant="secondary" href={`/sunday/${upcoming.serviceDate}/flow`}>
+                <Button variant="primary" href={`/sunday/${upcoming.serviceDate}/flow`}>
                   {t("openSundayFlow")}
                 </Button>
               </div>
@@ -207,11 +208,11 @@ export default async function AdminDashboardPage({
 
         <Card className="flex flex-col gap-3">
           <CardHeader title={t("systemHealth")} />
-          <div className="flex flex-col divide-y divide-border">
+          <div className="flex flex-col">
             {healthRows.map((row) => (
-              <div key={row.key} className="flex h-11 items-center justify-between">
-                <span className="text-label text-fg-secondary">{row.label}</span>
-                <HealthChip label={row.value} tone={row.tone} />
+              <div key={row.key} className="flex h-[58px] items-center justify-between gap-4">
+                <span className="text-label text-fg">{row.label}</span>
+                <HealthValue label={row.value} tone={row.tone} />
               </div>
             ))}
           </div>

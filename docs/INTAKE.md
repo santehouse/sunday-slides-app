@@ -42,7 +42,7 @@ the exact same call signature as `parseRunSheetText` (`@/lib/openai/client`), so
 `ingestRunSheet`/`reprocessRunSheet` just pick one function:
 
 ```ts
-const parse = hasOpenAI() ? parseRunSheetText : heuristicParseRunSheetText;
+const parse = hasOpenAI() && !isMockMode() ? parseRunSheetText : heuristicParseRunSheetText;
 ```
 
 It never sees the document's *meaning* — only its shape:

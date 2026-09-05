@@ -16,7 +16,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "brand" });
-  return { title: t("name"), description: t("tagline") };
+  // Every page title carries the brand: "Sunday flow · Church Panels" / "… · Eglise Panels".
+  return {
+    title: { default: t("name"), template: `%s · ${t("name")}` },
+    description: t("tagline"),
+  };
 }
 
 export default async function LocaleLayout({

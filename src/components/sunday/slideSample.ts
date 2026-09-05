@@ -6,9 +6,6 @@
  */
 import type { Slide, SlideBackgroundMode, SlideContent, SlideStatus, Template } from "@/lib/domain/types";
 
-const PREVIEW_LINE1 = "Mercredi";
-const PREVIEW_LINE2 = "19h00 à 20h00";
-
 export type RenderableSlideInit = {
   id?: string;
   templateId: string;
@@ -46,10 +43,14 @@ export function makeRenderableSlide(init: RenderableSlideInit): Slide {
   };
 }
 
-/** Sample content for a template card / Add Slide preview: name uppercase + placeholder time lines. */
+/**
+ * Sample content for a template card / Add Slide preview. Figma's template thumbnails
+ * (7:128, 8:317) render the template name alone — filling line1/line2 with placeholder
+ * copy also leaked English field labels into the FR thumbnails.
+ */
 export function templateSampleContent(template: Pick<Template, "nameEn" | "nameFr">, locale: "en" | "fr-CA"): SlideContent {
   const name = locale === "fr-CA" ? template.nameFr : template.nameEn;
-  return { headline: name.toUpperCase(), line1: PREVIEW_LINE1, line2: PREVIEW_LINE2 };
+  return { headline: name.toUpperCase() };
 }
 
 /** A renderable sample slide for a template, for use in Add Slide / template pickers. */

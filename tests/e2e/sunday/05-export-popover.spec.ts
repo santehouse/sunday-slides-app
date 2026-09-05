@@ -1,10 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { loginPin } from "./helpers";
+import { loginPin, openFlowFromDashboard } from "./helpers";
 
 test("Export popover keeps the slide-range field and thumbnail picker in sync", async ({ page }) => {
   await loginPin(page);
-  await page.getByRole("link", { name: /open flow/i }).click();
-  await expect(page).toHaveURL(/\/flow$/);
+  await openFlowFromDashboard(page);
 
   await page.getByRole("button", { name: /^export$/i }).click();
   const popover = page.getByRole("dialog");

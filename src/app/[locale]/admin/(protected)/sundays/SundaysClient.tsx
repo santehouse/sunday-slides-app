@@ -9,6 +9,7 @@ import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge
 import { CreateSundayDialog } from "@/components/admin/CreateSundayDialog";
 import { UploadRunSheetDialog } from "@/components/admin/UploadRunSheetDialog";
 import type { SundayListItem } from "@/lib/data";
+import { serviceDateToDate } from "@/lib/utils/serviceDate";
 
 const SUNDAY_STATUS_MAP: Record<SundayListItem["status"], StatusBadgeStatus> = {
   draft: "draft",
@@ -70,9 +71,9 @@ export function SundaysClient({
 
       <Card padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left">
+          <table className="w-full min-w-[720px] border-separate border-spacing-y-2 text-left">
             <thead>
-              <tr className="border-b border-border">
+              <tr>
                 {(["sunday", "source", "status", "slides", "updated"] as const).map((col) => (
                   <th key={col} className="px-5 py-3 text-caption font-bold text-fg-secondary">
                     {t(`columns.${col}`)}
@@ -89,22 +90,17 @@ export function SundaysClient({
                 </tr>
               ) : (
                 rows.map(({ sunday, sourceLabel, updatedLabel }) => (
-                  <tr key={sunday.id} className="h-[72px] border-b border-border last:border-b-0 hover:bg-surface-subtle">
+                  <tr key={sunday.id} className="h-[72px] [&>td]:bg-surface-subtle [&>td:first-child]:rounded-l-[10px] [&>td:last-child]:rounded-r-[10px] hover:[&>td]:bg-border/60">
                     <td className="px-5">
                       <Link href={`/admin/sundays/${sunday.id}`} className="text-label font-bold text-fg hover:underline">
-                        {format.dateTime(new Date(`${sunday.serviceDate}T00:00:00`), "dateMedium")}
+                        {format.dateTime(serviceDateToDate(sunday.serviceDate), "dateMedium")}
                       </Link>
                     </td>
                     <td className="px-5 text-label text-fg-secondary">{sourceLabel}</td>
                     <td className="px-5">
                       <StatusBadge status={SUNDAY_STATUS_MAP[sunday.status]} />
                     </td>
-                    <td className="px-5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-label text-fg">{tCommon("slidesCount", { count: sunday.slideCounts.total })}</span>
-                        {sunday.slideCounts.needsReview > 0 ? <StatusBadge status="needsReview" /> : null}
-                      </div>
-                    </td>
+                    <td className="px-5 text-label font-bold text-fg">{sunday.slideCounts.total}</td>
                     <td className="px-5 text-label text-fg-secondary">{updatedLabel}</td>
                   </tr>
                 ))
@@ -112,9 +108,11 @@ export function SundaysClient({
             </tbody>
           </table>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-5 py-4 text-caption text-fg-secondary">
-          <span className="font-bold text-fg">{t("inboundEmail")}</span>
-          <span>{inboundEmail ? t("inboundEmailBody", { address: inboundEmail }) : t("inboundNotConfigured")}</span>
+        <div className="m-5 mt-2 flex flex-col gap-1 rounded-[10px] bg-info-bg px-4 py-3.5">
+          <span className="text-caption font-bold text-info-fg">{t("inboundEmail")}</span>
+          <span className="text-caption text-fg-secondary">
+            {inboundEmail ? t("inboundEmailBody", { address: inboundEmail }) : t("inboundNotConfigured")}
+          </span>
         </div>
       </Card>
 

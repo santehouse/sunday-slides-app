@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { Upload } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getDb } from "@/lib/data";
+import { serviceDateToDate } from "@/lib/utils/serviceDate";
 import { buildColorHexById, buildTemplatesById, collectBackgroundAssetIds, resolveAssetsByIds } from "@/lib/sunday/view";
 import type { RunSheetParseStatus } from "@/lib/domain/types";
 import type { StatusBadgeStatus } from "@/components/ui/StatusBadge";
+import { Link } from "@/i18n/navigation";
 import { SundayShell } from "@/components/shell/SundayShell";
 import { SundayPageHeader } from "@/components/shell/SundayPageHeader";
 import { Button } from "@/components/ui/Button";
@@ -32,7 +34,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, date } = await params;
   const t = await getTranslations({ locale, namespace: "sunday.dashboard" });
-  return { title: t("title", { date: new Date(`${date}T00:00:00`) }) };
+  return { title: t("title", { date: serviceDateToDate(date) }) };
 }
 
 export default async function SundayDashboardPage({
@@ -77,25 +79,26 @@ export default async function SundayDashboardPage({
     <SundayShell>
       <SundayPageHeader
         titleSize="xl"
-        title={t("title", { date: new Date(`${date}T00:00:00`) })}
+        title={t("title", { date: serviceDateToDate(date) })}
         subtitle={subtitle}
         actions={<SundayWeekSwitcher date={date} prevDate={adjacent.prev} nextDate={adjacent.next} size="md" />}
       />
 
       <div className="grid grid-cols-4 gap-3.5">
-        <StatCard value={slidesPrepared} label={t("slidesPrepared")} />
-        <StatCard value={needsReview} label={t("needsReview")} />
-        <StatCard value={includedInMp4} label={t("includedInMp4")} />
+        <StatCard className="h-[108px]" value={slidesPrepared} label={t("slidesPrepared")} />
+        <StatCard className="h-[108px]" value={needsReview} label={t("needsReview")} />
+        <StatCard className="h-[108px]" value={includedInMp4} label={t("includedInMp4")} />
         <HoldSecondsCard sundayId={sunday.id} initialSeconds={sunday.defaultSlideHoldSeconds} />
       </div>
 
-      <div className="grid grid-cols-[1fr_424px] gap-3.5">
-        <Card padding="md" className="flex flex-col gap-4">
+      <div className="grid grid-cols-[1fr_424px] gap-[18px]">
+        <Card padding="none" className="flex flex-col gap-2.5 p-[22px]">
           <CardHeader
             title={t("sundayFlow")}
+            className="h-10"
             action={
-              <Button variant="secondary" href={`/sunday/${date}/flow`}>
-                {t("openFlow")}
+              <Button variant="secondary" href={`/sunday/${date}/add`}>
+                {t("addSlide")}
               </Button>
             }
           />
@@ -107,8 +110,12 @@ export default async function SundayDashboardPage({
                 const template = templatesMap[slide.templateId];
                 if (!template) return null;
                 return (
-                  <div key={slide.id} className="flex h-[68px] items-center gap-3 rounded-[10px] bg-surface-subtle px-3">
-                    <span className="w-6 shrink-0 text-caption font-bold text-fg-secondary">
+                  <Link
+                    key={slide.id}
+                    href={`/sunday/${date}/flow?slide=${slide.id}`}
+                    className="flex h-[68px] items-center gap-2.5 rounded-[10px] bg-surface-subtle px-3.5 transition-colors hover:bg-surface-subtle/70 focus-visible:bg-surface-subtle/70"
+                  >
+                    <span className="shrink-0 text-caption font-bold text-fg-secondary">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <div className="h-[45px] w-20 shrink-0 overflow-hidden rounded-[6px] border border-border">
@@ -123,18 +130,18 @@ export default async function SundayDashboardPage({
                     <StatusBadge
                       status={slide.status === "needs_review" ? "needsReview" : slide.status === "invalid" ? "invalid" : "ready"}
                     />
-                  </div>
+                  </Link>
                 );
               })}
             </div>
           )}
         </Card>
 
-        <Card padding="md" className="flex flex-col gap-4">
+        <Card padding="none" className="flex flex-col items-start gap-3.5 p-[22px]">
           <h2 className="text-h3 font-bold text-fg">{t("runSheet")}</h2>
           {runSheet ? (
             <>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2.5">
                 <p className="text-label font-bold text-fg">{runSheet.originalFilename}</p>
                 <p className="text-caption text-fg-secondary">
                   {runSheet.sourceType === "email" ? t("receivedByEmail") : t("uploadedManually")}

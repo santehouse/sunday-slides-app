@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getDb } from "@/lib/data";
+import { serviceDateToDate } from "@/lib/utils/serviceDate";
 import { buildColorHexById, buildTemplatesById, collectBackgroundAssetIds, resolveAssetsByIds } from "@/lib/sunday/view";
 import { SundayShell } from "@/components/shell/SundayShell";
 import { SundayPageHeader } from "@/components/shell/SundayPageHeader";
@@ -58,7 +59,7 @@ export default async function SundayFlowPage({
           titleSize="lg"
           title={t("title")}
           subtitle={t("subtitle", {
-            date: new Date(`${date}T00:00:00`),
+            date: serviceDateToDate(date),
             slides: tCommon("slidesCount", { count: slides.length }),
             seconds: tCommon("seconds", { count: sunday.defaultSlideHoldSeconds }),
           })}

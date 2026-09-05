@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { Slide, Template } from "@/lib/domain/types";
 import type { ResolvedAsset } from "@/lib/renderer/types";
@@ -112,8 +112,8 @@ export function FlowClient({
   const selectedTemplate = selectedSlide ? templatesById[selectedSlide.templateId] : null;
 
   return (
-    <div className="grid grid-cols-[500px_1fr] gap-3.5">
-      <Card padding="md">
+    <div className="grid grid-cols-[500px_1fr] gap-[18px]">
+      <Card padding="none" className="min-h-[820px] p-[18px]">
         {slides.length === 0 ? (
           <p className="text-label text-fg-secondary">{t("noSlides")}</p>
         ) : (
@@ -125,21 +125,20 @@ export function FlowClient({
             selectedId={selectedId}
             onSelect={selectSlide}
             onOpen={(id) => router.push(`/sunday/${date}/slide/${id}?from=flow`)}
-            onRemove={(slide) => setSlideToRemove(slide)}
             onReorder={handleReorder}
           />
         )}
       </Card>
 
-      <Card padding="md" className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="truncate text-h2 font-bold text-fg">{selectedSlide?.headline ?? ""}</h2>
+      <Card padding="none" className="flex min-h-[820px] flex-col gap-3.5 p-[18px]">
+        <div className="flex h-10 items-center justify-between gap-3">
+          <h2 className="truncate text-h3 font-bold text-fg">{selectedSlide?.headline ?? ""}</h2>
           <SafeZonesAction active={showSafeZone} onToggle={toggleSafeZone} />
         </div>
 
         {selectedSlide && selectedTemplate ? (
           <>
-            <div className="mx-auto aspect-video w-full max-w-[758px] overflow-hidden rounded-[12px] border border-border">
+            <div className="aspect-video w-full max-w-[758px] overflow-hidden rounded-[12px] border border-border">
               <SlidePreview
                 template={selectedTemplate}
                 slide={selectedSlide}
@@ -150,14 +149,20 @@ export function FlowClient({
                 safeZoneLabel={tSafeZones("label")}
               />
             </div>
-            <Button
-              variant="primary"
-              leadingIcon={Pencil}
-              className="w-fit"
-              onClick={() => router.push(`/sunday/${date}/slide/${selectedSlide.id}?from=flow`)}
-            >
-              {t("editSlide")}
-            </Button>
+            <div className="flex items-center gap-2.5">
+              <Button
+                variant="primary"
+                leadingIcon={Pencil}
+                onClick={() => router.push(`/sunday/${date}/slide/${selectedSlide.id}?from=flow`)}
+              >
+                {t("editSlide")}
+              </Button>
+              {/* Not in the Figma frame: the flow card itself has no menu (the status pill
+                  is pinned far right there), so slide removal lives beside "Edit slide". */}
+              <Button variant="ghost" leadingIcon={Trash2} onClick={() => setSlideToRemove(selectedSlide)}>
+                {t("removeSlide")}
+              </Button>
+            </div>
           </>
         ) : (
           <p className="text-label text-fg-secondary">{t("noSlides")}</p>

@@ -72,10 +72,11 @@ export function PinForm({ pinLength }: { pinLength: number }) {
 
   return (
     <Card padding="none" className="w-full max-w-[460px] p-[34px]">
-      <form ref={formRef} action={formAction} className="flex flex-col items-center gap-6">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <h1 className="text-h1 font-bold text-fg">{t("title")}</h1>
-          <p className="text-label text-fg-secondary">{t("description", { digits: pinLength })}</p>
+      {/* Figma 4:34 — card content is left-aligned, 28px between groups. */}
+      <form ref={formRef} action={formAction} className="flex flex-col items-start gap-7">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-[28px] font-bold leading-[34px] text-fg">{t("title")}</h1>
+          <p className="text-[15px] leading-[22px] text-fg-secondary">{t("description", { digits: pinLength })}</p>
         </div>
 
         <div className="flex gap-3" role="group" aria-label={t("title")}>
@@ -94,7 +95,7 @@ export function PinForm({ pinLength }: { pinLength: number }) {
               aria-label={t("inputLabel", { index: index + 1 })}
               className={cn(
                 "h-16 w-[72px] rounded-md border border-border bg-transparent text-center text-[24px] font-bold text-fg",
-                "focus-visible:border-border-focus focus-visible:outline-none",
+                "focus-visible:border-border-focus",
               )}
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
@@ -111,7 +112,7 @@ export function PinForm({ pinLength }: { pinLength: number }) {
           <MessageState state="error" title={t("errorTitle")} message={t(errorKey)} className="w-full" />
         ) : null}
 
-        <Button type="submit" variant="primary" disabled={!complete} loading={pending} className="w-full justify-center">
+        <Button type="submit" variant="primary" disabled={!complete} loading={pending}>
           {t("submit")}
         </Button>
 
