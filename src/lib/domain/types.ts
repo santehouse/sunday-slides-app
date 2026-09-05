@@ -75,6 +75,10 @@ export interface AppSettings {
   defaultLocale: Locale;
   /** Number of digits in the shared Sunday PIN (4–8). */
   sundayPinLength: number;
+  /** Bcrypt hash of the shared Sunday PIN; null until an admin sets one. Server-side only — never render this. */
+  sundayPinHash: string | null;
+  /** Bumped by `setSundayPin`; included in the Sunday session JWT so rotating the PIN invalidates old sessions. */
+  sundayPinVersion: number;
   defaultSlideHoldSeconds: number;
   inboundEmail: string | null;
   autoProcessInbound: boolean;

@@ -48,3 +48,6 @@ test-results/
 playwright-report/
 /tmp/
 supabase/.temp/
+.data/r2/
+
+!.env.example

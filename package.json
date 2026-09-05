@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "i18n:check": "tsx scripts/check-i18n.ts",
+    "seed": "tsx scripts/seed.ts",
     "db:types": "supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm i18n:check"
   },

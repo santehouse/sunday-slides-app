@@ -18,3 +18,12 @@ Temporary objects (run sheets, exports, tmp) expire from R2 after `temporary_ret
 
 ## Sunday PIN
 Stored hashed (bcrypt). Changing it in Admin → Settings bumps `sunday_pin_version`, which invalidates every Sunday session cookie.
+
+## Scheduled maintenance (`/api/cron/maintenance`)
+`vercel.json` fires `GET /api/cron/maintenance` every 48 hours (`0 6 */2 * *`, guarded by `Authorization: Bearer ${CRON_SECRET}` — Vercel Cron sends this automatically when `CRON_SECRET` is set on the project). Each run:
+- ensures the next upcoming Sunday record exists (creating it if needed),
+- checks whether that Sunday already has a run sheet,
+- counts failed run sheets and export jobs in the last 7 days,
+- writes one `system_checks` row per integration (`supabase`, `r2`, `openai`, `resend`, from env presence + a trivial DB round trip) plus a `maintenance` rollup (`ok`/`warn`/`error`).
+
+The Admin dashboard's "System health" panel reads `latestSystemChecks()` (one row per `check_type`) to show integration status. A missing/unavailable third-party service degrades that panel only — it never blocks the Sunday or Admin UI.

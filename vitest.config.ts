@@ -10,5 +10,14 @@ export default defineConfig({
     setupFiles: ["./tests/unit/setup.ts"],
     globals: true,
   },
-  resolve: { alias: { "@": path.resolve(__dirname, "src") } },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      // `server-only` throws unconditionally outside a Next.js server bundle (it only
+      // no-ops via the "react-server" webpack/turbopack resolve condition) — swap in a
+      // no-op stub so server-only modules (auth, data, r2, resend, openai, ...) are
+      // importable from Vitest, which runs in plain Node/jsdom.
+      "server-only": path.resolve(__dirname, "scripts/stubs/server-only-stub.ts"),
+    },
+  },
 });
