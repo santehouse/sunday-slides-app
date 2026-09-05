@@ -110,7 +110,18 @@ this repo's own CI sandbox may not have, and they're for a human to read the out
 - `pnpm tsx --tsconfig scripts/tsconfig.json scripts/parse-fixture.ts` — runs the real
   fixture DOCX through both the heuristic parser and (when `OPENAI_API_KEY` is
   configured, `.env.local` included) the real OpenAI parser, printing both parses and
-  the resulting Sunday Flow plan side by side.
+  the resulting Sunday Flow plan side by side. In a sandboxed dev environment that
+  routes outbound HTTPS through an env-configured proxy (`HTTPS_PROXY`), Node's own
+  built-in `fetch` (the OpenAI SDK's transport, Node >= 22.21) does not read it unless
+  `NODE_USE_ENV_PROXY=1` is exported **before the process starts** — curl and other
+  tools that read `HTTPS_PROXY` directly work regardless, which is why only this
+  OpenAI-calling script needs the extra flag:
+  `NODE_USE_ENV_PROXY=1 pnpm tsx --tsconfig scripts/tsconfig.json scripts/parse-fixture.ts`.
+  Even with that, `api.openai.com` may still not be in a given sandbox's egress
+  allowlist at all (403) — that's an organization network policy to report, not route
+  around (see `/root/.ccr/README.md`'s "403 / 407 from the proxy" section, where one
+  exists) — and a configured key can also simply be out of credits (429). Either way
+  the heuristic path is exercised regardless and needs no network.
 - `pnpm tsx --tsconfig scripts/tsconfig.json scripts/export-smoke.ts` — mock mode:
   builds on the seeded demo Sunday, runs a real JPG (all slides) and MP4 (all slides)
   export, writes both to `tmp/`, and prints sizes/filenames.

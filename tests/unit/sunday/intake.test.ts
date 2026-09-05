@@ -100,9 +100,17 @@ describe("previewRunSheet", () => {
 
     const preview = await previewRunSheet(runSheet.id);
 
-    expect(preview.summary.found).toBeGreaterThan(0);
+    // The heuristic parser resolves the fixture to 8 announcements (2 bullet-based in
+    // "Rendez-vous de la semaine", 4 in "Événements à venir", and one section-level
+    // announcement each for "Dîmes et offrandes" and "Conférence EAJC" — see
+    // heuristicParse.ts's doc comment and scripts/parse-fixture.ts's output).
+    expect(preview.summary.found).toBeGreaterThanOrEqual(8);
+    expect(preview.summary.found).toBeLessThanOrEqual(9);
     expect(preview.items).toHaveLength(preview.summary.found);
-    expect(preview.summary.mapped).toBeGreaterThan(0);
+    // Étude biblique, Culte d'adoration, Veillée des hommes, Dîmes et offrandes match
+    // exactly; Baptêmes and Prière matinale (typo'd "matinales" in the fixture) match
+    // via plan.ts's fuzzy matcher — six of eight resolve to a real template.
+    expect(preview.summary.mapped).toBeGreaterThanOrEqual(5);
     for (const item of preview.items) {
       expect(item.headline.length).toBeGreaterThan(0);
       expect(["ready", "needs_review"]).toContain(item.status);

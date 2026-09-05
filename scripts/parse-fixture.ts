@@ -10,6 +10,15 @@
  *
  * Builds its own self-contained mappings/templates/structural-defaults from
  * `src/lib/data/mockSeed.ts`'s natural-key seed data — no database or R2 needed.
+ *
+ * In a sandboxed dev environment that routes outbound HTTPS through an env-configured
+ * proxy (HTTPS_PROXY), Node's own built-in fetch (>= Node 22.21) does NOT read it unless
+ * `NODE_USE_ENV_PROXY=1` is set in the process environment BEFORE Node starts — this
+ * flag is read at startup, so setting `process.env.NODE_USE_ENV_PROXY` from inside the
+ * script itself is too late. curl (and other tools that read HTTPS_PROXY directly) work
+ * regardless, which is why only the OpenAI call (routed through `fetch`) is affected:
+ *
+ *   NODE_USE_ENV_PROXY=1 pnpm tsx --tsconfig scripts/tsconfig.json scripts/parse-fixture.ts
  */
 import fs from "node:fs";
 import path from "node:path";
