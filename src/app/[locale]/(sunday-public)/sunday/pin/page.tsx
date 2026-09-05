@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getDb } from "@/lib/data";
+import { SundayShell } from "@/components/shell/SundayShell";
 import { PinForm } from "./PinForm";
 
 export async function generateMetadata({
@@ -28,16 +29,10 @@ export default async function SundayPinPage({
   const settings = await getDb().getSettings();
 
   return (
-    <main className="flex min-h-dvh flex-col">
-      {/* TODO(ui-kit): swap to <AppHeader /> once src/components/shell/AppHeader exists */}
-      <header className="flex items-center justify-between border-b border-border px-6 py-4">
-        <span className="text-label font-bold">Church Panels</span>
-        {/* TODO(ui-kit): swap to <LanguageSelector /> once src/components/ui/LanguageSelector exists */}
-      </header>
-
-      <div className="flex flex-1 items-center justify-center px-4 py-12">
+    <SundayShell>
+      <div className="flex flex-1 items-center justify-center py-12">
         <PinForm pinLength={settings.sundayPinLength} />
       </div>
-    </main>
+    </SundayShell>
   );
 }

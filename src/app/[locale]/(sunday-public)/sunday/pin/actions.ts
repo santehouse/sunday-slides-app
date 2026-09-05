@@ -9,7 +9,10 @@ export interface PinFormState {
   error: "invalid" | "rate_limited" | "not_configured" | "incomplete" | null;
 }
 
-export const initialPinFormState: PinFormState = { error: null };
+// NOTE: a "use server" module may only export async functions (plus types, which are
+// erased) — a plain object export like `initialPinFormState` throws
+// "invalid-use-server-value" at runtime. `PinForm.tsx` defines that initial state
+// itself instead of importing it from here.
 
 function clientIp(headerList: Awaited<ReturnType<typeof headers>>): string {
   const forwardedFor = headerList.get("x-forwarded-for");
