@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm engine:bundle && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -16,7 +16,8 @@
     "i18n:check": "tsx scripts/check-i18n.ts",
     "seed": "tsx scripts/seed.ts",
     "db:types": "supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
-    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm i18n:check"
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm i18n:check",
+    "engine:bundle": "tsx --tsconfig scripts/tsconfig.json scripts/build-engine-bundle.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",
@@ -57,6 +58,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.1.1",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "jsdom": "^30.0.1",

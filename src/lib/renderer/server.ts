@@ -11,8 +11,8 @@ import "server-only";
  *  2. That shell is wrapped into a full HTML document with every font the template needs
  *     inlined as base64 `@font-face` rules (no network fetch from inside the page).
  *  3. The pure engine (`./engine.ts`) and measurer (`./measure.ts`) — both zero-import
- *     modules — are inlined into a `<script>` tag verbatim, via `Function.prototype
- *     .toString`, because Node has no `<canvas>` to measure text with. Node cannot run
+ *     modules — are injected into a `<script>` tag as a prebuilt esbuild IIFE
+ *     (`engine.bundle.generated.ts`), because Node has no `<canvas>` to measure text with. Node cannot run
  *     `computeSlideLayout` itself for that reason; the headless page runs it instead,
  *     after `ensureFontsLoaded`, with its own real canvas measurer — the SAME algorithm
  *     the browser preview calls directly.
@@ -27,8 +27,7 @@ import path from "node:path";
 import type { Browser } from "puppeteer-core";
 import { SlideCanvas, buildFontFaceCss } from "./SlideCanvas";
 import { buildContentMap, buildSlideFitResult, buildSlideLayoutInput } from "./fitText";
-import * as engineModule from "./engine";
-import * as measureModule from "./measure";
+import { ENGINE_BUNDLE } from "./engine.bundle.generated";
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from "./types";
 import type { FieldLayout, RenderSlideInput, RenderedSlide, ResolvedFont, TextFitResult } from "./types";
 
@@ -125,61 +124,13 @@ async function closeBrowser(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Inlining the pure engine into the headless page.
+// The pure engine + canvas measurer are pre-bundled by `pnpm engine:bundle` (esbuild) into
+// engine.bundle.generated.ts and injected into the headless page verbatim. This survives any
+// production minifier, unlike stringifying functions at runtime.
 // ---------------------------------------------------------------------------
 
-const ENGINE_EXPORTS = ["wrapLines", "fitText", "layoutLines", "computeSlideLayout"] as const;
-const MEASURE_EXPORTS = ["createCanvasMeasurer", "ensureFontsLoaded"] as const;
-
-function declaredFunctionName(source: string): string | null {
-  const match = /^(?:async\s+)?function\s*([A-Za-z0-9_$]*)\s*\(/.exec(source.trim());
-  return match ? match[1] || null : null;
-}
-
-/**
- * Inlines every exported function of `./engine.ts` and `./measure.ts` into a script that
- * exposes them as `window.__engine`. Every exported name is recovered from its OWN
- * source text (not assumed to equal the export key) specifically so this survives
- * whatever a production server bundle's minifier renames them to — see the module
- * doc-comment on `./engine.ts` for why this only works because every function there is
- * a named `function` declaration, never an arrow `const`.
- */
-function buildEngineScript(): string {
-  const parts: string[] = [];
-  const declaredNameFor = new Map<string, string>();
-
-  for (const mod of [engineModule, measureModule] as Record<string, unknown>[]) {
-    for (const [exportName, value] of Object.entries(mod)) {
-      if (typeof value !== "function") continue;
-      const source = Function.prototype.toString.call(value);
-      const declaredName = declaredFunctionName(source);
-      if (!declaredName) {
-        throw new Error(
-          `server.ts: "${exportName}" is not a named function declaration and cannot be inlined into the ` +
-            "headless page. Every export of engine.ts/measure.ts must be `export function name(...) {}`.",
-        );
-      }
-      parts.push(source);
-      declaredNameFor.set(exportName, declaredName);
-    }
-  }
-
-  const assignments = [...ENGINE_EXPORTS, ...MEASURE_EXPORTS].map((exportName) => {
-    const declared = declaredNameFor.get(exportName);
-    if (!declared) {
-      throw new Error(`server.ts: expected engine export "${exportName}" was not found.`);
-    }
-    return `${exportName}: ${declared}`;
-  });
-
-  return `${parts.join("\n\n")}\nwindow.__engine = { ${assignments.join(", ")} };`;
-}
-
-// Built once per server instance — the source never changes at runtime.
-let cachedEngineScript: string | null = null;
 function engineScript(): string {
-  if (!cachedEngineScript) cachedEngineScript = buildEngineScript();
-  return cachedEngineScript;
+  return ENGINE_BUNDLE;
 }
 
 function collectFontsToLoad(fields: FieldLayout[]): { family: string; weight: number; style: string }[] {
