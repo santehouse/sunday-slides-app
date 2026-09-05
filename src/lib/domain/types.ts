@@ -109,6 +109,8 @@ export interface RunSheet {
   parseStatus: RunSheetParseStatus;
   parseError: string | null;
   parsedJson: ParsedRunSheet | null;
+  /** Raw response from whichever parser produced `parsedJson` (OpenAI response object, or `{parser:"heuristic",...}`) — debugging only. */
+  modelOutput?: unknown;
   receivedAt: string;
   processedAt: string | null;
 }
