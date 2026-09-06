@@ -1,106 +1,21 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getDb } from "@/lib/data";
-import { serviceDateToDate } from "@/lib/utils/serviceDate";
-import { buildColorHexById, buildTemplatesById, collectBackgroundAssetIds, resolveAssetsByIds } from "@/lib/sunday/view";
-import { SundayShell } from "@/components/shell/SundayShell";
-import { SundayPageHeader } from "@/components/shell/SundayPageHeader";
-import { Button } from "@/components/ui/Button";
-import { ToastProvider } from "@/components/ui/Toast";
-import { ExportPopover } from "@/components/sunday/ExportPopover";
-import { SundayTabs } from "@/components/sunday/SundayTabs";
-import { SundayWeekSwitcher } from "@/components/sunday/SundayWeekSwitcher";
-import { FlowClient } from "./FlowClient";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/i18n/navigation";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "sunday.flow" });
-  return { title: t("title") };
-}
-
-export default async function SundayFlowPage({
+/**
+ * `/sunday/[date]/flow` → `/sunday/[date]` (Step 2, "Check slides", now the default
+ * screen). Kept as a redirect so old bookmarks and email links still work; preserves
+ * `?slide=` so a deep link into a specific slide still lands on it.
+ */
+export default async function FlowRedirectPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ locale: string; date: string }>;
+  params: Promise<{ date: string }>;
   searchParams: Promise<{ slide?: string }>;
 }) {
-  const { locale, date } = await params;
-  const { slide: selectedSlideParam } = await searchParams;
-  setRequestLocale(locale);
-
-  const db = getDb();
-  const sunday = await db.getSundayByDate(date);
-  if (!sunday) notFound();
-
-  const [slides, templates, colors, settings, adjacent] = await Promise.all([
-    db.listSlidesForSunday(sunday.id),
-    db.listTemplates(),
-    db.listApprovedColors(),
-    db.getSettings(),
-    db.getAdjacentSundayDates(date),
-  ]);
-
-  const templatesMap = buildTemplatesById(templates);
-  const colorMap = buildColorHexById(colors);
-  const assets = await resolveAssetsByIds(collectBackgroundAssetIds(slides, templatesMap));
-  const needsReviewCount = slides.filter((s) => s.status === "needs_review").length;
-
-  const t = await getTranslations("sunday.flow");
-  const tDashboard = await getTranslations("sunday.dashboard");
-  const tCommon = await getTranslations("common");
-
-  return (
-    <SundayShell>
-      {/* One shared ToastProvider for the whole page — ExportPopover (in the header) and
-          FlowClient (below) both call useToast() and must share the same provider. */}
-      <ToastProvider>
-        <SundayPageHeader
-          titleSize="xl"
-          title={tDashboard("title", { date: serviceDateToDate(date) })}
-          subtitle={t("subtitle", {
-            date: serviceDateToDate(date),
-            slides: tCommon("slidesCount", { count: slides.length }),
-            seconds: tCommon("seconds", { count: sunday.defaultSlideHoldSeconds }),
-          })}
-          actions={<SundayWeekSwitcher date={date} prevDate={adjacent.prev} nextDate={adjacent.next} size="md" />}
-        />
-
-        <SundayTabs date={date} needsReviewCount={needsReviewCount} />
-
-        <div className="flex justify-end gap-2.5">
-          <Button variant="secondary" href={`/sunday/${date}/upload`}>
-            {t("uploadRunSheet")}
-          </Button>
-          <Button variant="secondary" href={`/sunday/${date}/add`}>
-            {t("addSlide")}
-          </Button>
-          <ExportPopover
-            sundayId={sunday.id}
-            slides={slides}
-            templatesById={templatesMap}
-            colorHexById={colorMap}
-            assets={assets}
-            currentSlideId={selectedSlideParam ?? slides[0]?.id ?? null}
-          />
-        </div>
-
-        <FlowClient
-          date={date}
-          sundayId={sunday.id}
-          slides={slides}
-          templatesById={templatesMap}
-          colorHexById={colorMap}
-          assets={assets}
-          safeZone={settings.safeZone}
-          initialSelectedId={selectedSlideParam ?? null}
-        />
-      </ToastProvider>
-    </SundayShell>
-  );
+  const { date } = await params;
+  const { slide } = await searchParams;
+  const locale = await getLocale();
+  const query = slide ? `?slide=${encodeURIComponent(slide)}` : "";
+  redirect({ href: `/sunday/${date}${query}`, locale });
 }

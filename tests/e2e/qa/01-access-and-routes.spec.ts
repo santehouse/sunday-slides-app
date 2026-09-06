@@ -71,6 +71,8 @@ test.describe("Sunday PIN access", () => {
 test.describe("Unauthenticated gating", () => {
   for (const path of [
     `/sunday/${DEMO_SUNDAY_DATE}`,
+    `/sunday/${DEMO_SUNDAY_DATE}/run-sheet`,
+    `/sunday/${DEMO_SUNDAY_DATE}/download`,
     `/sunday/${DEMO_SUNDAY_DATE}/flow`,
     `/sunday/${DEMO_SUNDAY_DATE}/add`,
     `/sunday/${DEMO_SUNDAY_DATE}/upload`,
@@ -127,7 +129,10 @@ test.describe("API surface", () => {
         email_id: eventId,
         subject: "Run sheet for Sunday",
         text: "Voici la feuille de déroulement.",
-        created_at: "2026-09-03T12:00:00.000Z",
+        // A Monday whose "next Sunday" (2026-07-12) isn't any seeded or spec-owned Sunday —
+        // this only tests dedup-by-event-id, so it must not leave a "latest run sheet" on a
+        // date another spec (e.g. the Simplified Sunday IA stepper specs) asserts on.
+        created_at: "2026-07-06T12:00:00.000Z",
         attachments: [
           {
             id: "att-1",

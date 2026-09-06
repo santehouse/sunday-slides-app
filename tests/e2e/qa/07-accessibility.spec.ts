@@ -6,6 +6,9 @@ import { DEMO_SUNDAY_DATE, gotoFlow, loginPinAndWait, signInAsAdmin } from "./he
  * BUILD_HANDOFF section 40 — accessibility. axe-core for the automatable rules, plus
  * explicit checks for the things axe cannot see: focus-visible rings, segmented-control
  * radio semantics, the keyboard reorder fallback, and status never being colour-only.
+ *
+ * Sunday screens follow the Simplified Sunday IA (Sept 2026): three steps (Run sheet,
+ * Check slides, Download) instead of the old tab strip / dashboard / full-page editor.
  */
 
 async function analyse(page: Page) {
@@ -26,33 +29,35 @@ test.describe("axe-core", () => {
     let result = await analyse(page);
     expect(summarise(result.violations), "PIN").toBe("");
 
+    // Every navigation below waits for real content, not just the URL — a route with a
+    // streamed `loading.tsx` skeleton can otherwise still be showing that (stale-title)
+    // skeleton the instant `page.goto`/`waitForURL` resolves, which axe would flag on
+    // `document-title` for reasons that have nothing to do with the real page.
     await loginPinAndWait(page);
+    await page.locator("[data-slide-card]").first().waitFor();
     result = await analyse(page);
-    expect(summarise(result.violations), "Dashboard").toBe("");
+    expect(summarise(result.violations), "Check slides (Step 2)").toBe("");
+
+    await page.goto(`/sunday/${DEMO_SUNDAY_DATE}/run-sheet`);
+    await page.getByRole("heading", { name: "Inbox" }).waitFor();
+    result = await analyse(page);
+    expect(summarise(result.violations), "Run sheet (Step 1)").toBe("");
+
+    await page.goto(`/sunday/${DEMO_SUNDAY_DATE}/download`);
+    await page.getByRole("heading", { name: "Download pictures" }).waitFor();
+    result = await analyse(page);
+    expect(summarise(result.violations), "Download (Step 3)").toBe("");
 
     await gotoFlow(page);
-    result = await analyse(page);
-    expect(summarise(result.violations), "Flow").toBe("");
-
-    await page.getByRole("button", { name: /^Export/ }).click();
-    await page.getByRole("dialog").waitFor();
-    result = await analyse(page);
-    expect(summarise(result.violations), "Export popover").toBe("");
-    await page.keyboard.press("Escape");
-
     await page.locator("[data-slide-card]").first().click();
-    await page.getByRole("button", { name: "Edit slide" }).click();
-    await page.waitForURL(/\/slide\//);
+    await page.getByRole("button", { name: "Save", exact: true }).waitFor();
     result = await analyse(page);
-    expect(summarise(result.violations), "Slide editor").toBe("");
+    expect(summarise(result.violations), "Edit panel").toBe("");
 
-    await page.goto(`/sunday/${DEMO_SUNDAY_DATE}/add`);
+    await page.getByRole("button", { name: "+ Add a slide" }).click();
+    await page.getByRole("heading", { name: "Add a slide" }).waitFor();
     result = await analyse(page);
-    expect(summarise(result.violations), "Add slide").toBe("");
-
-    await page.goto(`/sunday/${DEMO_SUNDAY_DATE}/upload`);
-    result = await analyse(page);
-    expect(summarise(result.violations), "Upload run sheet").toBe("");
+    expect(summarise(result.violations), "Add slide panel").toBe("");
   });
 
   test("Admin screens have no WCAG A/AA violations", async ({ page }) => {
@@ -78,8 +83,8 @@ test.describe("Keyboard and semantics", () => {
     await expect(language.getByRole("radio", { name: "EN" })).toHaveAttribute("aria-checked", "true");
     await expect(language.getByRole("radio", { name: "FR" })).toHaveAttribute("aria-checked", "false");
 
-    // Add Slide category chips.
-    await page.goto(`/sunday/${DEMO_SUNDAY_DATE}/add`);
+    // Add-a-slide category chips (Step 2's inline template picker).
+    await page.goto(`/sunday/${DEMO_SUNDAY_DATE}?add=1`);
     await expect(page.getByRole("button", { name: "All", exact: true })).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", { name: "Events", exact: true }).click();
     await expect(page.getByRole("button", { name: "Events", exact: true })).toHaveAttribute("aria-pressed", "true");
@@ -88,7 +93,7 @@ test.describe("Keyboard and semantics", () => {
 
   test("safe-zone action is a toggle with aria-pressed and a label that flips", async ({ page }) => {
     await loginPinAndWait(page);
-    await gotoFlow(page);
+    await page.locator("[data-slide-card]").first().click();
 
     const action = page.getByRole("button", { name: "Show safe zones" });
     await expect(action).toHaveAttribute("aria-pressed", "false");
@@ -113,7 +118,7 @@ test.describe("Keyboard and semantics", () => {
     await page.keyboard.press("Enter");
     await page.waitForURL(/\/sunday\/\d{4}-\d{2}-\d{2}$/, { timeout: 20_000 });
 
-    // Every interactive element on the dashboard shows a focus ring when tabbed to.
+    // Every interactive element on Step 2 shows a focus ring when tabbed to.
     await gotoFlow(page);
     const handle = page.getByRole("button", { name: "Drag to reorder slide 1", exact: true });
     await handle.focus();
@@ -138,8 +143,10 @@ test.describe("Keyboard and semantics", () => {
     await loginPinAndWait(page);
     await gotoFlow(page);
 
-    await page.locator("[data-slide-card]").first().click();
-    await page.getByRole("button", { name: "Remove slide" }).click();
+    // A non-structural slide — the seeded structural slides (Welcome, …) have no
+    // "Remove this slide" control at all.
+    await page.locator("[data-slide-card]").filter({ hasText: /baptêmes/i }).click();
+    await page.getByRole("button", { name: "Remove this slide" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();

@@ -135,15 +135,14 @@ test.describe("Admin — assets", () => {
     await detail.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 30_000 });
 
-    // The Sunday editor can now pick it for a slide on that template.
+    // The Sunday "Check slides" edit panel can now pick it for a slide on that template.
     const sunday = await context.newPage();
     await openSundaySession(sunday);
-    await sunday.goto("/sunday/2026-09-06/flow");
+    await sunday.goto("/sunday/2026-09-06");
     await sunday.locator("[data-slide-card]").first().waitFor();
     // Pick the Annual theme slide by title, not by position: other specs may reorder the deck.
+    // Selecting a card loads it straight into the inline edit panel — no separate "Edit slide" step.
     await sunday.locator("[data-slide-card]", { hasText: "Je suis avec vous" }).first().click();
-    await sunday.getByRole("button", { name: "Edit slide" }).click();
-    await sunday.waitForURL(/\/slide\//);
     await sunday.getByRole("radiogroup", { name: "Background" }).getByRole("radio", { name: "Image" }).click();
     await expect(sunday.locator('button[aria-label="QA background"]')).toBeVisible({ timeout: 30_000 });
     await sunday.close();

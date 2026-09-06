@@ -1,9 +1,12 @@
 import { test, expect, type Page } from "@playwright/test";
-import { DEMO_SUNDAY_DATE, gotoFlow, loginPinAndWait } from "./helpers";
+import { gotoFlow, loginPinAndWait } from "./helpers";
 
 /**
- * BUILD_HANDOFF sections 7/11/48 — week switcher, duration stepper, reorder,
- * and the slide editor's validation / text-fit / template-switch behaviour.
+ * BUILD_HANDOFF section 7/48 — Sunday Flow drag/keyboard reorder. The week switcher and
+ * duration stepper this file used to cover were removed from the Sunday side by the
+ * Simplified Sunday IA (Sept 2026) — the duration stepper now lives on Step 3
+ * ("Download") and is covered by `tests/e2e/sunday/04-download.spec.ts`; there is no
+ * week switcher any more (see `sunday.simple.stepper.switchTo` instead).
  */
 
 /** Slide-flow card titles ("01 Welcome", ...) in Sunday Flow order. */
@@ -11,11 +14,6 @@ async function cardTitles(page: Page): Promise<string[]> {
   return page
     .locator("[data-slide-card]")
     .evaluateAll((cards) => cards.map((c) => c.querySelector(".text-label")?.textContent?.trim() ?? ""));
-}
-
-/** Lets the optimistic stepper's in-flight server actions land before a reload. */
-async function settle(page: Page) {
-  await page.waitForTimeout(600);
 }
 
 /** dnd-kit keyboard sorting: pick up, move, drop — with a tick between keystrokes. */
@@ -28,71 +26,6 @@ async function keyboardMove(page: Page, handleLabel: string, key: "ArrowUp" | "A
   await page.keyboard.press("Space");
   await page.waitForTimeout(700);
 }
-
-test.describe("Sunday dashboard controls", () => {
-  test("week switcher walks to the previous and next Sunday", async ({ page }) => {
-    await loginPinAndWait(page);
-    await expect(page).toHaveURL(new RegExp(`/sunday/${DEMO_SUNDAY_DATE}$`));
-
-    await page.getByRole("button", { name: "Previous Sunday" }).click();
-    await page.waitForURL(/\/sunday\/2026-08-30$/);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Sunday, August 30");
-
-    await page.getByRole("button", { name: "Next Sunday" }).click();
-    await page.waitForURL(new RegExp(`/sunday/${DEMO_SUNDAY_DATE}$`));
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Sunday, September 6");
-  });
-
-  test("duration stepper clamps to 1..30 and persists across a reload", async ({ page }) => {
-    await loginPinAndWait(page);
-
-    const value = page.getByText(/^\d+ sec$/);
-    const minus = page.getByRole("button", { name: "Decrease duration" });
-    const plus = page.getByRole("button", { name: "Increase duration" });
-
-    /** Clicks until the stepper reads `target`, letting each optimistic update commit. */
-    async function stepTo(target: number) {
-      for (let guard = 0; guard < 80; guard++) {
-        const current = Number((await value.innerText()).split(" ")[0]);
-        if (current === target) break;
-        await (current > target ? minus : plus).click();
-        await page.waitForTimeout(60);
-      }
-      await expect(value).toHaveText(`${target} sec`);
-    }
-
-    // Lower bound: 1 second, minus disabled.
-    await stepTo(1);
-    await expect(minus).toBeDisabled();
-    await expect(plus).toBeEnabled();
-
-    await settle(page);
-    await page.reload();
-    await expect(page.getByText(/^\d+ sec$/)).toHaveText("1 sec");
-
-    // Upper bound: 30 seconds, plus disabled.
-    await stepTo(30);
-    await expect(page.getByRole("button", { name: "Increase duration" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Decrease duration" })).toBeEnabled();
-
-    await settle(page);
-    await page.reload();
-    await expect(page.getByText(/^\d+ sec$/)).toHaveText("30 sec");
-
-    // Rapid taps must not drop updates (overlapping server actions).
-    for (let i = 0; i < 5; i++) await page.getByRole("button", { name: "Decrease duration" }).click();
-    await expect(page.getByText(/^\d+ sec$/)).toHaveText("25 sec");
-    await settle(page);
-    await page.reload();
-    await expect(page.getByText(/^\d+ sec$/)).toHaveText("25 sec");
-
-    // Restore the seeded default — the mock store is shared across specs.
-    await stepTo(5);
-    await settle(page);
-    await page.reload();
-    await expect(page.getByText(/^\d+ sec$/)).toHaveText("5 sec");
-  });
-});
 
 test.describe("Sunday flow", () => {
   test("selected card uses a border, not a fill, and the status pill is last in the row", async ({ page }) => {
