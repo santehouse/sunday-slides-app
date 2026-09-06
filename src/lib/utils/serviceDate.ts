@@ -23,3 +23,10 @@ export function todayInTimezone(timezone: string): string {
     day: "2-digit",
   }).format(new Date());
 }
+
+/** True for a `YYYY-MM-DD` string that is a real calendar date falling on a Sunday. */
+export function isSundayDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(`${value}T12:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(value) && d.getUTCDay() === 0;
+}

@@ -13,6 +13,7 @@ if (!key) {
   process.exit(1);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function api(method: string, pathName: string, body?: unknown): Promise<any> {
   const res = await fetch(`https://api.resend.com${pathName}`, {
     method,

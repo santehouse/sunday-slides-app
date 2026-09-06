@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Upload } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getDb } from "@/lib/data";
-import { serviceDateToDate } from "@/lib/utils/serviceDate";
+import { isSundayDate, serviceDateToDate } from "@/lib/utils/serviceDate";
 import { buildColorHexById, buildTemplatesById, collectBackgroundAssetIds, resolveAssetsByIds } from "@/lib/sunday/view";
 import type { RunSheetParseStatus } from "@/lib/domain/types";
 import type { StatusBadgeStatus } from "@/components/ui/StatusBadge";
@@ -46,8 +46,10 @@ export default async function SundayDashboardPage({
   setRequestLocale(locale);
 
   const db = getDb();
-  const sunday = await db.getSundayByDate(date);
-  if (!sunday) notFound();
+  // Any valid Sunday date is reachable from the week switcher: create the record on first
+  // visit (idempotent by date) instead of 404ing on a Sunday that has no run sheet yet.
+  if (!isSundayDate(date)) notFound();
+  const sunday = (await db.getSundayByDate(date)) ?? (await db.getOrCreateSundayByDate(date));
 
   const [slides, runSheet, adjacent, templates, colors] = await Promise.all([
     db.listSlidesForSunday(sunday.id),
