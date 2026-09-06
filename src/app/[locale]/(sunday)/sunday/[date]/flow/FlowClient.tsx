@@ -137,7 +137,9 @@ export function FlowClient({
         </div>
 
         {selectedSlide && selectedTemplate ? (
-          <>
+          // Keyed by slide id so switching slides re-mounts this block and cross-fades
+          // the preview + actions in with the shared 250ms `cp-page-enter` animation.
+          <div key={selectedSlide.id} className="flex flex-col gap-3.5 cp-page-enter">
             <div className="aspect-video w-full max-w-[758px] overflow-hidden rounded-[12px] border border-border">
               <SlidePreview
                 template={selectedTemplate}
@@ -163,7 +165,7 @@ export function FlowClient({
                 {t("removeSlide")}
               </Button>
             </div>
-          </>
+          </div>
         ) : (
           <p className="text-label text-fg-secondary">{t("noSlides")}</p>
         )}
@@ -176,6 +178,11 @@ export function FlowClient({
         confirmLoading={removing}
         destructive
         title={t("removeConfirmTitle")}
+        doubleConfirm={{
+          title: t("removeFinalTitle"),
+          confirmLabel: t("removeFinalConfirm"),
+          children: t("removeFinalBody"),
+        }}
       >
         {slideToRemove ? t("removeConfirmBody", { title: slideToRemove.headline }) : null}
       </ConfirmDialog>

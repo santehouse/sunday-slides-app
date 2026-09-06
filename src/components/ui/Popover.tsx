@@ -73,7 +73,7 @@ export function Popover({ trigger, children, className, panelClassName, align = 
         <div
           role="dialog"
           className={cn(
-            "absolute top-full z-30 mt-2 rounded-[12px] border border-border bg-surface p-5 shadow-lg",
+            "absolute top-full z-30 mt-2 rounded-[12px] border border-border bg-surface p-5 shadow-lg cp-page-enter",
             align === "end" ? "right-0" : "left-0",
             panelClassName,
           )}

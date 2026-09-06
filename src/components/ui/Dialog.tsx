@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "./Button";
@@ -51,7 +51,7 @@ export function Dialog({ open, onClose, title, children, actions, className }: D
         if (event.target === ref.current) onClose();
       }}
       className={cn(
-        "m-auto max-w-[480px] rounded-lg border border-border bg-surface p-6",
+        "m-auto max-w-[480px] rounded-lg border border-border bg-surface p-6 cp-page-enter",
         "[&::backdrop]:bg-overlay",
         className,
       )}
@@ -65,6 +65,12 @@ export function Dialog({ open, onClose, title, children, actions, className }: D
   );
 }
 
+export type ConfirmDialogDoubleConfirmStep = {
+  title: ReactNode;
+  children?: ReactNode;
+  confirmLabel: ReactNode;
+};
+
 export type ConfirmDialogProps = {
   open: boolean;
   onClose: () => void;
@@ -75,6 +81,13 @@ export type ConfirmDialogProps = {
   cancelLabel?: ReactNode;
   destructive?: boolean;
   confirmLoading?: boolean;
+  /**
+   * When set, the first confirm click swaps the dialog into this final step
+   * (its own title/body/confirm label, always destructive-styled) instead of
+   * calling `onConfirm` — only the final step's confirm click does that. The
+   * step resets to the initial one whenever the dialog closes.
+   */
+  doubleConfirm?: ConfirmDialogDoubleConfirmStep;
 };
 
 /** A Dialog pre-wired with confirm/cancel actions, optionally destructive. */
@@ -88,29 +101,50 @@ export function ConfirmDialog({
   cancelLabel,
   destructive = false,
   confirmLoading = false,
+  doubleConfirm,
 }: ConfirmDialogProps) {
   const t = useTranslations("common");
+  const [final, setFinal] = useState(false);
+
+  const onFinalStep = Boolean(doubleConfirm) && final;
+
+  // Reset back to the initial step on every close path (Cancel, backdrop click,
+  // Escape, the native `close` event) so the dialog never reopens already on
+  // the final "really do this" step.
+  function handleClose() {
+    setFinal(false);
+    onClose();
+  }
+
+  function handleConfirmClick() {
+    if (doubleConfirm && !final) {
+      setFinal(true);
+      return;
+    }
+    onConfirm();
+  }
+
   return (
     <Dialog
       open={open}
-      onClose={onClose}
-      title={title}
+      onClose={handleClose}
+      title={onFinalStep ? doubleConfirm!.title : title}
       actions={
         <>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={handleClose}>
             {cancelLabel ?? t("cancel")}
           </Button>
           <Button
-            variant={destructive ? "danger" : "primary"}
-            onClick={onConfirm}
+            variant={destructive || onFinalStep ? "danger" : "primary"}
+            onClick={handleConfirmClick}
             loading={confirmLoading}
           >
-            {confirmLabel ?? t("confirm")}
+            {onFinalStep ? doubleConfirm!.confirmLabel : (confirmLabel ?? t("confirm"))}
           </Button>
         </>
       }
     >
-      {children}
+      {onFinalStep ? doubleConfirm!.children : children}
     </Dialog>
   );
 }

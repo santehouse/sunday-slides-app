@@ -7,6 +7,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge";
 import { MessageState } from "@/components/ui/MessageState";
+import { ConfirmDialog } from "@/components/ui/Dialog";
 import { useToast } from "@/components/ui/Toast";
 import { applyRunSheetAction, reprocessRunSheetAction, type ReprocessResult } from "../actions";
 import { initialApplyRunSheetState } from "../formState";
@@ -23,12 +24,14 @@ const PARSE_STATUS_MAP: Record<RunSheet["parseStatus"], StatusBadgeStatus> = {
 
 export function RunSheetRow({ runSheet }: { runSheet: RunSheet }) {
   const t = useTranslations("admin.sundays");
+  const tUpload = useTranslations("sunday.upload");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
   const { showToast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [preview, setPreview] = useState<ReprocessResult | null>(null);
+  const [confirmingReplace, setConfirmingReplace] = useState(false);
 
   function handleReprocess() {
     startTransition(async () => {
@@ -54,6 +57,7 @@ export function RunSheetRow({ runSheet }: { runSheet: RunSheet }) {
       } else {
         showToast({ state: "error", title: tCommon("failed"), message: tErrors("generic") });
       }
+      setConfirmingReplace(false);
     });
   }
 
@@ -90,7 +94,7 @@ export function RunSheetRow({ runSheet }: { runSheet: RunSheet }) {
             })}
           </p>
           <div className="flex items-center justify-end gap-2.5">
-            <Button variant="danger" loading={isPending} onClick={() => handleApply("replace")}>
+            <Button variant="danger" loading={isPending} onClick={() => setConfirmingReplace(true)}>
               {t("replaceDeck")}
             </Button>
             <Button variant="primary" loading={isPending} onClick={() => handleApply("merge")}>
@@ -99,6 +103,22 @@ export function RunSheetRow({ runSheet }: { runSheet: RunSheet }) {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmingReplace}
+        onClose={() => setConfirmingReplace(false)}
+        onConfirm={() => handleApply("replace")}
+        confirmLoading={isPending}
+        destructive
+        title={tUpload("replaceConfirmTitle")}
+        doubleConfirm={{
+          title: tUpload("replaceFinalTitle"),
+          confirmLabel: tUpload("replaceFinalConfirm"),
+          children: tUpload("replaceFinalBody"),
+        }}
+      >
+        {tUpload("replaceConfirmBody")}
+      </ConfirmDialog>
     </div>
   );
 }

@@ -44,7 +44,7 @@ export function IconButton({
     <button
       type="button"
       className={cn(
-        "inline-flex shrink-0 items-center justify-center transition-colors",
+        "inline-flex shrink-0 items-center justify-center transition-colors duration-[250ms]",
         "disabled:pointer-events-none disabled:opacity-50",
         VARIANT_CLASSES[variant],
         className,

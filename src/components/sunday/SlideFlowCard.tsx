@@ -55,7 +55,7 @@ export function SlideFlowCard({
       className={cn(
         // Figma 6:19 — 12px side padding, 10px gaps. Selected keeps the same background
         // and gains a 2px primary edge; the inset shadow avoids a 1px content shift.
-        "flex h-[88px] items-center gap-2.5 rounded-[12px] border bg-surface px-3",
+        "flex h-[88px] items-center gap-2.5 rounded-[12px] border bg-surface px-3 transition-[border-color,box-shadow] duration-[250ms]",
         selected
           ? "border-primary shadow-[inset_0_0_0_1px_var(--bg-primary)]"
           : "border-border",

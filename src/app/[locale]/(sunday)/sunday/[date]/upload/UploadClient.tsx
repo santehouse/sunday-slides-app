@@ -232,6 +232,11 @@ function UploadClientInner({ date, hasSlides, currentRunSheet }: UploadClientPro
         confirmLoading={applying === "replace"}
         destructive
         title={t("replaceConfirmTitle")}
+        doubleConfirm={{
+          title: t("replaceFinalTitle"),
+          confirmLabel: t("replaceFinalConfirm"),
+          children: t("replaceFinalBody"),
+        }}
       >
         {t("replaceConfirmBody")}
       </ConfirmDialog>

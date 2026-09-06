@@ -57,7 +57,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-full max-w-sm flex-col gap-2">
         {toasts.map((toast) => (
-          <div key={toast.id} className="pointer-events-auto relative">
+          <div key={toast.id} className="pointer-events-auto relative cp-page-enter">
             <MessageState state={toast.state} title={toast.title} message={toast.message} />
             <button
               type="button"

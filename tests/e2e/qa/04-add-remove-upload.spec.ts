@@ -23,7 +23,9 @@ async function slideCount(page: Page) {
 async function removeSlideAt(page: Page, index: number) {
   await page.locator("[data-slide-card]").nth(index).click();
   await page.getByRole("button", { name: "Remove slide" }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Confirm" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Confirm" }).click();
+  await dialog.getByRole("button", { name: "Yes, remove slide" }).click();
 }
 
 test.describe("Add slide", () => {
@@ -84,7 +86,9 @@ test.describe("Remove slide", () => {
     // not position, so an earlier reorder spec cannot make this test remove the wrong slide.
     await page.locator("[data-slide-card]").filter({ hasText: /BIENVENUE/i }).first().click();
     await page.getByRole("button", { name: "Remove slide" }).click();
-    await page.getByRole("dialog").getByRole("button", { name: "Confirm" }).click();
+    const removeDialog = page.getByRole("dialog");
+    await removeDialog.getByRole("button", { name: "Confirm" }).click();
+    await removeDialog.getByRole("button", { name: "Yes, remove slide" }).click();
     await expect(page.getByText("This slide is always included and can’t be removed.")).toBeVisible();
     await expect(page.locator("[data-slide-card]")).toHaveCount(before);
   });
@@ -135,6 +139,8 @@ test.describe("Run sheet upload (scenario D)", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toContainText("Replace the whole deck?");
     await dialog.getByRole("button", { name: "Confirm" }).click();
+    await expect(dialog).toContainText("Last check — replace everything?");
+    await dialog.getByRole("button", { name: "Yes, replace the deck" }).click();
     await page.waitForURL(/\/flow$/, { timeout: 60_000 });
 
     const afterReplace = await page.evaluate(async (m) => {

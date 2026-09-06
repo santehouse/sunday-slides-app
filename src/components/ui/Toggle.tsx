@@ -32,13 +32,13 @@ export function Toggle({ checked, onChange, label, description, disabled, classN
       <span
         aria-hidden="true"
         className={cn(
-          "relative mt-0.5 h-6 w-10 shrink-0 rounded-full transition-colors",
+          "relative mt-0.5 h-6 w-10 shrink-0 rounded-full transition-colors duration-[250ms]",
           checked ? "bg-primary" : "bg-border-strong",
         )}
       >
         <span
           className={cn(
-            "absolute top-0.5 size-5 rounded-full bg-white transition-transform",
+            "absolute top-0.5 size-5 rounded-full bg-white transition-transform duration-[250ms]",
             checked ? "translate-x-[18px]" : "translate-x-0.5",
           )}
         />

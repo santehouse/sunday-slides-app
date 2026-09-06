@@ -125,7 +125,7 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(event) => handleKeyDown(event, index)}
             className={cn(
-              "flex items-center justify-center whitespace-nowrap font-bold transition-colors",
+              "flex items-center justify-center whitespace-nowrap font-bold transition-colors duration-[250ms]",
               "disabled:cursor-not-allowed disabled:opacity-50",
               SEGMENT_SIZE[size],
               equalWidth && "flex-1",

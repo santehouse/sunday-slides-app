@@ -23,7 +23,7 @@ export function FilterChips({ options, value, onChange, className, ...rest }: Fi
             aria-pressed={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "h-7 shrink-0 rounded-full px-3 text-caption font-bold transition-colors",
+              "h-7 shrink-0 rounded-full px-3 text-caption font-bold transition-colors duration-[250ms]",
               active ? "bg-primary text-fg-on-primary" : "bg-surface-subtle text-fg-secondary hover:bg-border",
             )}
           >

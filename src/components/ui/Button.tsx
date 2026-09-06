@@ -60,7 +60,7 @@ export function Button(props: ButtonProps) {
   } = props;
 
   const base = cn(
-    "inline-flex w-fit shrink-0 items-center justify-center gap-2 rounded-md font-bold whitespace-nowrap transition-colors",
+    "inline-flex w-fit shrink-0 items-center justify-center gap-2 rounded-md font-bold whitespace-nowrap transition-colors duration-[250ms]",
     "disabled:pointer-events-none disabled:opacity-50",
     VARIANT_CLASSES[variant],
     SIZE_CLASSES[size],

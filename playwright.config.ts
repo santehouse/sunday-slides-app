@@ -23,6 +23,10 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     viewport: { width: 1440, height: 1024 },
+    // The 250ms `cp-page-enter` soft-transition (Dialog/Popover/Toast/page nav) honours
+    // `prefers-reduced-motion` and turns itself off under it — set it suite-wide so specs
+    // never race a CSS transition/animation instead of the real app state.
+    reducedMotion: "reduce",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], launchOptions } }],
   webServer: process.env.E2E_BASE_URL
@@ -32,6 +36,11 @@ export default defineConfig({
         url: "http://localhost:3000",
         reuseExistingServer: true,
         timeout: 120_000,
-        env: { CP_MOCK_DATA: "1" },
+        env: {
+          CP_MOCK_DATA: "1",
+          // Keep e2e deterministic and offline even when .env.local has real keys.
+          OPENAI_API_KEY: "",
+          RESEND_INBOUND_WEBHOOK_SECRET: "",
+        },
       },
 });

@@ -123,3 +123,39 @@ body {
   outline: 2px solid var(--border-focus);
   outline-offset: 2px;
 }
+
+/*
+ * Soft 250ms page/panel transitions (product-owner request). `.cp-page-enter`
+ * is applied by `src/app/[locale]/template.tsx` (re-mounted on every
+ * navigation) and reused by Dialog/Popover/Toast and the Sunday Flow preview
+ * panel. Only opacity/transform animate — never layout-affecting properties.
+ */
+@keyframes cp-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.cp-page-enter {
+  animation: cp-fade-in 250ms ease-out both;
+}
+
+/* The native <dialog> backdrop can't be reached by a React className — style it directly. */
+dialog::backdrop {
+  animation: cp-fade-in 250ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-page-enter {
+    animation: none;
+  }
+
+  dialog::backdrop {
+    animation: none;
+  }
+}

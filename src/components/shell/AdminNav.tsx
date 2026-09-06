@@ -58,7 +58,7 @@ export function AdminNav({ user, onSignOut, className }: AdminNavProps) {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   // min-h, not a fixed height: the longer fr-CA labels wrap instead of clipping.
-                  "flex min-h-[42px] items-center gap-2.5 rounded-[8px] px-3 py-1.5 text-label",
+                  "flex min-h-[42px] items-center gap-2.5 rounded-[8px] px-3 py-1.5 text-label transition-colors duration-[250ms]",
                   active ? "bg-surface-subtle font-bold text-fg" : "font-normal text-fg-secondary hover:bg-surface-subtle",
                 )}
               >
