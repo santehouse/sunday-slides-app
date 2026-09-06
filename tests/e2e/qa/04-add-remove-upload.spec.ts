@@ -132,6 +132,8 @@ test.describe("Run sheet upload (scenario D)", () => {
 
     // 4. Replace regenerates the deck (destructive, behind a confirm dialog).
     await page.goto(`/sunday/${MERGE_SUNDAY}/upload`);
+    // Wait for the hydrated page (not the streamed loading skeleton) before attaching the file.
+    await expect(page.getByRole("heading", { name: "Manual upload" })).toBeVisible();
     await page.setInputFiles('input[type="file"]', RUN_SHEET);
     await expect(page.getByRole("button", { name: "Replace deck" })).toBeVisible({ timeout: 90_000 });
     await page.getByRole("button", { name: "Replace deck" }).click();

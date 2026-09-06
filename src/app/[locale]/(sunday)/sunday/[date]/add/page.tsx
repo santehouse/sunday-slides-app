@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { getDb } from "@/lib/data";
 import { resolveAssetsByIds } from "@/lib/sunday/view";
+import { serviceDateToDate } from "@/lib/utils/serviceDate";
 import { SundayShell } from "@/components/shell/SundayShell";
 import { SundayPageHeader } from "@/components/shell/SundayPageHeader";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Button } from "@/components/ui/Button";
 import { AddSlideClient } from "./AddSlideClient";
 
@@ -38,9 +40,18 @@ export default async function AddSlidePage({
 
   const t = await getTranslations("sunday.addSlide");
   const tCommon = await getTranslations("common");
+  const tTabs = await getTranslations("sunday.tabs");
+  const format = await getFormatter({ locale });
 
   return (
     <SundayShell>
+      <Breadcrumb
+        items={[
+          { label: format.dateTime(serviceDateToDate(date), "sundayShort"), href: `/sunday/${date}` },
+          { label: tTabs("flow"), href: `/sunday/${date}/flow` },
+          { label: t("title") },
+        ]}
+      />
       <SundayPageHeader
         titleSize="lg"
         title={t("title")}

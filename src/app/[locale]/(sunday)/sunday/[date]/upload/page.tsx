@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getDb } from "@/lib/data";
+import { serviceDateToDate } from "@/lib/utils/serviceDate";
 import { SundayShell } from "@/components/shell/SundayShell";
 import { SundayPageHeader } from "@/components/shell/SundayPageHeader";
-import { Button } from "@/components/ui/Button";
+import { SundayTabs } from "@/components/sunday/SundayTabs";
+import { SundayWeekSwitcher } from "@/components/sunday/SundayWeekSwitcher";
 import { UploadClient } from "./UploadClient";
 
 export async function generateMetadata({
@@ -29,26 +31,28 @@ export default async function UploadRunSheetPage({
   const sunday = await db.getSundayByDate(date);
   if (!sunday) notFound();
 
-  const [slides, currentRunSheet] = await Promise.all([
+  const [slides, currentRunSheet, adjacent] = await Promise.all([
     db.listSlidesForSunday(sunday.id),
     db.getLatestRunSheetForSunday(sunday.id),
+    db.getAdjacentSundayDates(date),
   ]);
 
+  const needsReviewCount = slides.filter((s) => s.status === "needs_review").length;
+
   const t = await getTranslations("sunday.upload");
-  const tCommon = await getTranslations("common");
+  const tDashboard = await getTranslations("sunday.dashboard");
 
   return (
     <SundayShell>
       <SundayPageHeader
-        titleSize="lg"
-        title={t("title")}
-        backHref={`/sunday/${date}/flow`}
-        actions={
-          <Button variant="secondary" href={`/sunday/${date}/flow`}>
-            {tCommon("cancel")}
-          </Button>
-        }
+        titleSize="xl"
+        title={tDashboard("title", { date: serviceDateToDate(date) })}
+        subtitle={t("subtitle")}
+        actions={<SundayWeekSwitcher date={date} prevDate={adjacent.prev} nextDate={adjacent.next} size="md" />}
       />
+
+      <SundayTabs date={date} needsReviewCount={needsReviewCount} />
+
       <UploadClient date={date} hasSlides={slides.length > 0} currentRunSheet={currentRunSheet} />
     </SundayShell>
   );

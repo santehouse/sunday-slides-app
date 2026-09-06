@@ -2,21 +2,29 @@ import { SundayShell } from "@/components/shell/SundayShell";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonStatus } from "@/components/ui/Skeleton";
 
-/** Mirrors `SundayFlowPage`: header + flow list (8 card ghosts) + a 16:9 preview ghost. */
+/** Mirrors `SundayFlowPage`: header + week switcher, tabs, action row, flow list (8 card ghosts) + a 16:9 preview ghost. */
 export default function Loading() {
   return (
     <SundayShell>
       <SkeletonStatus className="flex flex-1 flex-col gap-7">
-        <div className="flex min-h-16 items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <Skeleton className="h-[30px] w-52" />
-            <Skeleton className="h-[18px] w-96" />
+        <div className="flex min-h-[59px] items-center justify-between gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-3.5 w-96" />
           </div>
-          <div className="flex shrink-0 items-start gap-2.5">
-            <Skeleton className="h-10 w-36 rounded-md" />
-            <Skeleton className="h-10 w-28 rounded-md" />
-            <Skeleton className="h-10 w-24 rounded-md" />
-          </div>
+          <Skeleton className="h-12 w-[220px] rounded-[12px]" />
+        </div>
+
+        <div className="flex h-10 items-end gap-6 border-b border-border pb-2">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+
+        <div className="flex justify-end gap-2.5">
+          <Skeleton className="h-10 w-36 rounded-md" />
+          <Skeleton className="h-10 w-28 rounded-md" />
+          <Skeleton className="h-10 w-24 rounded-md" />
         </div>
 
         <div className="grid grid-cols-[500px_1fr] gap-[18px]">

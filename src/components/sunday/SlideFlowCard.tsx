@@ -49,6 +49,7 @@ export function SlideFlowCard({
   return (
     <li
       ref={setNodeRef}
+      id={`slide-card-${slide.id}`}
       style={style}
       data-slide-card=""
       aria-current={selected ? "true" : undefined}

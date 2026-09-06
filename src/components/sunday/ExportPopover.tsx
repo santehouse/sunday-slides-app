@@ -26,7 +26,9 @@ export type ExportPopoverProps = {
   templatesById: Record<string, Template>;
   colorHexById: Record<string, string>;
   assets: ResolvedAsset[];
-  currentSlideId: string | null;
+  /** Omit (or pass `null`/`undefined`) when the caller has no "current slide" concept
+      (e.g. the Overview screen) — the "Current slide" scope option is hidden. */
+  currentSlideId?: string | null;
 };
 
 function extractFilename(contentDisposition: string | null, fallback: string): string {
@@ -43,7 +45,7 @@ export function ExportPopover({
   templatesById,
   colorHexById,
   assets,
-  currentSlideId,
+  currentSlideId = null,
 }: ExportPopoverProps) {
   const t = useTranslations("sunday.export");
   const tFlow = useTranslations("sunday.flow");
@@ -192,7 +194,7 @@ export function ExportPopover({
           <div className="flex flex-col gap-1.5">
             <p className="text-[11px] leading-4 text-fg-secondary">{t("slides")}</p>
             <div role="radiogroup" aria-label={t("slides")} className="flex flex-col gap-1">
-              {(["current", "all", "custom"] as ExportScope[]).map((option) => (
+              {(currentSlideId !== null ? (["current", "all", "custom"] as ExportScope[]) : (["all", "custom"] as ExportScope[])).map((option) => (
                 <button
                   key={option}
                   type="button"

@@ -2,7 +2,7 @@ import { SundayShell } from "@/components/shell/SundayShell";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonStatus } from "@/components/ui/Skeleton";
 
-/** Mirrors `SundayDashboardPage`: title bar + week switcher, 4 stat cards, flow + run sheet panels. */
+/** Mirrors `SundayDashboardPage`: title bar + week switcher, tabs, action row, 4 stat cards, flow + run sheet panels. */
 export default function Loading() {
   return (
     <SundayShell>
@@ -13,6 +13,18 @@ export default function Loading() {
             <Skeleton className="h-3.5 w-80" />
           </div>
           <Skeleton className="h-12 w-[220px] rounded-[12px]" />
+        </div>
+
+        <div className="flex h-10 items-end gap-6 border-b border-border pb-2">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+
+        <div className="flex justify-end gap-2.5">
+          <Skeleton className="h-10 w-36 rounded-md" />
+          <Skeleton className="h-10 w-28 rounded-md" />
+          <Skeleton className="h-10 w-24 rounded-md" />
         </div>
 
         <div className="grid grid-cols-4 gap-3.5">

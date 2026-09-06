@@ -439,9 +439,17 @@
       "y": "Y",
       "width": "Width",
       "height": "Height",
-      "canvas": "Canvas · 1920×1080",
       "pipGuideOn": "PIP guide on",
       "pipGuideOff": "PIP guide off",
+      "canvas": {
+        "title": "Canvas · 1920×1080",
+        "fit": "Fit",
+        "editSafeZone": "Edit safe zone",
+        "saveSafeZone": "Save safe zone for all templates",
+        "safeZoneSaved": "Safe zone updated for every template and Sunday preview",
+        "hint": "Drag a field to move it. Drag a handle to resize. Arrow keys nudge.",
+        "position": "{field}: x {x}, y {y}, {width} × {height}"
+      },
       "editableFields": "Editable fields",
       "addField": "Add field",
       "removeField": "Remove field",

@@ -439,9 +439,17 @@
       "y": "Y",
       "width": "Largeur",
       "height": "Hauteur",
-      "canvas": "Canevas · 1920×1080",
       "pipGuideOn": "Guide caméra activé",
       "pipGuideOff": "Guide caméra désactivé",
+      "canvas": {
+        "title": "Canevas · 1920×1080",
+        "fit": "Ajuster",
+        "editSafeZone": "Modifier la zone de sécurité",
+        "saveSafeZone": "Enregistrer la zone de sécurité pour tous les modèles",
+        "safeZoneSaved": "Zone de sécurité mise à jour pour tous les modèles et aperçus du dimanche",
+        "hint": "Glissez un champ pour le déplacer. Glissez une poignée pour le redimensionner. Les flèches ajustent.",
+        "position": "{field} : x {x}, y {y}, {width} × {height}"
+      },
       "editableFields": "Champs modifiables",
       "addField": "Ajouter un champ",
       "removeField": "Retirer le champ",

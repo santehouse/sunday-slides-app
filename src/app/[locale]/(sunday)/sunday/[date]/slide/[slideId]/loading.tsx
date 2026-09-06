@@ -2,11 +2,12 @@ import { SundayShell } from "@/components/shell/SundayShell";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonStatus } from "@/components/ui/Skeleton";
 
-/** Mirrors `EditorClient`: a 420px form column of field ghosts + a preview ghost. */
+/** Mirrors `EditorClient`: breadcrumb + a 420px form column of field ghosts + a preview ghost. */
 export default function Loading() {
   return (
     <SundayShell>
       <SkeletonStatus className="flex flex-1 flex-col gap-[22px]">
+        <Skeleton className="h-3.5 w-72" />
         <div className="flex min-h-14 items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <Skeleton className="h-6 w-6" />

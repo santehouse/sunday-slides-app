@@ -9,6 +9,8 @@ import { SundayPageHeader } from "@/components/shell/SundayPageHeader";
 import { Button } from "@/components/ui/Button";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ExportPopover } from "@/components/sunday/ExportPopover";
+import { SundayTabs } from "@/components/sunday/SundayTabs";
+import { SundayWeekSwitcher } from "@/components/sunday/SundayWeekSwitcher";
 import { FlowClient } from "./FlowClient";
 
 export async function generateMetadata({
@@ -36,18 +38,21 @@ export default async function SundayFlowPage({
   const sunday = await db.getSundayByDate(date);
   if (!sunday) notFound();
 
-  const [slides, templates, colors, settings] = await Promise.all([
+  const [slides, templates, colors, settings, adjacent] = await Promise.all([
     db.listSlidesForSunday(sunday.id),
     db.listTemplates(),
     db.listApprovedColors(),
     db.getSettings(),
+    db.getAdjacentSundayDates(date),
   ]);
 
   const templatesMap = buildTemplatesById(templates);
   const colorMap = buildColorHexById(colors);
   const assets = await resolveAssetsByIds(collectBackgroundAssetIds(slides, templatesMap));
+  const needsReviewCount = slides.filter((s) => s.status === "needs_review").length;
 
   const t = await getTranslations("sunday.flow");
+  const tDashboard = await getTranslations("sunday.dashboard");
   const tCommon = await getTranslations("common");
 
   return (
@@ -56,32 +61,34 @@ export default async function SundayFlowPage({
           FlowClient (below) both call useToast() and must share the same provider. */}
       <ToastProvider>
         <SundayPageHeader
-          titleSize="lg"
-          title={t("title")}
+          titleSize="xl"
+          title={tDashboard("title", { date: serviceDateToDate(date) })}
           subtitle={t("subtitle", {
             date: serviceDateToDate(date),
             slides: tCommon("slidesCount", { count: slides.length }),
             seconds: tCommon("seconds", { count: sunday.defaultSlideHoldSeconds }),
           })}
-          actions={
-            <>
-              <Button variant="secondary" href={`/sunday/${date}/upload`}>
-                {t("uploadRunSheet")}
-              </Button>
-              <Button variant="secondary" href={`/sunday/${date}/add`}>
-                {t("addSlide")}
-              </Button>
-              <ExportPopover
-                sundayId={sunday.id}
-                slides={slides}
-                templatesById={templatesMap}
-                colorHexById={colorMap}
-                assets={assets}
-                currentSlideId={selectedSlideParam ?? slides[0]?.id ?? null}
-              />
-            </>
-          }
+          actions={<SundayWeekSwitcher date={date} prevDate={adjacent.prev} nextDate={adjacent.next} size="md" />}
         />
+
+        <SundayTabs date={date} needsReviewCount={needsReviewCount} />
+
+        <div className="flex justify-end gap-2.5">
+          <Button variant="secondary" href={`/sunday/${date}/upload`}>
+            {t("uploadRunSheet")}
+          </Button>
+          <Button variant="secondary" href={`/sunday/${date}/add`}>
+            {t("addSlide")}
+          </Button>
+          <ExportPopover
+            sundayId={sunday.id}
+            slides={slides}
+            templatesById={templatesMap}
+            colorHexById={colorMap}
+            assets={assets}
+            currentSlideId={selectedSlideParam ?? slides[0]?.id ?? null}
+          />
+        </div>
 
         <FlowClient
           date={date}

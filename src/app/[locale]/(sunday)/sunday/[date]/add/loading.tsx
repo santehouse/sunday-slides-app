@@ -1,11 +1,12 @@
 import { SundayShell } from "@/components/shell/SundayShell";
 import { Skeleton, SkeletonCard, SkeletonStatus } from "@/components/ui/Skeleton";
 
-/** Mirrors `AddSlideClient`: a category chip row + an 8-card template grid ghost. */
+/** Mirrors `AddSlidePage`: breadcrumb + header, category chip row + an 8-card template grid ghost. */
 export default function Loading() {
   return (
     <SundayShell>
       <SkeletonStatus className="flex flex-1 flex-col gap-7">
+        <Skeleton className="h-3.5 w-64" />
         <div className="flex min-h-16 items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <Skeleton className="h-6 w-6" />

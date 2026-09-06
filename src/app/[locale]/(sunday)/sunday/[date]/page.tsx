@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ToastProvider } from "@/components/ui/Toast";
 import { SundayWeekSwitcher } from "@/components/sunday/SundayWeekSwitcher";
+import { SundayTabs } from "@/components/sunday/SundayTabs";
+import { ExportPopover } from "@/components/sunday/ExportPopover";
 import { SlidePreview } from "@/components/sunday/SlidePreview";
 import { HoldSecondsCard } from "./HoldSecondsCard";
 
@@ -66,6 +69,7 @@ export default async function SundayDashboardPage({
   const t = await getTranslations("sunday.dashboard");
 
   const slidesPrepared = slides.length;
+  const firstNeedsReviewSlide = slides.find((s) => s.status === "needs_review") ?? null;
   const needsReview = slides.filter((s) => s.status === "needs_review").length;
   const includedInMp4 = slides.filter((s) => s.includeInVideo).length;
 
@@ -79,16 +83,40 @@ export default async function SundayDashboardPage({
 
   return (
     <SundayShell>
-      <SundayPageHeader
-        titleSize="xl"
-        title={t("title", { date: serviceDateToDate(date) })}
-        subtitle={subtitle}
-        actions={<SundayWeekSwitcher date={date} prevDate={adjacent.prev} nextDate={adjacent.next} size="md" />}
-      />
+      <ToastProvider>
+        <SundayPageHeader
+          titleSize="xl"
+          title={t("title", { date: serviceDateToDate(date) })}
+          subtitle={subtitle}
+          actions={<SundayWeekSwitcher date={date} prevDate={adjacent.prev} nextDate={adjacent.next} size="md" />}
+        />
+
+        <SundayTabs date={date} needsReviewCount={needsReview} />
+
+        <div className="flex justify-end gap-2.5">
+          <Button variant="secondary" href={`/sunday/${date}/upload`}>
+            {t("uploadRunSheet")}
+          </Button>
+          <Button variant="secondary" href={`/sunday/${date}/add`}>
+            {t("addSlide")}
+          </Button>
+          <ExportPopover
+            sundayId={sunday.id}
+            slides={slides}
+            templatesById={templatesMap}
+            colorHexById={colorMap}
+            assets={assets}
+          />
+        </div>
 
       <div className="grid grid-cols-4 gap-3.5">
         <StatCard className="h-[108px]" value={slidesPrepared} label={t("slidesPrepared")} />
-        <StatCard className="h-[108px]" value={needsReview} label={t("needsReview")} />
+        <StatCard
+          className="h-[108px]"
+          value={needsReview}
+          label={t("needsReview")}
+          href={firstNeedsReviewSlide ? `/sunday/${date}/flow?slide=${firstNeedsReviewSlide.id}` : undefined}
+        />
         <StatCard className="h-[108px]" value={includedInMp4} label={t("includedInMp4")} />
         <HoldSecondsCard sundayId={sunday.id} initialSeconds={sunday.defaultSlideHoldSeconds} />
       </div>
@@ -99,8 +127,8 @@ export default async function SundayDashboardPage({
             title={t("sundayFlow")}
             className="h-10"
             action={
-              <Button variant="secondary" href={`/sunday/${date}/add`}>
-                {t("addSlide")}
+              <Button variant="primary" href={`/sunday/${date}/flow`}>
+                {t("openFlow")}
               </Button>
             }
           />
@@ -168,6 +196,7 @@ export default async function SundayDashboardPage({
           )}
         </Card>
       </div>
+      </ToastProvider>
     </SundayShell>
   );
 }

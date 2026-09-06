@@ -65,6 +65,14 @@ export function FlowClient({
     }
   }, []);
 
+  useEffect(() => {
+    // A "Needs review" link (or any deep link carrying `?slide=`) may land a card
+    // below the fold — bring it into view once, on arrival.
+    if (!initialSelectedId) return;
+    document.getElementById(`slide-card-${initialSelectedId}`)?.scrollIntoView({ block: "nearest" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function toggleSafeZone() {
     setShowSafeZone((prev) => {
       const next = !prev;

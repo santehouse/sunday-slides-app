@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { ArrowLeft } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import type { AppLocale } from "@/i18n/routing";
 import type { Slide, SlideContent, Template } from "@/lib/domain/types";
 import type { ResolvedAsset, SlideFitResult } from "@/lib/renderer/types";
 import { fitSlide } from "@/lib/renderer/fitText";
 import { createCanvasMeasurer, ensureFontsLoaded } from "@/lib/renderer/measure";
+import { serviceDateToDate } from "@/lib/utils/serviceDate";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ColorSelect } from "@/components/ui/ColorSelect";
@@ -47,7 +49,9 @@ function EditorClientInner({ date, slide, templates, assetsByTemplateId, colors,
   const t = useTranslations("sunday.editor");
   const tCommon = useTranslations("common");
   const tSafeZones = useTranslations("sunday.safeZones");
+  const tTabs = useTranslations("sunday.tabs");
   const locale = useLocale() as AppLocale;
+  const format = useFormatter();
   const router = useRouter();
   const { showToast } = useToast();
 
@@ -65,6 +69,7 @@ function EditorClientInner({ date, slide, templates, assetsByTemplateId, colors,
   const [attemptedSave, setAttemptedSave] = useState(false);
   const [showSafeZone, setShowSafeZone] = useState(false);
   const [confirmingBack, setConfirmingBack] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string>(`/sunday/${date}/flow?slide=${slide.id}`);
   const [fit, setFit] = useState<SlideFitResult | null>(null);
 
   const template = templatesById[templateId];
@@ -174,12 +179,25 @@ function EditorClientInner({ date, slide, templates, assetsByTemplateId, colors,
     }
   }
 
-  function handleBack() {
+  function navigateAway(href: string) {
     if (dirty) {
+      setPendingHref(href);
       setConfirmingBack(true);
       return;
     }
-    router.push(`/sunday/${date}/flow?slide=${slide.id}`);
+    router.push(href);
+  }
+
+  function handleBack() {
+    navigateAway(`/sunday/${date}/flow?slide=${slide.id}`);
+  }
+
+  function handleBreadcrumbClick(href: string) {
+    return (event: MouseEvent<HTMLAnchorElement>) => {
+      if (!dirty) return;
+      event.preventDefault();
+      navigateAway(href);
+    };
   }
 
   const messageKind = fitKind(fit);
@@ -192,6 +210,21 @@ function EditorClientInner({ date, slide, templates, assetsByTemplateId, colors,
 
   return (
     <div className="flex flex-col gap-[22px]">
+      <Breadcrumb
+        items={[
+          {
+            label: format.dateTime(serviceDateToDate(date), "sundayShort"),
+            href: `/sunday/${date}`,
+            onClick: handleBreadcrumbClick(`/sunday/${date}`),
+          },
+          {
+            label: tTabs("flow"),
+            href: `/sunday/${date}/flow`,
+            onClick: handleBreadcrumbClick(`/sunday/${date}/flow`),
+          },
+          { label: slide.headline || t("untitledSlide") },
+        ]}
+      />
       <div className="flex min-h-14 items-center justify-between gap-4">
         <div className="flex items-center gap-2.5">
           <button type="button" aria-label={tCommon("back")} onClick={handleBack} className="text-fg">
@@ -323,7 +356,7 @@ function EditorClientInner({ date, slide, templates, assetsByTemplateId, colors,
         onClose={() => setConfirmingBack(false)}
         onConfirm={() => {
           setConfirmingBack(false);
-          router.push(`/sunday/${date}/flow?slide=${slide.id}`);
+          router.push(pendingHref);
         }}
         title={t("unsavedTitle")}
         confirmLabel={t("discard")}

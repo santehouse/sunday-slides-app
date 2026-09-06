@@ -25,12 +25,17 @@ test.describe("PIN access", () => {
 });
 
 test.describe("French locale", () => {
-  test("shows Eglise Panels and the French Sunday Flow title", async ({ page }) => {
+  test("shows Eglise Panels and the French Sunday Flow tab", async ({ page }) => {
     await loginPin(page, { locale: "fr" });
     await expect(page.getByRole("banner").getByText("Eglise Panels")).toBeVisible();
 
     await openFlowFromDashboard(page);
     await expect(page).toHaveURL(/\/fr\/sunday\/\d{4}-\d{2}-\d{2}\/flow\?/);
-    await expect(page.getByRole("heading", { name: "Déroulement du dimanche" })).toBeVisible();
+    // The header title is the Sunday date (stable across tabs) — the French Flow tab
+    // in the SundayTabs strip carries the section name instead. Selected by href, not
+    // name: "Déroulement" is also a substring of "Feuille de déroulement".
+    const flowTab = page.getByRole("navigation", { name: "Sections du dimanche" }).locator('a[href$="/flow"]');
+    await expect(flowTab).toContainText("Déroulement");
+    await expect(flowTab).toHaveAttribute("aria-current", "page");
   });
 });

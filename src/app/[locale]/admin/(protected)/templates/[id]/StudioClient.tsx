@@ -1,20 +1,22 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, Eye, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, Plus, Trash2, Video } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Toggle } from "@/components/ui/Toggle";
 import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge";
 import { MessageState } from "@/components/ui/MessageState";
 import { useToast } from "@/components/ui/Toast";
-import { TemplatePreview } from "@/components/admin/TemplatePreview";
-import { saveTemplateAction } from "./actions";
+import { StudioCanvas, type ZoomLevel } from "@/components/admin/StudioCanvas";
+import { saveTemplateAction, updateSafeZoneAction } from "./actions";
+import { clampBox, intersects, type Box } from "@/lib/engines/canvasGeometry";
 import type { CreateTemplateFieldInput, TemplateWithFields } from "@/lib/data";
 import type {
   Asset,
@@ -38,6 +40,8 @@ const OVERLAY_OPTIONS: OverlayColor[] = ["none", "black", "white"];
 const ALIGN_OPTIONS: TextAlignment[] = ["left", "center", "right"];
 const OVERFLOW_OPTIONS: OverflowMode[] = ["fixed", "auto_fit", "flex_height"];
 const WEIGHT_OPTIONS = [400, 700];
+const ZOOM_OPTIONS: ZoomLevel[] = ["50", "75", "100"];
+const MAX_HISTORY = 50;
 
 const TEMPLATE_STATUS_BADGE: Record<TemplateStatus, StatusBadgeStatus> = {
   published: "published",
@@ -51,10 +55,6 @@ function toFieldDraft(field: TemplateWithFields["fields"][number]): FieldDraft {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { id, templateId, fieldType, ...rest } = field;
   return { ...rest, key: field.id };
-}
-
-function boxesOverlap(a: { x: number; y: number; width: number; height: number }, b: SafeZone): boolean {
-  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
 export function StudioClient({
@@ -73,6 +73,8 @@ export function StudioClient({
   const t = useTranslations("admin.templates");
   const tBrand = useTranslations("admin.brand");
   const tCommon = useTranslations("common");
+  const tSafeZones = useTranslations("sunday.safeZones");
+  const tSettings = useTranslations("admin.settings");
   const locale = useLocale();
   const isFr = locale.startsWith("fr");
   const { showToast } = useToast();
@@ -96,6 +98,12 @@ export function StudioClient({
   const [fields, setFields] = useState<FieldDraft[]>(() => template.fields.map(toFieldDraft));
   const [selectedKey, setSelectedKey] = useState<string | null>(fields[0]?.key ?? null);
   const [showSafeZone, setShowSafeZone] = useState(false);
+  const [zoom, setZoom] = useState<ZoomLevel>("50");
+  const [safeZoneEditing, setSafeZoneEditing] = useState(false);
+  const [safeZoneDraft, setSafeZoneDraft] = useState<SafeZone>(safeZone);
+  const [isSafeZonePending, startSafeZoneTransition] = useTransition();
+  const [savedSafeZone, setSavedSafeZone] = useState<SafeZone>(safeZone);
+  const selectedFieldCardRef = useRef<HTMLDivElement>(null);
 
   const enabledFamilies = useMemo(
     () => Array.from(new Set(fonts.filter((f) => f.enabled).map((f) => f.family))).sort(),
@@ -104,8 +112,68 @@ export function StudioClient({
 
   const selectedField = fields.find((f) => f.key === selectedKey) ?? null;
 
+  // Simple in-memory undo history (Ctrl/Cmd+Z, up to 50 steps) for canvas moves/resizes —
+  // pushed once per drag/keyboard gesture by `StudioCanvas`'s `onBeginChange`.
+  const historyRef = useRef<Array<{ fields: FieldDraft[]; safeZoneDraft: SafeZone }>>([]);
+  const fieldsRef = useRef(fields);
+  const safeZoneDraftRef = useRef(safeZoneDraft);
+  useEffect(() => {
+    fieldsRef.current = fields;
+  }, [fields]);
+  useEffect(() => {
+    safeZoneDraftRef.current = safeZoneDraft;
+  }, [safeZoneDraft]);
+
+  function pushHistory() {
+    historyRef.current.push({ fields: fieldsRef.current, safeZoneDraft: safeZoneDraftRef.current });
+    if (historyRef.current.length > MAX_HISTORY) historyRef.current.shift();
+  }
+
+  function undo() {
+    const previous = historyRef.current.pop();
+    if (!previous) return;
+    setFields(previous.fields);
+    setSafeZoneDraft(previous.safeZoneDraft);
+  }
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        undo();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  // Scroll the controls column to the selected field's Typography/Text fitting/Position
+  // controls — whether the selection came from the canvas or the field list below. Only
+  // when the selection actually *changes* to a different field (comparing against the
+  // previous value, not a "have I run before" flag — Strict Mode's dev-only double effect
+  // invocation would otherwise defeat a simple mount guard) — never on the initial mount,
+  // where a field is pre-selected by default and the page should stay put on the canvas.
+  const previousSelectedKeyRef = useRef(selectedKey);
+  useEffect(() => {
+    if (previousSelectedKeyRef.current !== selectedKey) {
+      if (selectedKey) selectedFieldCardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+    previousSelectedKeyRef.current = selectedKey;
+  }, [selectedKey]);
+
   function updateField(key: string, patch: Partial<FieldDraft>) {
     setFields((current) => current.map((f) => (f.key === key ? { ...f, ...patch } : f)));
+  }
+
+  function updateFieldBox(key: string, box: Box) {
+    updateField(key, box);
+  }
+
+  function updateSafeZoneDraft(patch: Partial<SafeZone>) {
+    setSafeZoneDraft((current) => clampBox({ ...current, ...patch }));
   }
 
   function addField() {
@@ -164,9 +232,36 @@ export function StudioClient({
   }, [fields]);
 
   const overlappingFields = useMemo(
-    () => fields.filter((f) => boxesOverlap(f, safeZone)),
-    [fields, safeZone],
+    () => fields.filter((f) => intersects(f, safeZoneDraft)),
+    [fields, safeZoneDraft],
   );
+
+  const currentSnapshot = JSON.stringify({
+    nameEn,
+    nameFr,
+    category,
+    status,
+    backgroundType,
+    backgroundValue: backgroundType === "color" ? backgroundColorHex : backgroundAssetId,
+    overlayColor,
+    overlayOpacity,
+    includeInVideoDefault,
+    allowedAssetIds,
+    fields,
+  });
+  // Captured once on mount, replaced after every successful save — `dirty` is then just a
+  // plain string comparison against the last-saved snapshot.
+  const [savedSnapshot, setSavedSnapshot] = useState(currentSnapshot);
+  const dirty = currentSnapshot !== savedSnapshot || JSON.stringify(safeZoneDraft) !== JSON.stringify(savedSafeZone);
+
+  useEffect(() => {
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      if (!dirty) return;
+      event.preventDefault();
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [dirty]);
 
   /**
    * Persists the studio. Publish / Unpublish / Archive / Restore pass their target
@@ -196,9 +291,38 @@ export function StudioClient({
         allowedAssetIds,
       });
       if (result.ok) {
-        setFields(result.template.fields.map(toFieldDraft));
+        const savedFields = result.template.fields.map(toFieldDraft);
+        setFields(savedFields);
         setSelectedKey(result.template.fields[0]?.id ?? null);
+        setSavedSnapshot(JSON.stringify({
+          nameEn,
+          nameFr,
+          category,
+          status: nextStatus ?? status,
+          backgroundType,
+          backgroundValue: patch.backgroundValue,
+          overlayColor,
+          overlayOpacity,
+          includeInVideoDefault,
+          allowedAssetIds,
+          fields: savedFields,
+        }));
         showToast({ state: "success", title: t("saved"), message: tCommon("saveChanges") });
+      } else {
+        showToast({ state: "error", title: tCommon("failed"), message: result.error });
+      }
+    });
+  }
+
+  /** Saves the global broadcast safe zone for every template + the Sunday preview (BUILD_HANDOFF §13). */
+  function handleSaveSafeZone() {
+    const box = clampBox(safeZoneDraft);
+    startSafeZoneTransition(async () => {
+      const result = await updateSafeZoneAction(box);
+      if (result.ok) {
+        setSafeZoneDraft(result.safeZone);
+        setSavedSafeZone(result.safeZone);
+        showToast({ state: "success", title: t("saved"), message: t("canvas.safeZoneSaved") });
       } else {
         showToast({ state: "error", title: tCommon("failed"), message: result.error });
       }
@@ -324,7 +448,47 @@ export function StudioClient({
             <Toggle checked={includeInVideoDefault} onChange={setIncludeInVideoDefault} label={t("includeInMp4Default")} />
           </Card>
 
+          {safeZoneEditing ? (
+            <Card className="flex flex-col gap-4">
+              <CardHeader title={tSafeZones("label")} />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  id="safe-zone-x"
+                  type="number"
+                  label={tSettings("pipX")}
+                  value={safeZoneDraft.x}
+                  onChange={(e) => updateSafeZoneDraft({ x: Number(e.target.value) })}
+                />
+                <Input
+                  id="safe-zone-y"
+                  type="number"
+                  label={tSettings("pipY")}
+                  value={safeZoneDraft.y}
+                  onChange={(e) => updateSafeZoneDraft({ y: Number(e.target.value) })}
+                />
+                <Input
+                  id="safe-zone-width"
+                  type="number"
+                  label={tSettings("pipWidth")}
+                  value={safeZoneDraft.width}
+                  onChange={(e) => updateSafeZoneDraft({ width: Number(e.target.value) })}
+                />
+                <Input
+                  id="safe-zone-height"
+                  type="number"
+                  label={tSettings("pipHeight")}
+                  value={safeZoneDraft.height}
+                  onChange={(e) => updateSafeZoneDraft({ height: Number(e.target.value) })}
+                />
+              </div>
+              <Button variant="primary" loading={isSafeZonePending} onClick={handleSaveSafeZone}>
+                {t("canvas.saveSafeZone")}
+              </Button>
+            </Card>
+          ) : null}
+
           {selectedField ? (
+            <div ref={selectedFieldCardRef}>
             <Card className="flex flex-col gap-4">
               <CardHeader title={selectedField.labelEn || t("editableFields")} />
               <Input
@@ -495,6 +659,7 @@ export function StudioClient({
                 />
               </div>
             </Card>
+            </div>
           ) : null}
         </div>
 
@@ -502,27 +667,55 @@ export function StudioClient({
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-4">
             <CardHeader
-              title={t("canvas")}
+              title={t("canvas.title")}
               action={
-                <Button variant="ghost" leadingIcon={Eye} onClick={() => setShowSafeZone((s) => !s)}>
-                  {showSafeZone ? t("pipGuideOn") : t("pipGuideOff")}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <span className="text-caption font-bold text-fg-secondary">{t("canvas.fit")}</span>
+                  <SegmentedControl
+                    ariaLabel={t("canvas.fit")}
+                    size="sm"
+                    value={zoom}
+                    onChange={setZoom}
+                    options={ZOOM_OPTIONS.map((z) => ({ value: z, label: `${z}%` }))}
+                  />
+                  <Button variant="ghost" leadingIcon={Eye} aria-pressed={showSafeZone} onClick={() => setShowSafeZone((s) => !s)}>
+                    {showSafeZone ? t("pipGuideOn") : t("pipGuideOff")}
+                  </Button>
+                  <Button
+                    variant={safeZoneEditing ? "primary" : "secondary"}
+                    leadingIcon={Video}
+                    aria-pressed={safeZoneEditing}
+                    onClick={() => {
+                      setSafeZoneEditing((editing) => !editing);
+                      setSelectedKey(null);
+                    }}
+                  >
+                    {t("canvas.editSafeZone")}
+                  </Button>
+                </div>
               }
             />
-            <div className="aspect-video w-full overflow-hidden rounded-md border border-border bg-surface-subtle">
-              <TemplatePreview
-                rendererKey={template.rendererKey}
-                fields={previewFields}
-                content={previewContent}
-                backgroundType={backgroundType}
-                backgroundColorHex={backgroundType === "color" ? backgroundColorHex : null}
-                backgroundImageUrl={backgroundType === "image" ? assetUrls[backgroundAssetId] : null}
-                overlayColor={overlayColor}
-                overlayOpacity={overlayOpacity}
-                safeZone={safeZone}
-                showSafeZone={showSafeZone}
-              />
-            </div>
+            <StudioCanvas
+              rendererKey={template.rendererKey}
+              fields={previewFields}
+              content={previewContent}
+              backgroundType={backgroundType}
+              backgroundColorHex={backgroundType === "color" ? backgroundColorHex : null}
+              backgroundImageUrl={backgroundType === "image" ? assetUrls[backgroundAssetId] : null}
+              overlayColor={overlayColor}
+              overlayOpacity={overlayOpacity}
+              safeZone={safeZoneDraft}
+              showSafeZone={showSafeZone}
+              safeZoneLabel={tSafeZones("label")}
+              safeZoneEditing={safeZoneEditing}
+              selectedKey={selectedKey}
+              locale={locale}
+              zoom={zoom}
+              onSelectField={setSelectedKey}
+              onBeginChange={pushHistory}
+              onFieldChange={updateFieldBox}
+              onSafeZoneChange={setSafeZoneDraft}
+            />
             {overlappingFields.length > 0 ? (
               <MessageState
                 state="warning"
