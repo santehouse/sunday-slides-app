@@ -80,7 +80,9 @@ export function SlideCanvas({ input, layouts }: SlideCanvasProps) {
 
 
 function fontFormat(url: string): string {
-  const ext = url.split("?")[0]?.split(".").pop()?.toLowerCase();
+  // Inlined fonts arrive as data URIs; read the format from the MIME type instead of an extension.
+  const dataMime = /^data:font\/(woff2|woff|ttf|otf)/i.exec(url)?.[1]?.toLowerCase();
+  const ext = dataMime ?? url.split("?")[0]?.split(".").pop()?.toLowerCase();
   switch (ext) {
     case "woff":
       return "woff";

@@ -242,7 +242,10 @@ async function inlineCustomFonts(fonts: ResolvedFont[]): Promise<string> {
       throw new Error(`server.ts: failed to fetch font "${resolved.font.family}" (${resolved.url}): HTTP ${res.status}`);
     }
     const buf = Buffer.from(await res.arrayBuffer());
-    const mime = resolved.url.toLowerCase().endsWith(".woff") ? "font/woff" : "font/woff2";
+    const ext = resolved.url.toLowerCase().split("?")[0]?.split(".").pop() ?? "woff2";
+    const mime =
+      ({ woff: "font/woff", woff2: "font/woff2", ttf: "font/ttf", otf: "font/otf" } as Record<string, string>)[ext] ??
+      "font/woff2";
     inlined.push({ ...resolved, url: `data:${mime};base64,${buf.toString("base64")}` });
   }
   return buildFontFaceCss(inlined);

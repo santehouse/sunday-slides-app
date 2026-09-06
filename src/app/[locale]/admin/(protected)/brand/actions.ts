@@ -60,6 +60,11 @@ const FONT_MIME_EXT: Record<string, string> = {
   "font/woff2": "woff2",
   "application/font-woff": "woff",
   "application/font-woff2": "woff2",
+  "font/ttf": "ttf",
+  "font/otf": "otf",
+  "application/x-font-ttf": "ttf",
+  "application/x-font-opentype": "otf",
+  "font/sfnt": "ttf",
 };
 
 export type UploadFontFileResult = { ok: true; r2Key: string } | { ok: false; error: string };
@@ -68,14 +73,23 @@ export async function uploadFontFileAction(formData: FormData): Promise<UploadFo
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false, error: "missing_file" };
 
-  const ext =
-    FONT_MIME_EXT[file.type] ?? (file.name.endsWith(".woff2") ? "woff2" : file.name.endsWith(".woff") ? "woff" : null);
+  const lower = file.name.toLowerCase();
+  const byName = (["woff2", "woff", "ttf", "otf"] as const).find((e) => lower.endsWith(`.${e}`)) ?? null;
+  const ext = FONT_MIME_EXT[file.type] ?? byName;
   if (!ext) return { ok: false, error: "unsupported_file" };
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const id = randomUUID();
   const r2Key = keys.fonts(id, ext);
-  await putObject(r2Key, bytes, ext === "woff2" ? "font/woff2" : "font/woff");
+  const contentType =
+    ({ woff2: "font/woff2", woff: "font/woff", ttf: "font/ttf", otf: "font/otf" } as Record<string, string>)[ext] ??
+    "font/woff2";
+  try {
+    await putObject(r2Key, bytes, contentType);
+  } catch (error) {
+    console.error("uploadFontFileAction: storage failed", error);
+    return { ok: false, error: "storage_failed" };
+  }
   return { ok: true, r2Key };
 }
 

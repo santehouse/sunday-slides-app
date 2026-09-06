@@ -75,7 +75,11 @@ function UploadFontDialog({ open, onClose }: { open: boolean; onClose: () => voi
       if (result.ok) {
         setR2Key(result.r2Key);
       } else {
-        showToast({ state: "error", title: tCommon("failed"), message: tErrors("unsupportedFile") });
+        showToast({
+          state: "error",
+          title: tCommon("failed"),
+          message: result.error === "unsupported_file" ? tErrors("unsupportedFont") : tErrors("generic"),
+        });
       }
     });
   }
@@ -100,7 +104,7 @@ function UploadFontDialog({ open, onClose }: { open: boolean; onClose: () => voi
             title={t("uploadFont")}
             hint={t("uploadFontHelper")}
             chooseFileLabel={tCommon("upload")}
-            accept=".woff,.woff2,font/woff,font/woff2"
+            accept=".woff,.woff2,.ttf,.otf,font/woff,font/woff2,font/ttf,font/otf"
             onFile={handleFile}
             disabled={isPending}
           />

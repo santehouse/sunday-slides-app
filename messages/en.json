@@ -10,6 +10,7 @@
     "cancel": "Cancel",
     "continue": "Continue",
     "back": "Back",
+    "breadcrumb": "Breadcrumb",
     "close": "Close",
     "delete": "Delete",
     "duplicate": "Duplicate",
@@ -77,7 +78,8 @@
     "unauthorized": "You need to sign in to continue.",
     "validation": "Please check the highlighted fields.",
     "fileTooLarge": "That file is larger than {max} MB.",
-    "unsupportedFile": "Only DOCX or PDF files are supported."
+    "unsupportedFile": "Only DOCX or PDF files are supported.",
+    "unsupportedFont": "Only WOFF, WOFF2, TTF or OTF font files are supported."
   },
   "pin": {
     "title": "Sunday team access",
@@ -93,6 +95,13 @@
   "sunday": {
     "header": {
       "brandHome": "Go to the Sunday dashboard"
+    },
+    "tabs": {
+      "label": "Sunday sections",
+      "overview": "Overview",
+      "flow": "Sunday flow",
+      "runSheet": "Run sheet",
+      "needsReviewCount": "{count, plural, one {# slide needs review} other {# slides need review}}"
     },
     "dashboard": {
       "title": "{date, date, sundayLong}",
@@ -240,6 +249,7 @@
     },
     "upload": {
       "title": "Upload run sheet",
+      "subtitle": "Upload, review, and apply the run sheet for this Sunday",
       "manualUpload": "Manual upload",
       "helper": "Use this if the pastor’s email did not arrive or you received a revised file Sunday morning.",
       "dropHere": "Drop Word or PDF run sheet here",
@@ -546,7 +556,7 @@
       "googleFonts": "Google Fonts",
       "customFont": "Custom / licensed slot",
       "uploadFont": "Upload custom font",
-      "uploadFontHelper": "WOFF / WOFF2 · enter family, weight and style metadata after upload.",
+      "uploadFontHelper": "WOFF / WOFF2 / TTF / OTF · enter family, weight and style metadata after upload.",
       "family": "Family",
       "weight": "Weight",
       "style": "Style",
