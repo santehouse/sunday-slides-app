@@ -3,12 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Inbox, Plus, Trash2 } from "lucide-react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import type { Slide, Template } from "@/lib/domain/types";
 import { resolveSlideBackgroundHex } from "@/lib/sunday/background";
 import type { TemplateWithFields } from "@/lib/data";
 import type { ResolvedAsset } from "@/lib/renderer/types";
-import { serviceDateToDate } from "@/lib/utils/serviceDate";
 import { buildCheckItems } from "@/lib/sunday/checklist";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -50,7 +49,6 @@ export type SundayQueueClientProps = {
 
 export function SundayQueueClient({
   sundayId,
-  serviceDate,
   holdSeconds,
   slides,
   templatesById,
@@ -67,7 +65,6 @@ export function SundayQueueClient({
 }: SundayQueueClientProps) {
   const t = useTranslations("sunday.queue");
   const tCheck = useTranslations("sunday.simple.check");
-  const format = useFormatter();
   const { showToast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
@@ -178,7 +175,6 @@ export function SundayQueueClient({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-[28px] font-bold leading-tight text-fg">{t("title")}</h1>
-          <p className="text-caption text-fg-secondary">{format.dateTime(serviceDateToDate(serviceDate), "sundayLong")}</p>
         </div>
         <ExportMenu
           sundayId={sundayId}
