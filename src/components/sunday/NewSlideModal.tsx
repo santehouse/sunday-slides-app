@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Slide, Template } from "@/lib/domain/types";
 import type { TemplateWithFields } from "@/lib/data";
@@ -8,7 +8,7 @@ import type { ResolvedAsset } from "@/lib/renderer/types";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { SlideAddPanel } from "@/components/sunday/SlideAddPanel";
-import { SlideEditForm, type ApprovedColorOption } from "@/components/sunday/SlideEditForm";
+import { SlideEditForm, type ApprovedColorOption, type SlideEditFormBusy, type SlideEditFormHandle } from "@/components/sunday/SlideEditForm";
 import { createSlideFromTemplateAction } from "@/app/[locale]/(sunday)/sunday/actions";
 
 export type NewSlideModalProps = {
@@ -45,7 +45,10 @@ export function NewSlideModal({
 }: NewSlideModalProps) {
   const t = useTranslations("sunday.simple.add");
   const tCommon = useTranslations("common");
+  const tEdit = useTranslations("sunday.simple.edit");
   const [createdSlide, setCreatedSlide] = useState<Slide | null>(null);
+  const formRef = useRef<SlideEditFormHandle>(null);
+  const [busy, setBusy] = useState<SlideEditFormBusy>({ saving: false, duplicating: false });
 
   useEffect(() => {
     if (!open) {
@@ -71,10 +74,28 @@ export function NewSlideModal({
       size="lg"
       bareBody
       title={t("title")}
-      actions={<Button variant="secondary" onClick={onClose}>{tCommon("cancel")}</Button>}
+      actions={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            {tCommon("cancel")}
+          </Button>
+          {createdSlide ? (
+            <>
+              <Button variant="secondary" onClick={() => formRef.current?.duplicate()} loading={busy.duplicating}>
+                {tEdit("duplicate")}
+              </Button>
+              <Button variant="primary" onClick={() => formRef.current?.save()} loading={busy.saving}>
+                {tCommon("save")}
+              </Button>
+            </>
+          ) : null}
+        </>
+      }
     >
       {createdSlide ? (
         <SlideEditForm
+          ref={formRef}
+          onBusyChange={setBusy}
           slide={createdSlide}
           templates={templatesAsTemplates}
           assetsByTemplateId={assetsByTemplateId}

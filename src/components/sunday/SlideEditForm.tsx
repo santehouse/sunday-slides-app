@@ -7,7 +7,6 @@ import type { Slide, SlideContent, Template } from "@/lib/domain/types";
 import type { ResolvedAsset, SlideFitResult } from "@/lib/renderer/types";
 import { fitSlide } from "@/lib/renderer/fitText";
 import { createCanvasMeasurer, ensureFontsLoaded } from "@/lib/renderer/measure";
-import { Button } from "@/components/ui/Button";
 import { ColorSelect } from "@/components/ui/ColorSelect";
 import { Input } from "@/components/ui/Input";
 import { MessageState } from "@/components/ui/MessageState";
@@ -21,8 +20,14 @@ import { duplicateSlideAction, saveSlideAction } from "@/app/[locale]/(sunday)/s
 
 export type ApprovedColorOption = { id: string; nameEn: string; nameFr: string; hex: string };
 
+export type SlideEditFormBusy = { saving: boolean; duplicating: boolean };
+
 export type SlideEditFormHandle = {
   isDirty: () => boolean;
+  /** Saves the slide — driven by the host modal's sticky footer button. */
+  save: () => Promise<void>;
+  /** Duplicates the slide — driven by the host modal's sticky footer button. */
+  duplicate: () => Promise<void>;
 };
 
 export type SlideEditFormProps = {
@@ -35,6 +40,8 @@ export type SlideEditFormProps = {
   onSaved: (slide: Slide) => void;
   onDuplicated: (slide: Slide) => void;
   onDirtyChange?: (dirty: boolean) => void;
+  /** Lets the host modal show loading states on its footer Save / Duplicate buttons. */
+  onBusyChange?: (busy: SlideEditFormBusy) => void;
 };
 
 type BackgroundMode = "color" | "image";
@@ -52,11 +59,10 @@ function fitKind(fit: SlideFitResult | null): "success" | "warning" | "error" {
  * volunteer immediately types the text after picking a design).
  */
 export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>(function SlideEditForm(
-  { slide, templates, assetsByTemplateId, colors, safeZone, onSaved, onDuplicated, onDirtyChange },
+  { slide, templates, assetsByTemplateId, colors, safeZone, onSaved, onDuplicated, onDirtyChange, onBusyChange },
   ref,
 ) {
   const t = useTranslations("sunday.simple.edit");
-  const tCommon = useTranslations("common");
   const tSafeZones = useTranslations("sunday.safeZones");
   const locale = useLocale() as AppLocale;
   const { showToast } = useToast();
@@ -92,11 +98,17 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
   const currentSnapshot = JSON.stringify({ templateId, content, backgroundMode, approvedColorId, assetId, includeInVideo });
   const dirty = currentSnapshot !== savedSnapshot;
 
-  useImperativeHandle(ref, () => ({ isDirty: () => dirty }), [dirty]);
-
   useEffect(() => {
     onDirtyChange?.(dirty);
   }, [dirty, onDirtyChange]);
+
+  useEffect(() => {
+    onBusyChange?.({ saving, duplicating });
+  }, [saving, duplicating, onBusyChange]);
+
+  // `handleSave` / `handleDuplicate` are function declarations below (hoisted); the host
+  // modal's sticky footer drives them through this handle.
+  useImperativeHandle(ref, () => ({ isDirty: () => dirty, save: handleSave, duplicate: handleDuplicate }));
 
   const contentKey = JSON.stringify(content);
   useEffect(() => {
@@ -287,15 +299,6 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
             />
           </div>
         </div>
-      </div>
-
-      <div className="col-span-full flex items-center justify-end gap-2.5 border-t border-border pt-4">
-        <Button variant="secondary" onClick={handleDuplicate} loading={duplicating}>
-          {t("duplicate")}
-        </Button>
-        <Button variant="primary" onClick={handleSave} loading={saving}>
-          {tCommon("save")}
-        </Button>
       </div>
     </div>
   );

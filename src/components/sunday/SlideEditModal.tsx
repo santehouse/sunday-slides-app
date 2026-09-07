@@ -6,7 +6,7 @@ import type { Slide, Template } from "@/lib/domain/types";
 import type { ResolvedAsset } from "@/lib/renderer/types";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog, Dialog } from "@/components/ui/Dialog";
-import { SlideEditForm, type ApprovedColorOption, type SlideEditFormHandle } from "@/components/sunday/SlideEditForm";
+import { SlideEditForm, type ApprovedColorOption, type SlideEditFormBusy, type SlideEditFormHandle } from "@/components/sunday/SlideEditForm";
 
 export type SlideEditModalProps = {
   open: boolean;
@@ -26,6 +26,7 @@ export function SlideEditModal({ open, slide, templates, assetsByTemplateId, col
   const tCommon = useTranslations("common");
   const formRef = useRef<SlideEditFormHandle>(null);
   const [dirty, setDirty] = useState(false);
+  const [busy, setBusy] = useState<SlideEditFormBusy>({ saving: false, duplicating: false });
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
 
   useEffect(() => {
@@ -54,10 +55,25 @@ export function SlideEditModal({ open, slide, templates, assetsByTemplateId, col
         size="lg"
         bareBody
         title={slide.headline || t("untitledSlide")}
-        actions={<Button variant="secondary" onClick={requestClose}>{tCommon("cancel")}</Button>}
+        actions={
+          // Save / Duplicate live in the sticky footer so they never scroll out of view
+          // behind the two-column body on short laptop screens.
+          <>
+            <Button variant="secondary" onClick={requestClose}>
+              {tCommon("cancel")}
+            </Button>
+            <Button variant="secondary" onClick={() => formRef.current?.duplicate()} loading={busy.duplicating}>
+              {t("duplicate")}
+            </Button>
+            <Button variant="primary" onClick={() => formRef.current?.save()} loading={busy.saving}>
+              {tCommon("save")}
+            </Button>
+          </>
+        }
       >
         <SlideEditForm
           ref={formRef}
+          onBusyChange={setBusy}
           slide={slide}
           templates={templates}
           assetsByTemplateId={assetsByTemplateId}
