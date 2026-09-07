@@ -164,15 +164,17 @@ export async function rememberMapping(slideId: string, templateId: string): Prom
  * Removes a slide, refusing when it's a structural slide whose default is
  * `insertionRule: "always"` or `removableBySundayTeam: false` (section 19).
  * Renumbers the remaining deck (contiguous `sortOrder`) on success.
+ * `force` skips that guard — "Clear queue" empties the whole service, Welcome and
+ * "See you next week" included (the next import puts them back).
  */
-export async function removeSlide(slideId: string): Promise<RemoveSlideResult> {
+export async function removeSlide(slideId: string, opts: { force?: boolean } = {}): Promise<RemoveSlideResult> {
   const db = getDb();
   const slide = await db.getSlide(slideId);
   if (!slide) {
     return { ok: false, error: "not_removable" };
   }
 
-  if (slide.isStructural) {
+  if (slide.isStructural && !opts.force) {
     const defaults = await db.listStructuralDefaults();
     const def = slide.structuralDefaultId ? defaults.find((d) => d.id === slide.structuralDefaultId) : undefined;
     const blocked = def ? def.insertionRule === "always" || !def.removableBySundayTeam : true;

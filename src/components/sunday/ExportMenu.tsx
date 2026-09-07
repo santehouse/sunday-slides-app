@@ -10,6 +10,7 @@ import type { ExportBlocked } from "@/lib/sunday/contracts";
 import { formatSlideRange, parseSlideRange } from "@/lib/engines/exportRange";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
 import { DurationStepper } from "@/components/ui/DurationStepper";
 import { Input } from "@/components/ui/Input";
 import { MessageState } from "@/components/ui/MessageState";
@@ -194,21 +195,35 @@ export function ExportMenu({ sundayId, slides, templatesById, colorHexById, asse
             type="button"
             onClick={() => handleQuickDownload("jpg")}
             disabled={total === 0 || downloadingFormat !== null}
-            className="flex items-center gap-3 rounded-[10px] p-3 text-left hover:bg-surface-subtle disabled:pointer-events-none disabled:opacity-50"
+            aria-busy={downloadingFormat === "jpg"}
+            className={cn(
+              "flex items-center gap-3 rounded-[10px] p-3 text-left hover:bg-surface-subtle disabled:pointer-events-none",
+              // The row being made stays fully visible with its spinner; only the other row dims.
+              downloadingFormat === "jpg" ? "bg-surface-subtle" : "disabled:opacity-50",
+            )}
           >
             <Images aria-hidden="true" size={24} className="shrink-0 text-primary" />
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="text-label font-bold text-fg">{t("picturesTitle")}</span>
               <span className="truncate text-caption text-fg-secondary">{t("picturesSubtitle", { count: total })}</span>
             </span>
-            {downloadingFormat === "jpg" ? <span className="text-caption text-fg-secondary">{t("making")}</span> : null}
+            {downloadingFormat === "jpg" ? (
+              <span className="flex shrink-0 items-center gap-2 text-caption font-bold text-fg-secondary">
+                <Spinner size={18} />
+                {t("making")}
+              </span>
+            ) : null}
           </button>
 
           <button
             type="button"
             onClick={() => handleQuickDownload("mp4")}
             disabled={total === 0 || downloadingFormat !== null}
-            className="flex items-center gap-3 rounded-[10px] p-3 text-left hover:bg-surface-subtle disabled:pointer-events-none disabled:opacity-50"
+            aria-busy={downloadingFormat === "mp4"}
+            className={cn(
+              "flex items-center gap-3 rounded-[10px] p-3 text-left hover:bg-surface-subtle disabled:pointer-events-none",
+              downloadingFormat === "mp4" ? "bg-surface-subtle" : "disabled:opacity-50",
+            )}
           >
             <Film aria-hidden="true" size={24} className="shrink-0 text-primary" />
             <span className="flex min-w-0 flex-1 flex-col">
@@ -218,7 +233,12 @@ export function ExportMenu({ sundayId, slides, templatesById, colorHexById, asse
               </span>
               {hiddenFromVideo > 0 ? <span className="text-caption text-fg-secondary">{t("hiddenFromVideo", { count: hiddenFromVideo })}</span> : null}
             </span>
-            {downloadingFormat === "mp4" ? <span className="text-caption text-fg-secondary">{t("making")}</span> : null}
+            {downloadingFormat === "mp4" ? (
+              <span className="flex shrink-0 items-center gap-2 text-caption font-bold text-fg-secondary">
+                <Spinner size={18} />
+                {t("making")}
+              </span>
+            ) : null}
           </button>
 
           <div className="border-t border-border pt-3">
