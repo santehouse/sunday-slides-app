@@ -12,8 +12,9 @@ test.describe("queue screen", () => {
     await loginPin(page);
     await expect(page).toHaveURL(/\/sunday$/);
 
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("This service’s slides");
-    await expect(page.getByText("Sunday, September 6")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("This service’s panels");
+    // No date under the title: the queue is one running service, not a dated deck.
+    await expect(page.getByText("Sunday, September 6")).toHaveCount(0);
 
     await expect(page.locator("[data-slide-card]")).toHaveCount(8);
 
@@ -57,7 +58,7 @@ test.describe("queue screen", () => {
 
   test("FR: title, review strip and tags are translated", async ({ page }) => {
     await loginPin(page, { locale: "fr" });
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Diapositives de ce culte");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Panneaux de ce culte");
     await expect(page.getByRole("alert").filter({ hasText: "a besoin d’un coup d’œil" })).toBeVisible();
     await expect(page.locator("[data-slide-card]").filter({ hasText: /veillée des hommes/i }).getByText("À vérifier", { exact: true })).toBeVisible();
   });

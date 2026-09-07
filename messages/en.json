@@ -432,7 +432,7 @@
       }
     },
     "queue": {
-      "title": "This service’s slides",
+      "title": "This service’s panels",
       "dateCaption": "{date, date, sundayLong}",
       "clear": "Clear queue",
       "previewLabel": "Preview",
