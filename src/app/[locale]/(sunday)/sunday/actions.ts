@@ -57,7 +57,8 @@ export async function clearQueueAction(sundayId: string): Promise<{ removed: num
   let removed = 0;
   let kept = 0;
   for (const slide of slides) {
-    const result = await removeSlide(slide.id);
+    // Clear means clear: the structural slides go too (an import re-adds them).
+    const result = await removeSlide(slide.id, { force: true });
     if (result.ok) removed += 1;
     else kept += 1;
   }

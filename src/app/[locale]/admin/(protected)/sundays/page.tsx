@@ -25,9 +25,14 @@ export default async function SundaysPage({
   setRequestLocale(locale);
 
   const db = getDb();
-  const [sundays, settings] = await Promise.all([db.listSundays(), db.getSettings()]);
+  const [sundays, settings, recentRunSheets] = await Promise.all([db.listSundays(), db.getSettings(), db.listRecentRunSheets(20)]);
 
   return (
-    <SundaysClient sundays={sundays} inboundEmail={settings.inboundEmail} initialUploadOpen={upload === "1"} />
+    <SundaysClient
+      sundays={sundays}
+      recentRunSheets={recentRunSheets}
+      inboundEmail={settings.inboundEmail}
+      initialUploadOpen={upload === "1"}
+    />
   );
 }
