@@ -9,11 +9,14 @@ import "server-only";
  * asset/font resolution never drifts between preview and export.
  */
 import { getDb } from "@/lib/data";
+import { resolveSlideBackgroundHex } from "@/lib/sunday/background";
 import { isMockMode } from "@/lib/env";
 import { mockAssetUrl } from "@/lib/data/mockSeed";
-import { getSignedReadUrl } from "@/lib/r2/client";
+import { getObjectStore, getSignedReadUrl } from "@/lib/r2/client";
+import { isSlideImageKey } from "@/lib/renderer/imageUrls";
+import { effectiveFieldText } from "@/lib/renderer/fitText";
 import { resolveFonts } from "@/lib/fonts/resolve";
-import type { Asset, Slide } from "@/lib/domain/types";
+import type { Asset, Slide, Template } from "@/lib/domain/types";
 import type { RenderSlideInput, ResolvedAsset } from "@/lib/renderer/types";
 
 export interface BuildRenderInputOptions {
@@ -45,6 +48,30 @@ async function resolveAssets(assetIds: (string | null)[]): Promise<ResolvedAsset
   return resolved;
 }
 
+const IMAGE_MIME_BY_EXT: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+
+/**
+ * Image-field pictures as `data:` URIs so the headless page needs no network access for
+ * them (fonts are inlined the same way). A missing picture just leaves the slot empty.
+ */
+async function resolveImageUrls(template: Template, slide: Slide): Promise<Record<string, string>> {
+  const content = { headline: slide.headline, ...slide.content };
+  const urls: Record<string, string> = {};
+  for (const field of template.fields) {
+    if (field.fieldType !== "image") continue;
+    const key = effectiveFieldText(field, content);
+    if (!key || !isSlideImageKey(key) || urls[key]) continue;
+    try {
+      const bytes = await getObjectStore().getObject(key);
+      const ext = key.split(".").pop()?.toLowerCase() ?? "jpg";
+      urls[key] = `data:${IMAGE_MIME_BY_EXT[ext] ?? "image/jpeg"};base64,${Buffer.from(bytes).toString("base64")}`;
+    } catch (error) {
+      console.error(`render-input: image field picture "${key}" could not be read`, error);
+    }
+  }
+  return urls;
+}
+
 /**
  * Builds the full render input for `slide`: its (fielded) template, the
  * effective background color hex, resolved background assets, resolved
@@ -59,14 +86,8 @@ export async function buildRenderInput(slide: Slide, opts: BuildRenderInputOptio
     throw new Error(`buildRenderInput: template ${slide.templateId} not found for slide ${slide.id}`);
   }
 
-  let backgroundColorHex: string | null = null;
-  if (slide.approvedColorId) {
-    const colors = await db.listApprovedColors();
-    backgroundColorHex = colors.find((c) => c.id === slide.approvedColorId)?.hex ?? null;
-  }
-  if (!backgroundColorHex && template.backgroundType === "color") {
-    backgroundColorHex = template.backgroundValue;
-  }
+  const colors = slide.approvedColorId && template.allowTeamBackgroundChoice ? await db.listApprovedColors() : [];
+  const backgroundColorHex = resolveSlideBackgroundHex(template, slide, (id) => colors.find((c) => c.id === id)?.hex);
 
   const templateBackgroundAssetId = template.backgroundType === "image" ? template.backgroundValue : null;
   const assets = await resolveAssets([slide.assetId, templateBackgroundAssetId]);
@@ -77,12 +98,15 @@ export async function buildRenderInput(slide: Slide, opts: BuildRenderInputOptio
 
   const settings = await db.getSettings();
 
+  const imageUrls = await resolveImageUrls(template, slide);
+
   return {
     template,
     slide,
     backgroundColorHex,
     assets,
     fonts,
+    imageUrls,
     safeZone: settings.safeZone,
     showSafeZone: opts.showSafeZone ?? false,
     safeZoneLabel: opts.safeZoneLabel,

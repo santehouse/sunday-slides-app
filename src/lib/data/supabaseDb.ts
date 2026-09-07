@@ -5,6 +5,7 @@ import "server-only";
  * (Sunday session cookie, or an authenticated + `is_admin()` Supabase user).
  */
 import { getServiceClient } from "@/lib/supabase/service";
+import { nextSundayOnOrAfter } from "@/lib/utils/serviceDate";
 import type {
   AnnouncementAliasRow,
   AnnouncementMappingRow,
@@ -251,17 +252,13 @@ export function createSupabaseDb(): Db {
       return sundayFromRow(assertData(data, error, "getOrCreateSundayByDate"));
     },
     async getNextSunday(fromDate: string, opts): Promise<Sunday | null> {
-      const { data, error } = await db
-        .from("sundays")
-        .select("*")
-        .gte("service_date", fromDate)
-        .order("service_date", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw new Error(`getNextSunday: ${error.message}`);
-      if (data) return sundayFromRow(data);
+      // "The current service" is the coming Sunday's exact date — never a Sunday created
+      // further ahead (a special event, a pre-planned deck) just because it sorts first.
+      const target = nextSundayOnOrAfter(fromDate);
+      const existing = await this.getSundayByDate(target);
+      if (existing) return existing;
       if (!opts?.create) return null;
-      return this.getOrCreateSundayByDate(fromDate);
+      return this.getOrCreateSundayByDate(target);
     },
     async getAdjacentSundayDates(date: string): Promise<AdjacentSundayDates> {
       const [{ data: beforeRows }, { data: afterRows }] = await Promise.all([
@@ -342,8 +339,18 @@ export function createSupabaseDb(): Db {
       if (patch.parsedJson !== undefined) row.parsed_json = patch.parsedJson as unknown as Json;
       if (patch.modelOutput !== undefined) row.model_output = patch.modelOutput as Json;
       if (patch.processedAt !== undefined) row.processed_at = patch.processedAt;
+      if (patch.openedAt !== undefined) row.opened_at = patch.openedAt;
       const { data, error } = await db.from("run_sheets").update(row).eq("id", id).select("*").single();
       return runSheetFromRow(assertData(data, error, "updateRunSheet"));
+    },
+    async listRecentRunSheets(limit: number): Promise<RunSheet[]> {
+      const { data, error } = await db
+        .from("run_sheets")
+        .select("*")
+        .order("received_at", { ascending: false })
+        .limit(limit);
+      if (error) throw new Error(`listRecentRunSheets: ${error.message}`);
+      return (data ?? []).map(runSheetFromRow);
     },
     async findRunSheetByInboundEventId(eventId: string): Promise<RunSheet | null> {
       const { data, error } = await db.from("run_sheets").select("*").eq("inbound_event_id", eventId).maybeSingle();
@@ -471,7 +478,7 @@ export function createSupabaseDb(): Db {
       const rows = fields.map((f) => ({
         template_id: templateId,
         field_key: f.fieldKey,
-        field_type: "text",
+        field_type: f.fieldType ?? "text",
         label_en: f.labelEn,
         label_fr: f.labelFr,
         team_editable: f.teamEditable,
@@ -494,6 +501,12 @@ export function createSupabaseDb(): Db {
         overflow_mode: f.overflowMode,
         text_transform: f.textTransform,
         sort_order: f.sortOrder,
+        default_value: f.defaultValue ?? "",
+        rotation: f.rotation ?? 0,
+        box_color: f.boxColor ?? null,
+        box_padding: f.boxPadding ?? 0,
+        frame_color: f.frameColor ?? null,
+        frame_width: f.frameWidth ?? 0,
       }));
       const { data, error } = await db.from("template_fields").insert(rows).select("*");
       if (error) throw new Error(`upsertTemplateFields (insert): ${error.message}`);

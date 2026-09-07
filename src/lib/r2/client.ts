@@ -105,6 +105,8 @@ export const keys = {
   templates: (id: string, ext: string) => `templates/${id}.${ext}`,
   assets: (id: string, ext: string) => `assets/${id}.${ext}`,
   fonts: (id: string, ext: string) => `fonts/${id}.${ext}`,
+  /** Pictures the Sunday team drops into a template's image field (speaker photos…). */
+  slideImages: (id: string, ext: string) => `slide-images/${id}.${ext}`,
 
   // Temporary — expired by the R2 lifecycle rule in ./lifecycle.ts.
   runSheets: (sundayDate: string, id: string, ext: string) => `run-sheets/${sundayDate}/${id}.${ext}`,

@@ -20,7 +20,7 @@ export async function signInFormAction(_prev: SignInFormState, formData: FormDat
     if (!email) return { mode: "invalid_credentials" };
     const result = await sendMagicLink(email, `${appUrl()}/api/auth/callback`);
     if (!result.ok) return { mode: "magic_link_error" };
-    return { mode: "magic_link_sent", email };
+    return { mode: "magic_link_sent", email, mock: result.mock };
   }
 
   const password = String(formData.get("password") ?? "");

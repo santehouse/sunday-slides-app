@@ -1,10 +1,8 @@
-import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { Resend } from "resend";
 import { getDb } from "@/lib/data";
 import { env, isProduction } from "@/lib/env";
-import { keys, getObjectStore } from "@/lib/r2/client";
-import { ingestRunSheet, applyRunSheet } from "@/lib/sunday/intake";
+import { ingestRunSheet } from "@/lib/sunday/intake";
 import {
   pickRunSheetAttachment,
   resolveTargetSundayDate,
@@ -45,11 +43,6 @@ function collectSvixHeaders(request: NextRequest): Record<string, string> {
     if (value) headers[key] = value;
   }
   return headers;
-}
-
-function extensionFor(mimeType: string, filename: string): "docx" | "pdf" {
-  if (mimeType.toLowerCase() === "application/pdf" || filename.toLowerCase().endsWith(".pdf")) return "pdf";
-  return "docx";
 }
 
 /** Fetches an attachment's bytes — inline base64 when present, else via the Resend API. */
@@ -156,32 +149,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   );
   const filename = sanitizeFilename(picked.attachment.filename);
 
-  if (!settings.autoProcessInbound) {
-    // Store it and create the run sheet record only — a human applies it from the UI.
-    const sunday = await db.getOrCreateSundayByDate(targetDate);
-    const r2Key = keys.runSheets(sunday.serviceDate, randomUUID(), extensionFor(chosenMeta.content_type, filename));
-    try {
-      await getObjectStore().putObject(r2Key, bytes, chosenMeta.content_type);
-    } catch (err) {
-      console.error("api/inbound/resend: failed to store attachment", err);
-      await db.recordSystemCheck("inbound_store_failed", "error", {
-        emailId: data.email_id,
-        message: err instanceof Error ? err.message : String(err),
-      });
-      return NextResponse.json({ ok: true });
-    }
-    const runSheet = await db.createRunSheet({
-      sundayId: sunday.id,
-      sourceType: "email",
-      originalFilename: filename,
-      mimeType: chosenMeta.content_type,
-      r2Key,
-      parseStatus: "queued",
-      inboundEventId: data.email_id,
-    });
-    return NextResponse.json({ ok: true, runSheetId: runSheet.id });
-  }
-
+  // Store the attachment and create the run sheet with parseStatus "queued" only — no
+  // extraction/parse, no auto-apply. A Sunday Team member parses it on demand from the
+  // Import modal's "Received files" list ("Use this file") — the single-screen IA always
+  // reviews before applying, so there is no "quiet auto-apply" path any more.
   const runSheet = await ingestRunSheet({
     bytes,
     filename,
@@ -189,25 +160,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     sourceType: "email",
     sundayDate: targetDate,
     inboundEventId: data.email_id,
+    parse: false,
   });
-
-  // First sheet of the week (no slides yet) is auto-applied ("Added to flow" per brief
-  // §16); if the Sunday already has a deck, the team applies it explicitly from the UI.
-  if (runSheet.parseStatus === "ready_to_apply" || runSheet.parseStatus === "needs_review") {
-    const existingSlides = await db.listSlidesForSunday(runSheet.sundayId);
-    if (existingSlides.length === 0) {
-      try {
-        await applyRunSheet(runSheet.id, "replace");
-      } catch (err) {
-        console.error("api/inbound/resend: auto-apply failed", err);
-        await db.recordSystemCheck("inbound_auto_apply_failed", "error", {
-          emailId: data.email_id,
-          runSheetId: runSheet.id,
-          message: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
-  }
 
   return NextResponse.json({ ok: true, runSheetId: runSheet.id });
 }

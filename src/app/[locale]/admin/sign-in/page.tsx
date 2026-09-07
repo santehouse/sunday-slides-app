@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { SignInForm } from "./SignInForm";
 
 // Reads settings/session at request time — never prerender against the database at build.
@@ -36,7 +37,11 @@ export default async function AdminSignInPage({
         <p className="max-w-[470px] text-[15px] leading-[22px]">{t("heroBody")}</p>
       </aside>
 
-      <main className="flex flex-1 items-center justify-center px-6 py-12">
+      <main className="relative flex flex-1 items-center justify-center px-6 py-12">
+        {/* QA: the language switch is a screen-level control, not a sign-in option. */}
+        <div className="absolute right-6 top-6">
+          <LanguageSelector size="md" />
+        </div>
         <SignInForm />
       </main>
     </div>

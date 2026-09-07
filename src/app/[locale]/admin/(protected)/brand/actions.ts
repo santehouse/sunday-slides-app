@@ -98,10 +98,17 @@ export async function createCustomFontAction(input: {
   weight: number;
   style: FontStyle;
   r2Key: string;
-}): Promise<{ ok: boolean; font?: FontRecord }> {
+}): Promise<{ ok: true; font: FontRecord } | { ok: false; error: "variant_exists" }> {
   const db = getDb();
+  // One record per (family, weight, style) — the database enforces it, but a clear
+  // answer beats a constraint error: the admin picks another weight/style or deletes
+  // the existing variant first. Nothing is ever silently replaced.
+  const existing = (await db.listFonts()).find(
+    (f) => f.family.trim().toLowerCase() === input.family.trim().toLowerCase() && f.weight === input.weight && f.style === input.style,
+  );
+  if (existing) return { ok: false, error: "variant_exists" };
   const font = await db.createFont({
-    family: input.family,
+    family: input.family.trim(),
     source: "custom",
     r2Key: input.r2Key,
     weight: input.weight,

@@ -6,6 +6,7 @@ import "server-only";
  * this mapping", and slide removal (with the structural-slide guard).
  */
 import { getDb, normalizeAlias } from "@/lib/data";
+import { stripInlineMarkup } from "@/lib/renderer/engine";
 import type { Slide, SlideBackgroundMode, SlideContent, SlideStatus } from "@/lib/domain/types";
 
 export type RemoveSlideResult = { ok: true } | { ok: false; error: "not_removable" };
@@ -24,10 +25,14 @@ export async function createSlideFromTemplate(sundayId: string, templateId: stri
     throw new Error(`createSlideFromTemplate: template ${templateId} not found`);
   }
 
+  // Editable fields start from the template's default text (image fields start empty);
+  // locked fields always render their default and need no slide entry.
   const content: SlideContent = {};
   for (const field of template.fields) {
-    if (field.teamEditable && field.fieldKey !== "headline") content[field.fieldKey] = "";
+    if (!field.teamEditable || field.fieldKey === "headline") continue;
+    content[field.fieldKey] = field.fieldType === "image" ? "" : field.defaultValue;
   }
+  const headlineField = template.fields.find((f) => f.fieldKey === "headline");
 
   const status: SlideStatus = template.fields.some((f) => f.required) ? "invalid" : "ready";
 
@@ -35,8 +40,12 @@ export async function createSlideFromTemplate(sundayId: string, templateId: stri
   let approvedColorId: string | null = null;
   let assetId: string | null = null;
   if (backgroundMode === "color") {
-    const enabledColors = await db.listApprovedColors({ enabledOnly: true });
-    approvedColorId = enabledColors[0]?.id ?? null;
+    // Only templates that let the team pick a colour start from an approved colour;
+    // locked templates paint their own `backgroundValue` (see lib/sunday/background.ts).
+    if (template.allowTeamBackgroundChoice) {
+      const enabledColors = await db.listApprovedColors({ enabledOnly: true });
+      approvedColorId = enabledColors[0]?.id ?? null;
+    }
   } else {
     assetId = template.backgroundValue;
   }
@@ -44,7 +53,7 @@ export async function createSlideFromTemplate(sundayId: string, templateId: stri
   return db.createSlide({
     sundayId,
     templateId,
-    headline: "",
+    headline: headlineField?.teamEditable ? stripInlineMarkup(headlineField.defaultValue) : "",
     content,
     assetId,
     backgroundMode,

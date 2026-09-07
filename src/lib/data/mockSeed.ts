@@ -11,7 +11,9 @@
  * stable in-memory ids; scripts/seed.ts upserts and reads back Supabase uuids).
  */
 import bcrypt from "bcryptjs";
+import { BRAND_ASSET_NAMES, BRAND_ASSET_SLUGS, BRAND_TEMPLATE_SEEDS, BRAND_TEMPLATE_SLUGS } from "./brandTemplates";
 import type {
+  FieldType,
   AssetCategory,
   AssetStatus,
   BackgroundType,
@@ -186,6 +188,34 @@ export const ASSET_SEEDS: AssetSeed[] = [
     height: 1080,
     color: "#0e7490",
   },
+  // Brand template backgrounds (real photos are uploaded on production — see brandTemplates.ts).
+  {
+    slug: BRAND_ASSET_SLUGS.annualTheme,
+    nameEn: BRAND_ASSET_NAMES.annualTheme.nameEn,
+    nameFr: BRAND_ASSET_NAMES.annualTheme.nameFr,
+    category: "backgrounds",
+    width: 1920,
+    height: 1080,
+    color: "#4b6a86",
+  },
+  {
+    slug: BRAND_ASSET_SLUGS.baptisms,
+    nameEn: BRAND_ASSET_NAMES.baptisms.nameEn,
+    nameFr: BRAND_ASSET_NAMES.baptisms.nameFr,
+    category: "special",
+    width: 1920,
+    height: 1080,
+    color: "#2f5a6b",
+  },
+  {
+    slug: BRAND_ASSET_SLUGS.conference,
+    nameEn: BRAND_ASSET_NAMES.conference.nameEn,
+    nameFr: BRAND_ASSET_NAMES.conference.nameFr,
+    category: "backgrounds",
+    width: 1920,
+    height: 1080,
+    color: "#3a2f10",
+  },
 ];
 
 /**
@@ -250,6 +280,13 @@ export interface TemplateFieldSeed {
   overflowMode: OverflowMode;
   textTransform: "none" | "uppercase";
   sortOrder: number;
+  fieldType?: FieldType;
+  defaultValue?: string;
+  rotation?: number;
+  boxColor?: string | null;
+  boxPadding?: number;
+  frameColor?: string | null;
+  frameWidth?: number;
 }
 
 /** The standard headline/line1/line2 layout shared by nearly every template. */
@@ -348,7 +385,8 @@ export interface TemplateSeed {
   allowedAssetSlugs: string[];
 }
 
-export const TEMPLATE_SEEDS: TemplateSeed[] = [
+/** Demo templates that predate the brand rebuild; brand slugs are overridden below. */
+const DEMO_TEMPLATE_SEEDS: TemplateSeed[] = [
   {
     slug: "welcome",
     nameEn: "Welcome",
@@ -533,6 +571,12 @@ export const TEMPLATE_SEEDS: TemplateSeed[] = [
   },
 ];
 
+/** Brand templates (rebuilt from the Canva masters) first, then the remaining demo templates. */
+export const TEMPLATE_SEEDS: TemplateSeed[] = [
+  ...BRAND_TEMPLATE_SEEDS,
+  ...DEMO_TEMPLATE_SEEDS.filter((t) => !BRAND_TEMPLATE_SLUGS.has(t.slug)),
+];
+
 // ---------------------------------------------------------------------------
 // Announcement mappings + suggestions
 // ---------------------------------------------------------------------------
@@ -595,7 +639,9 @@ export const MAPPING_SEEDS: MappingSeed[] = [
   {
     canonicalName: "Culte d'adoration",
     canonicalKey: "culte-d-adoration",
-    templateSlug: "rendez-vous",
+    // A one-off worship announcement is a plain announcement — the weekly schedule
+    // template ("rendez-vous") is the structural slide, not a mapping target.
+    templateSlug: DEFAULT_TEMPLATE_SLUG,
     aliases: [
       { alias: "Sunday worship", locale: "en" },
       { alias: "Worship service", locale: "en" },
@@ -654,7 +700,14 @@ export const STRUCTURAL_DEFAULT_SEEDS: StructuralDefaultSeed[] = [
     sortOrder: 0,
     removableBySundayTeam: true,
     includeInVideoDefault: true,
-    defaultContent: { headline: "RENDEZ-VOUS DE LA SEMAINE" },
+    defaultContent: {
+      headline: "Mercredi",
+      line1: "*Étude biblique* 19h00 à 20h00",
+      line2: "Les portes ouvrent dès 18h pour la prière libre",
+      day2: "Dimanche",
+      event2: "Culte d’adoration",
+      time2: "10h",
+    },
   },
   {
     nameEn: "See you next week",
@@ -831,7 +884,14 @@ export const SUNDAY_SEEDS: SundaySeed[] = [
       {
         templateSlug: "rendez-vous",
         headline: "RENDEZ-VOUS DE LA SEMAINE",
-        content: { headline: "RENDEZ-VOUS DE LA SEMAINE" },
+        content: {
+          headline: "Mercredi",
+          line1: "*Étude biblique* 19h00 à 20h00",
+          line2: "Les portes ouvrent dès 18h pour la prière libre",
+          day2: "Dimanche",
+          event2: "Culte d’adoration",
+          time2: "10h",
+        },
         backgroundMode: "color",
         sortOrder: 2,
         isStructural: true,
@@ -941,7 +1001,14 @@ export const SUNDAY_SEEDS: SundaySeed[] = [
       {
         templateSlug: "rendez-vous",
         headline: "RENDEZ-VOUS DE LA SEMAINE",
-        content: { headline: "RENDEZ-VOUS DE LA SEMAINE" },
+        content: {
+          headline: "Mercredi",
+          line1: "*Étude biblique* 19h00 à 20h00",
+          line2: "Les portes ouvrent dès 18h pour la prière libre",
+          day2: "Dimanche",
+          event2: "Culte d’adoration",
+          time2: "10h",
+        },
         backgroundMode: "color",
         sortOrder: 2,
         isStructural: true,
@@ -1032,7 +1099,14 @@ export const SUNDAY_SEEDS: SundaySeed[] = [
       {
         templateSlug: "rendez-vous",
         headline: "RENDEZ-VOUS DE LA SEMAINE",
-        content: { headline: "RENDEZ-VOUS DE LA SEMAINE" },
+        content: {
+          headline: "Mercredi",
+          line1: "*Étude biblique* 19h00 à 20h00",
+          line2: "Les portes ouvrent dès 18h pour la prière libre",
+          day2: "Dimanche",
+          event2: "Culte d’adoration",
+          time2: "10h",
+        },
         backgroundMode: "color",
         sortOrder: 1,
         isStructural: true,
@@ -1110,7 +1184,14 @@ export const SUNDAY_SEEDS: SundaySeed[] = [
       {
         templateSlug: "rendez-vous",
         headline: "RENDEZ-VOUS DE LA SEMAINE",
-        content: { headline: "RENDEZ-VOUS DE LA SEMAINE" },
+        content: {
+          headline: "Mercredi",
+          line1: "*Étude biblique* 19h00 à 20h00",
+          line2: "Les portes ouvrent dès 18h pour la prière libre",
+          day2: "Dimanche",
+          event2: "Culte d’adoration",
+          time2: "10h",
+        },
         backgroundMode: "color",
         sortOrder: 2,
         isStructural: true,

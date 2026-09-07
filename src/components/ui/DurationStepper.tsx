@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Minus, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/cn";
@@ -18,6 +18,10 @@ export type DurationStepperProps = {
   max?: number;
   step?: number;
   size?: DurationStepperSize;
+  /** Overrides the built-in "Default slide duration" caption — e.g. Step 3's plainer
+      "Seconds per slide in the video" wording. Pass `false` to render no caption at all
+      (the caller supplies its own label alongside the control). */
+  label?: ReactNode | false;
   className?: string;
 };
 
@@ -29,6 +33,7 @@ export function DurationStepper({
   max = 30,
   step: stepBy = 1,
   size = "md",
+  label,
   className,
 }: DurationStepperProps) {
   const t = useTranslations("sunday.dashboard");
@@ -55,8 +60,8 @@ export function DurationStepper({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <p className={cn(config.label, "text-fg-secondary")}>{t("defaultSlideDuration")}</p>
-      <div className="flex flex-1 items-center justify-between">
+      {label === false ? null : <p className={cn(config.label, "text-fg-secondary")}>{label ?? t("defaultSlideDuration")}</p>}
+      <div className="flex items-center gap-3">
         <p className={cn(config.value, "font-bold text-fg")}>{tCommon("seconds", { count: value })}</p>
         <div className="flex items-center gap-2">
           <IconButton

@@ -17,10 +17,18 @@ ingestRunSheet(input)
   ├─ dedupe by inboundEventId (email retries never create a second run sheet)
   ├─ store original bytes (R2, or the local filesystem store in mock/no-R2 mode)
   ├─ create the run sheet row (queued → processing)
+  ├─ input.parse === false? return here — stays "queued", nothing extracted/parsed yet
   ├─ processRunSheet()  — @/lib/run-sheets/pipeline (extract → parse), unchanged
   │    └─ parse: real OpenAI (hasOpenAI()) or the offline heuristic fallback
   └─ store extractedText/parsedJson/modelOutput, status ready_to_apply | needs_review | failed
 ```
+
+`input.parse` defaults to `true`. The Import modal's manual upload passes `true` (parses right
+away so "Received files" can show ready/needs-review state immediately); `/api/inbound/resend`
+passes `false` — inbound email only stores the attachment and queues the run sheet, deferring
+extraction/parsing (and any apply) until a Sunday Team member picks "Use this file" from the
+Import modal, which calls `reprocessRunSheet` on demand when `parseStatus === "queued"`. There
+is no more auto-apply on inbound intake — the single-screen IA always reviews before applying.
 
 `ingestRunSheet` never throws for an expected failure (bad file, extraction error, parse
 error) — it always returns the run sheet record, `failed` with `parseError` set instead.
@@ -97,10 +105,11 @@ or an unsupported attachment set never blocks the response: it's recorded as a
 `system_checks` row (`inbound_ambiguous` / `inbound_unsupported`) for Admin to notice,
 and the webhook still answers 200.
 
-The first run sheet of the week (target Sunday has no slides yet) is auto-applied
-(`applyRunSheet(id, "replace")`) — "Added to flow" per section 16. If the Sunday
-already has a deck, the run sheet is left `ready_to_apply`/`needs_review` for the team
-to review from the Upload screen instead of silently overwriting manual work.
+Every inbound run sheet is stored and queued only (`ingestRunSheet({ ..., parse: false
+})`) — there is no auto-apply any more. It shows up in the Import modal's "Received
+files" list (new-dot until previewed/used); picking "Use this file" there parses it on
+demand (`reprocessRunSheet`) and then applies it — replacing the queue when nothing has
+been manually edited yet, merging (preserving edits) otherwise.
 
 ## Manual test/verification scripts
 

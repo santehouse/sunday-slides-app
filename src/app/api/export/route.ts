@@ -46,6 +46,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const result = await runExport(parsed.data);
     if (!result.ok) {
+      // Operators read this in the function logs when the team reports "export won't start".
+      console.warn("api/export: blocked", JSON.stringify({ sundayId: parsed.data.sundayId, ...result }));
       return NextResponse.json(result satisfies ExportBlocked, { status: 422 });
     }
 

@@ -36,6 +36,13 @@ export interface IngestInput {
   sundayDate?: string;
   /** Resend inbound `email_id` — dedupes so a webhook retry never creates a second run sheet. */
   inboundEventId?: string;
+  /**
+   * Whether to run extraction/parsing right away. Defaults to `true` (manual upload in the
+   * Import modal parses immediately so "Received files" can show ready/needs-review state).
+   * Inbound email intake passes `false` — the file is only stored and queued; parsing happens
+   * on demand when a Sunday Team member picks "Use this file" (see `reprocessRunSheet`).
+   */
+  parse?: boolean;
 }
 
 export interface RunSheetPreviewItem {
@@ -217,6 +224,12 @@ export async function ingestRunSheet(input: IngestInput): Promise<RunSheet> {
     return db.updateRunSheet(runSheet.id, { parseStatus: "failed", parseError: describeError(err) });
   }
 
+  if (input.parse === false) {
+    // Stored and queued only — a human picks "Use this file" later, which parses on demand
+    // via `reprocessRunSheet` (Import modal, simplified Sunday IA).
+    return runSheet;
+  }
+
   runSheet = await db.updateRunSheet(runSheet.id, { parseStatus: "processing" });
 
   const [mappings, templates] = await Promise.all([db.listMappings(), db.listTemplates({ status: "published" })]);
@@ -348,7 +361,7 @@ async function toCreateSlideInput(
     content: insert.content,
     assetId: backgroundMode === "image" ? (template?.backgroundValue ?? null) : null,
     backgroundMode,
-    approvedColorId: backgroundMode === "color" ? firstColorId : null,
+    approvedColorId: backgroundMode === "color" && template?.allowTeamBackgroundChoice ? firstColorId : null,
     sortOrder: insert.sortOrder,
     includeInVideo: insert.includeInVideo,
     status: insert.status,

@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { MessageState } from "@/components/ui/MessageState";
-import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { signInFormAction } from "./actions";
 import { initialSignInFormState } from "./formState";
 
@@ -18,13 +17,10 @@ export function SignInForm() {
     return (
       <Card padding="none" className="flex w-full max-w-[430px] flex-col gap-5 p-8">
         <MessageState
-          state="success"
-          title={t("magicLinkSent")}
-          message={t("magicLinkSentBody", { email: state.email })}
+          state={state.mock ? "info" : "success"}
+          title={state.mock ? t("magicLinkMockTitle") : t("magicLinkSent")}
+          message={state.mock ? t("magicLinkMockBody") : t("magicLinkSentBody", { email: state.email })}
         />
-        <div className="flex justify-end">
-          <LanguageSelector size="md" />
-        </div>
       </Card>
     );
   }
@@ -75,10 +71,6 @@ export function SignInForm() {
         >
           {t("magicLink")}
         </Button>
-
-        <div className="flex justify-start pt-2">
-          <LanguageSelector size="md" />
-        </div>
       </form>
     </Card>
   );

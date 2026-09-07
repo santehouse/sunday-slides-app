@@ -58,7 +58,7 @@ export default async function SundayDetailPage({
           </h1>
           <StatusBadge status={SUNDAY_STATUS_MAP[sunday.status] ?? "draft"} />
         </div>
-        <Button variant="secondary" href={`/sunday/${sunday.serviceDate}/flow`}>
+        <Button variant="secondary" href="/sunday">
           {t("openSunday")}
         </Button>
       </div>

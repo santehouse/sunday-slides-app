@@ -19,6 +19,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
         monthDay: { month: "long", day: "numeric" },
         dateMedium: { year: "numeric", month: "short", day: "numeric" },
         time: { hour: "numeric", minute: "2-digit" },
+        dayTime: { weekday: "long", hour: "numeric", minute: "2-digit" },
       },
     },
   };

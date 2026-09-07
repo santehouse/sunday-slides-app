@@ -154,6 +154,12 @@ export type TemplateFieldRow = {
   overflow_mode: OverflowModeEnum;
   text_transform: string;
   sort_order: number;
+  default_value: string;
+  rotation: number;
+  box_color: string | null;
+  box_padding: number;
+  frame_color: string | null;
+  frame_width: number;
 };
 
 export type TemplateAssetRow = {
@@ -227,6 +233,7 @@ export type RunSheetRow = {
   inbound_event_id: string | null;
   received_at: string;
   processed_at: string | null;
+  opened_at: string | null;
 };
 
 export type SlideRow = {

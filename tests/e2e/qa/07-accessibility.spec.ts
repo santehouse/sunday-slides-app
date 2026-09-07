@@ -1,11 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
-import { DEMO_SUNDAY_DATE, gotoFlow, loginPinAndWait, signInAsAdmin } from "./helpers";
+import { gotoQueue, loginPinAndWait, signInAsAdmin } from "./helpers";
 
 /**
  * BUILD_HANDOFF section 40 — accessibility. axe-core for the automatable rules, plus
  * explicit checks for the things axe cannot see: focus-visible rings, segmented-control
  * radio semantics, the keyboard reorder fallback, and status never being colour-only.
+ *
+ * Sunday screens follow the single-screen IA (queue + near-full-screen modals) — one
+ * page (`/sunday`), everything else (import, new slide, edit, export) in a `<dialog>`.
  */
 
 async function analyse(page: Page) {
@@ -13,6 +16,9 @@ async function analyse(page: Page) {
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     // Next's dev-tools overlay is not part of the product.
     .exclude("nextjs-portal")
+    // Slide artwork (thumbnails, previews) is the church's design, not UI — its text
+    // contrast is a template decision, and the row title carries the accessible name.
+    .exclude("[data-slide-canvas]")
     .analyze();
 }
 
@@ -26,33 +32,35 @@ test.describe("axe-core", () => {
     let result = await analyse(page);
     expect(summarise(result.violations), "PIN").toBe("");
 
+    // Every navigation below waits for real content, not just the URL — a route with a
+    // streamed `loading.tsx` skeleton can otherwise still be showing that (stale-title)
+    // skeleton the instant `page.goto`/`waitForURL` resolves, which axe would flag on
+    // `document-title` for reasons that have nothing to do with the real page.
     await loginPinAndWait(page);
+    await page.locator("[data-slide-card]").first().waitFor();
     result = await analyse(page);
-    expect(summarise(result.violations), "Dashboard").toBe("");
+    expect(summarise(result.violations), "Queue").toBe("");
 
-    await gotoFlow(page);
+    await page.locator("[data-slide-card]").first().getByRole("button", { name: "Edit" }).click();
+    await page.getByRole("button", { name: "Save", exact: true }).waitFor();
     result = await analyse(page);
-    expect(summarise(result.violations), "Flow").toBe("");
-
-    await page.getByRole("button", { name: /^Export/ }).click();
-    await page.getByRole("dialog").waitFor();
-    result = await analyse(page);
-    expect(summarise(result.violations), "Export popover").toBe("");
+    expect(summarise(result.violations), "Edit modal").toBe("");
     await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
 
-    await page.locator("[data-slide-card]").first().click();
-    await page.getByRole("button", { name: "Edit slide" }).click();
-    await page.waitForURL(/\/slide\//);
+    await page.getByRole("button", { name: "New slide" }).click();
+    await page.getByRole("heading", { name: "Add a slide" }).waitFor();
     result = await analyse(page);
-    expect(summarise(result.violations), "Slide editor").toBe("");
+    expect(summarise(result.violations), "New slide modal").toBe("");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
 
-    await page.goto(`/sunday/${DEMO_SUNDAY_DATE}/add`);
+    await page.getByRole("button", { name: "Import announcements" }).click();
+    await page.getByRole("heading", { name: "Import announcements" }).waitFor();
     result = await analyse(page);
-    expect(summarise(result.violations), "Add slide").toBe("");
-
-    await page.goto(`/sunday/${DEMO_SUNDAY_DATE}/upload`);
-    result = await analyse(page);
-    expect(summarise(result.violations), "Upload run sheet").toBe("");
+    expect(summarise(result.violations), "Import modal").toBe("");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 
   test("Admin screens have no WCAG A/AA violations", async ({ page }) => {
@@ -78,25 +86,32 @@ test.describe("Keyboard and semantics", () => {
     await expect(language.getByRole("radio", { name: "EN" })).toHaveAttribute("aria-checked", "true");
     await expect(language.getByRole("radio", { name: "FR" })).toHaveAttribute("aria-checked", "false");
 
-    // Add Slide category chips.
-    await page.goto(`/sunday/${DEMO_SUNDAY_DATE}/add`);
+    // New slide modal's category chips.
+    await page.goto("/sunday?add=1");
+    await page.getByRole("heading", { name: "Add a slide" }).waitFor();
     await expect(page.getByRole("button", { name: "All", exact: true })).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", { name: "Events", exact: true }).click();
     await expect(page.getByRole("button", { name: "Events", exact: true })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", { name: "All", exact: true })).toHaveAttribute("aria-pressed", "false");
   });
 
-  test("safe-zone action is a toggle with aria-pressed and a label that flips", async ({ page }) => {
+  test("the film toggle is aria-pressed and the safe-zone action flips its label", async ({ page }) => {
     await loginPinAndWait(page);
-    await gotoFlow(page);
+    await gotoQueue(page);
 
-    const action = page.getByRole("button", { name: "Show safe zones" });
+    const film = page.locator("[data-slide-card]").first().getByRole("button", { name: /shown in the video|not shown in the video/i });
+    await expect(film).toHaveAttribute("aria-pressed");
+
+    await page.locator("[data-slide-card]").first().getByRole("button", { name: "Edit" }).click();
+    // The queue's preview panel has its own safe-zone action behind the modal: scope to the dialog.
+    const dialog = page.getByRole("dialog");
+    const action = dialog.getByRole("button", { name: "Show safe zones" });
     await expect(action).toHaveAttribute("aria-pressed", "false");
     await action.click();
-    const active = page.getByRole("button", { name: "Hide safe zones" });
+    const active = dialog.getByRole("button", { name: "Hide safe zones" });
     await expect(active).toHaveAttribute("aria-pressed", "true");
     await active.click();
-    await expect(page.getByRole("button", { name: "Show safe zones" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Show safe zones" })).toBeVisible();
   });
 
   test("every Sunday screen is reachable and operable with the keyboard alone", async ({ page }) => {
@@ -111,10 +126,10 @@ test.describe("Keyboard and semantics", () => {
     }
     await page.keyboard.type("53787");
     await page.keyboard.press("Enter");
-    await page.waitForURL(/\/sunday\/\d{4}-\d{2}-\d{2}$/, { timeout: 20_000 });
+    await page.waitForURL(/\/sunday$/, { timeout: 20_000 });
 
-    // Every interactive element on the dashboard shows a focus ring when tabbed to.
-    await gotoFlow(page);
+    // Every interactive element on the queue shows a focus ring when tabbed to.
+    await gotoQueue(page);
     const handle = page.getByRole("button", { name: "Drag to reorder slide 1", exact: true });
     await handle.focus();
     const outline = await handle.evaluate((el) => {
@@ -127,19 +142,21 @@ test.describe("Keyboard and semantics", () => {
 
   test("slide status is conveyed by text, not colour alone", async ({ page }) => {
     await loginPinAndWait(page);
-    await gotoFlow(page);
+    await gotoQueue(page);
 
-    const badges = await page.locator('[data-slide-card] span').allInnerTexts();
-    const statuses = badges.filter((t) => /Ready|Needs review|Text is too long/.test(t));
-    expect(statuses.length, "each card carries a written status").toBeGreaterThan(0);
+    const tags = await page.locator('[data-slide-card] span').allInnerTexts();
+    const checkTags = tags.filter((t) => t === "Check");
+    expect(checkTags.length, "the needs-a-look row carries a written tag").toBeGreaterThan(0);
   });
 
   test("dialogs trap focus and close on Escape", async ({ page }) => {
     await loginPinAndWait(page);
-    await gotoFlow(page);
+    await gotoQueue(page);
 
-    await page.locator("[data-slide-card]").first().click();
-    await page.getByRole("button", { name: "Remove slide" }).click();
+    // A non-structural slide — the seeded structural slides (Welcome, …) have no
+    // delete control shown for them in review-strip context, but every row still
+    // has one; pick a plainly-removable one by headline.
+    await page.locator("[data-slide-card]").filter({ hasText: /baptêmes/i }).getByRole("button", { name: "Delete" }).click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, Eye, Plus, Trash2, Video } from "lucide-react";
+import { ArrowLeft, Copy, Eye, Plus, Trash2, Video } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Toggle } from "@/components/ui/Toggle";
+import { Textarea } from "@/components/ui/Textarea";
 import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge";
 import { MessageState } from "@/components/ui/MessageState";
 import { useToast } from "@/components/ui/Toast";
@@ -26,6 +27,7 @@ import type {
   OverlayColor,
   SafeZone,
   TemplateCategory,
+  FieldType,
   TemplateField,
   TemplateStatus,
   TextAlignment,
@@ -34,6 +36,25 @@ import type {
 type FieldDraft = CreateTemplateFieldInput & { key: string };
 
 const HEX_PATTERN = /^#([0-9a-fA-F]{6})$/;
+const NEW_FIELD_GAP = 24;
+
+/**
+ * New text boxes become Sunday-editable "Line N" fields (the next free number after the
+ * existing line1/line2/…), so they show up in the Sunday Edit modal automatically.
+ */
+function nextLineField(fields: FieldDraft[]): { fieldKey: string; labelEn: string; labelFr: string } {
+  const used = new Set(fields.map((f) => f.fieldKey));
+  let n = 1;
+  while (used.has(`line${n}`)) n += 1;
+  return { fieldKey: `line${n}`, labelEn: `Line ${n}`, labelFr: `Ligne ${n}` };
+}
+
+/** Places a new box just under the lowest existing one, staying inside the 1920×1080 stage. */
+function placeBelow(fields: FieldDraft[], box: Box): Box {
+  const bottom = fields.reduce((max, f) => Math.max(max, f.y + f.height), 0);
+  const y = bottom > 0 ? bottom + NEW_FIELD_GAP : box.y;
+  return clampBox({ ...box, y });
+}
 const CATEGORY_OPTIONS: TemplateCategory[] = ["general", "events", "special", "giving", "welcome", "theme", "closing"];
 const STATUS_OPTIONS: TemplateStatus[] = ["draft", "published", "archived"];
 const OVERLAY_OPTIONS: OverlayColor[] = ["none", "black", "white"];
@@ -50,10 +71,10 @@ const TEMPLATE_STATUS_BADGE: Record<TemplateStatus, StatusBadgeStatus> = {
 };
 
 function toFieldDraft(field: TemplateWithFields["fields"][number]): FieldDraft {
-  // Drop server-owned id/templateId/fieldType — `upsertTemplateFields` fully replaces the
-  // field set on save and assigns fresh ids, so the draft only carries editable data + `key`.
+  // Drop server-owned id/templateId — `upsertTemplateFields` fully replaces the field set
+  // on save and assigns fresh ids, so the draft only carries editable data + `key`.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id, templateId, fieldType, ...rest } = field;
+  const { id, templateId, ...rest } = field;
   return { ...rest, key: field.id };
 }
 
@@ -144,11 +165,34 @@ export function StudioClient({
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
         event.preventDefault();
         undo();
+        return;
+      }
+      // Canvas shortcuts for the selected text box: ⌘/Ctrl+D duplicates, Delete/Backspace removes.
+      const current = selectedKeyRef.current;
+      if (!current || safeZoneEditingRef.current) return;
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        duplicateFieldRef.current(current);
+      } else if (event.key === "Delete" || event.key === "Backspace") {
+        event.preventDefault();
+        removeFieldRef.current(current);
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  // Latest handlers/selection for the window-level shortcut listener above (registered once).
+  const selectedKeyRef = useRef(selectedKey);
+  const safeZoneEditingRef = useRef(safeZoneEditing);
+  const duplicateFieldRef = useRef(duplicateField);
+  const removeFieldRef = useRef(removeField);
+  useEffect(() => {
+    selectedKeyRef.current = selectedKey;
+    safeZoneEditingRef.current = safeZoneEditing;
+    duplicateFieldRef.current = duplicateField;
+    removeFieldRef.current = removeField;
+  });
 
   // Scroll the controls column to the selected field's Typography/Text fitting/Position
   // controls — whether the selection came from the canvas or the field list below. Only
@@ -177,38 +221,49 @@ export function StudioClient({
   }
 
   function addField() {
-    const newKey = `field-${Date.now()}`;
+    const base = selectedField ?? fields[fields.length - 1] ?? null;
+    const naming = nextLineField(fields);
+    const box = placeBelow(fields, { x: base?.x ?? 96, y: 96, width: base?.width ?? 800, height: base?.height ?? 120 });
     const draft: FieldDraft = {
-      key: newKey,
-      fieldKey: `field_${fields.length + 1}`,
-      labelEn: "New field",
-      labelFr: "Nouveau champ",
+      key: `field-${Date.now()}`,
+      ...naming,
       teamEditable: true,
       required: false,
-      x: 96,
-      y: 96,
-      width: 800,
-      height: 120,
-      fontId: null,
-      fontFamily: enabledFamilies[0] ?? "Arimo",
-      fontSize: 56,
-      minFontSize: 40,
-      fontWeight: 400,
-      fontStyle: "normal",
-      lineHeight: 1.1,
-      letterSpacing: 0,
-      alignment: "left",
-      textColor: "#ffffff",
-      maxLines: 1,
-      overflowMode: "fixed",
-      textTransform: "none",
+      ...box,
+      fontId: base?.fontId ?? null,
+      fontFamily: base?.fontFamily ?? enabledFamilies[0] ?? "Arimo",
+      fontSize: base?.fontSize ?? 56,
+      minFontSize: base?.minFontSize ?? 40,
+      fontWeight: base?.fontWeight ?? 400,
+      fontStyle: base?.fontStyle ?? "normal",
+      lineHeight: base?.lineHeight ?? 1.1,
+      letterSpacing: base?.letterSpacing ?? 0,
+      alignment: base?.alignment ?? "left",
+      textColor: base?.textColor ?? "#ffffff",
+      maxLines: base?.maxLines ?? 1,
+      overflowMode: base?.overflowMode ?? "fixed",
+      textTransform: base?.textTransform ?? "none",
       sortOrder: fields.length,
     };
+    pushHistory();
     setFields((current) => [...current, draft]);
-    setSelectedKey(newKey);
+    setSelectedKey(draft.key);
+  }
+
+  /** Copies a box (styling included) right under the original as the next "Line N" field. */
+  function duplicateField(key: string) {
+    const source = fields.find((f) => f.key === key);
+    if (!source) return;
+    const naming = nextLineField(fields);
+    const box = clampBox({ x: source.x, y: source.y + source.height + NEW_FIELD_GAP, width: source.width, height: source.height });
+    const draft: FieldDraft = { ...source, key: `field-${Date.now()}`, ...naming, ...box, sortOrder: fields.length };
+    pushHistory();
+    setFields((current) => [...current, draft]);
+    setSelectedKey(draft.key);
   }
 
   function removeField(key: string) {
+    pushHistory();
     setFields((current) => current.filter((f) => f.key !== key));
     if (selectedKey === key) setSelectedKey(null);
   }
@@ -218,16 +273,25 @@ export function StudioClient({
       fields.map((f) => ({
         id: f.key,
         templateId: template.id,
-        fieldType: "text" as const,
         ...f,
+        fieldType: f.fieldType ?? ("text" as const),
         fontId: f.fontId ?? null,
+        defaultValue: f.defaultValue ?? "",
+        rotation: f.rotation ?? 0,
+        boxColor: f.boxColor ?? null,
+        boxPadding: f.boxPadding ?? 0,
+        frameColor: f.frameColor ?? null,
+        frameWidth: f.frameWidth ?? 0,
       })),
     [fields, template.id],
   );
 
   const previewContent = useMemo(() => {
     const content: Record<string, string> = {};
-    for (const f of fields) content[f.fieldKey] = f.labelEn.toUpperCase();
+    for (const f of fields) {
+      if ((f.fieldType ?? "text") === "image") continue;
+      content[f.fieldKey] = f.defaultValue?.trim() ? f.defaultValue : f.labelEn.toUpperCase();
+    }
     return content;
   }, [fields]);
 
@@ -528,7 +592,76 @@ export function StudioClient({
                 value={selectedField.sortOrder}
                 onChange={(e) => updateField(selectedField.key, { sortOrder: Number(e.target.value) })}
               />
+              <Select
+                id="field-type"
+                label={t("fieldType")}
+                value={selectedField.fieldType ?? "text"}
+                onChange={(e) => updateField(selectedField.key, { fieldType: e.target.value as FieldType })}
+                options={[
+                  { value: "text", label: t("fieldTypeText") },
+                  { value: "image", label: t("fieldTypeImage") },
+                ]}
+              />
+              {(selectedField.fieldType ?? "text") === "text" ? (
+                <Textarea
+                  id="field-default-value"
+                  label={t("defaultValue")}
+                  helper={t("defaultValueHelp")}
+                  rows={3}
+                  value={selectedField.defaultValue ?? ""}
+                  onChange={(e) => updateField(selectedField.key, { defaultValue: e.target.value })}
+                />
+              ) : null}
 
+              <h4 className="text-caption font-bold text-fg-secondary">{t("layers")}</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  id="field-rotation"
+                  type="number"
+                  step={0.5}
+                  label={t("rotation")}
+                  value={selectedField.rotation ?? 0}
+                  onChange={(e) => updateField(selectedField.key, { rotation: Number(e.target.value) })}
+                />
+                {(selectedField.fieldType ?? "text") === "image" ? (
+                  <>
+                    <Input
+                      id="field-frame-color"
+                      label={t("frameColor")}
+                      placeholder="#ffc957"
+                      value={selectedField.frameColor ?? ""}
+                      onChange={(e) => updateField(selectedField.key, { frameColor: e.target.value.trim() === "" ? null : e.target.value })}
+                    />
+                    <Input
+                      id="field-frame-width"
+                      type="number"
+                      label={t("frameWidth")}
+                      value={selectedField.frameWidth ?? 0}
+                      onChange={(e) => updateField(selectedField.key, { frameWidth: Number(e.target.value) })}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      id="field-box-color"
+                      label={t("boxColor")}
+                      placeholder="#ffffff"
+                      value={selectedField.boxColor ?? ""}
+                      onChange={(e) => updateField(selectedField.key, { boxColor: e.target.value.trim() === "" ? null : e.target.value })}
+                    />
+                    <Input
+                      id="field-box-padding"
+                      type="number"
+                      label={t("boxPadding")}
+                      value={selectedField.boxPadding ?? 0}
+                      onChange={(e) => updateField(selectedField.key, { boxPadding: Number(e.target.value) })}
+                    />
+                  </>
+                )}
+              </div>
+
+              {(selectedField.fieldType ?? "text") === "text" ? (
+              <>
               <h4 className="text-caption font-bold text-fg-secondary">{t("typography")}</h4>
               <Select
                 id="field-font-family"
@@ -658,6 +791,8 @@ export function StudioClient({
                   onChange={(e) => updateField(selectedField.key, { height: Number(e.target.value) })}
                 />
               </div>
+              </>
+              ) : null}
             </Card>
             </div>
           ) : null}
@@ -695,6 +830,28 @@ export function StudioClient({
                 </div>
               }
             />
+            {/* Text-box toolbar — the Fields card's "+" does the same, this keeps it next to the canvas. */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="secondary" leadingIcon={Plus} onClick={addField} disabled={safeZoneEditing}>
+                {t("canvas.addTextBox")}
+              </Button>
+              <Button
+                variant="ghost"
+                leadingIcon={Copy}
+                onClick={() => selectedKey && duplicateField(selectedKey)}
+                disabled={!selectedKey || safeZoneEditing}
+              >
+                {t("canvas.duplicate")}
+              </Button>
+              <Button
+                variant="ghost"
+                leadingIcon={Trash2}
+                onClick={() => selectedKey && removeField(selectedKey)}
+                disabled={!selectedKey || safeZoneEditing}
+              >
+                {t("canvas.delete")}
+              </Button>
+            </div>
             <StudioCanvas
               rendererKey={template.rendererKey}
               fields={previewFields}

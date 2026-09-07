@@ -25,7 +25,7 @@ export interface AdminSession {
 }
 
 export type SignInResult = { ok: true } | { ok: false; error: "invalid_credentials" };
-export type MagicLinkResult = { ok: true } | { ok: false; error: string };
+export type MagicLinkResult = { ok: true; mock?: boolean } | { ok: false; error: string };
 
 /** Returns the current admin session, or null if signed out, unknown, or disabled. */
 export async function getAdminSession(): Promise<AdminSession | null> {
@@ -80,8 +80,9 @@ export async function signInWithPassword(email: string, password: string): Promi
 
 export async function sendMagicLink(email: string, redirectTo: string): Promise<MagicLinkResult> {
   if (isMockMode()) {
-    // No real email is sent in mock mode; the sign-in form still shows the "check your inbox" state.
-    return { ok: true };
+    // No real email is sent in mock mode; the sign-in form explains that instead of
+    // claiming a link is on its way.
+    return { ok: true, mock: true };
   }
 
   const supabase = await createSupabaseServerClient();

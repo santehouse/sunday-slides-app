@@ -434,7 +434,7 @@ export function StudioCanvas({
               role="button"
               tabIndex={0}
               aria-label={safeZoneLabel}
-              className="absolute box-border cursor-move border-4 border-dashed border-primary bg-primary/10"
+              className="absolute box-border cursor-move border-4 border-dashed border-error-fg bg-error-fg/10"
               style={{
                 left: safeZone.x * scale,
                 top: safeZone.y * scale,

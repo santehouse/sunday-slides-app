@@ -188,7 +188,7 @@ async function seedTemplates(assetIdBySlug: Map<string, string>): Promise<Map<st
       template.fields.map((f) => ({
         template_id: data.id,
         field_key: f.fieldKey,
-        field_type: "text",
+        field_type: f.fieldType ?? "text",
         label_en: f.labelEn,
         label_fr: f.labelFr,
         team_editable: f.teamEditable,
@@ -210,6 +210,12 @@ async function seedTemplates(assetIdBySlug: Map<string, string>): Promise<Map<st
         overflow_mode: f.overflowMode,
         text_transform: f.textTransform,
         sort_order: f.sortOrder,
+        default_value: f.defaultValue ?? "",
+        rotation: f.rotation ?? 0,
+        box_color: f.boxColor ?? null,
+        box_padding: f.boxPadding ?? 0,
+        frame_color: f.frameColor ?? null,
+        frame_width: f.frameWidth ?? 0,
       })),
     );
     if (fieldsError) throw new Error(`seedTemplates fields insert (${template.slug}): ${fieldsError.message}`);

@@ -30,7 +30,9 @@ async function makePng(page: Page): Promise<{ name: string; mimeType: string; bu
 /** A Sunday in 2027 that no other spec (or earlier run) has claimed. */
 function nextFreeSunday(): string {
   const base = Date.UTC(2027, 0, 3); // 2027-01-03 is a Sunday
-  const week = Math.floor(Date.now() / 1000) % 52;
+  // Ten years of candidate Sundays so repeated runs against one long-lived mock server
+  // don't collide on the same date (which would make "create" fail as a duplicate).
+  const week = Math.floor(Date.now() / 1000) % 520;
   return new Date(base + week * 7 * 86_400_000).toISOString().slice(0, 10);
 }
 
@@ -39,7 +41,7 @@ async function openSundaySession(page: Page) {
   const digits = page.locator('input[inputmode="numeric"]');
   for (const [i, d] of [..."53787"].entries()) await digits.nth(i).fill(d);
   await page.getByRole("button", { name: /open sunday/i }).click();
-  await page.waitForURL(/\/sunday\/\d{4}-\d{2}-\d{2}$/);
+  await page.waitForURL(/\/sunday$/);
 }
 
 test.describe("Admin — Sundays", () => {
@@ -85,13 +87,15 @@ test.describe("Admin — template lifecycle", () => {
 
     const sunday = await context.newPage();
     await openSundaySession(sunday);
-    await sunday.goto("/sunday/2026-09-06/add");
+    await sunday.goto("/sunday?add=1");
+    await sunday.getByRole("heading", { name: "Add a slide" }).waitFor();
     await expect(sunday.locator(`button[aria-label="Use ${name}"]`)).toHaveCount(0);
 
     // Publish → the Sunday team can now pick it.
     await page.getByRole("button", { name: "Publish", exact: true }).click();
     await expect(page.getByText("Template saved")).toBeVisible({ timeout: 30_000 });
     await sunday.reload();
+    await sunday.getByRole("heading", { name: "Add a slide" }).waitFor();
     await expect(sunday.locator(`button[aria-label="Use ${name}"]`)).toBeVisible({ timeout: 30_000 });
 
     // Archive → gone from Add Slide, still listed in the library, and the existing
@@ -99,9 +103,10 @@ test.describe("Admin — template lifecycle", () => {
     await page.getByRole("button", { name: "Archive", exact: true }).click();
     await expect(page.getByText("Template saved").last()).toBeVisible({ timeout: 30_000 });
     await sunday.reload();
+    await sunday.getByRole("heading", { name: "Add a slide" }).waitFor();
     await expect(sunday.locator(`button[aria-label="Use ${name}"]`)).toHaveCount(0);
 
-    await sunday.goto("/sunday/2026-09-06/flow");
+    await sunday.goto("/sunday");
     await sunday.locator("[data-slide-card]").first().waitFor();
     expect(await sunday.locator("[data-slide-card]").count()).toBeGreaterThan(0);
     await sunday.close();
@@ -128,24 +133,29 @@ test.describe("Admin — assets", () => {
     await expect(page.getByText("QA background").first()).toBeVisible({ timeout: 30_000 });
 
     // Uploaded assets start as Draft; publish it and allow it on the Annual theme template.
-    await page.getByText("QA background").first().click();
+    // The grid re-renders right after the upload dialog closes (router.refresh), so open
+    // the card by its accessible name and re-click once if that first click was swallowed.
+    const card = page.getByRole("button", { name: /QA background/ }).first();
+    await card.click();
     const detail = page.getByRole("dialog");
+    if (!(await detail.getByLabel("Status").isVisible({ timeout: 5_000 }).catch(() => false))) {
+      await card.click();
+    }
     await detail.getByLabel("Status").selectOption("published");
     await detail.locator("label", { hasText: "Annual theme" }).getByRole("checkbox").check();
     await detail.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 30_000 });
 
-    // The Sunday editor can now pick it for a slide on that template.
+    // The Sunday Edit modal can now pick it for a slide on that template.
     const sunday = await context.newPage();
     await openSundaySession(sunday);
-    await sunday.goto("/sunday/2026-09-06/flow");
+    await sunday.goto("/sunday");
     await sunday.locator("[data-slide-card]").first().waitFor();
     // Pick the Annual theme slide by title, not by position: other specs may reorder the deck.
-    await sunday.locator("[data-slide-card]", { hasText: "Je suis avec vous" }).first().click();
-    await sunday.getByRole("button", { name: "Edit slide" }).click();
-    await sunday.waitForURL(/\/slide\//);
-    await sunday.getByRole("radiogroup", { name: "Background" }).getByRole("radio", { name: "Image" }).click();
-    await expect(sunday.locator('button[aria-label="QA background"]')).toBeVisible({ timeout: 30_000 });
+    await sunday.locator("[data-slide-card]", { hasText: "Je suis avec vous" }).getByRole("button", { name: "Edit" }).click();
+    const dialog = sunday.getByRole("dialog").filter({ hasText: "Je suis avec vous" });
+    await dialog.getByRole("radiogroup", { name: "Background" }).getByRole("radio", { name: "Image" }).click();
+    await expect(dialog.locator('button[aria-label="QA background"]')).toBeVisible({ timeout: 30_000 });
     await sunday.close();
   });
 });

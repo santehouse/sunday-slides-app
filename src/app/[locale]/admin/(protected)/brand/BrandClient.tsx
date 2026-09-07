@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { Upload, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash2, Upload } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -13,6 +13,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Dialog } from "@/components/ui/Dialog";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Spinner } from "@/components/ui/Spinner";
 import { VisuallyHidden } from "@/components/ui/VisuallyHidden";
 import { useToast } from "@/components/ui/Toast";
 import {
@@ -35,6 +36,35 @@ type FamilyGroup = {
   badge: "enabled" | "available" | "needsFontFile";
 };
 
+const FONT_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
+
+const WEIGHT_TOKENS: Array<[RegExp, number]> = [
+  [/extra ?black|ultra ?black|heavy/i, 900],
+  [/black/i, 900],
+  [/extra ?bold|ultra ?bold/i, 800],
+  [/semi ?bold|demi ?bold/i, 600],
+  [/bold/i, 700],
+  [/medium/i, 500],
+  [/extra ?light|ultra ?light/i, 200],
+  [/light/i, 300],
+  [/thin|hairline/i, 100],
+  [/regular|book|normal|roman/i, 400],
+];
+
+/** Best-effort family / weight / style from a font file name such as "Inter-SemiBoldItalic.ttf". */
+function guessFontMetadata(filename: string): { family: string; weight: number | null; style: FontStyle | null } {
+  const stem = filename.replace(/\.(woff2?|ttf|otf)$/i, "");
+  const [rawFamily, ...rest] = stem.split(/[-_]/);
+  const descriptor = rest.join(" ") || stem.replace(rawFamily ?? "", "");
+  const weight = WEIGHT_TOKENS.find(([pattern]) => pattern.test(descriptor))?.[1] ?? null;
+  const style: FontStyle | null = /italic|oblique/i.test(descriptor) ? "italic" : descriptor ? "normal" : null;
+  const family = (rawFamily ?? "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+  return { family, weight, style };
+}
+
 function groupFonts(fonts: FontRecord[]): FamilyGroup[] {
   const byFamily = new Map<string, FontRecord[]>();
   for (const font of fonts) {
@@ -55,93 +85,188 @@ function groupFonts(fonts: FontRecord[]): FamilyGroup[] {
     .sort((a, b) => a.family.localeCompare(b.family));
 }
 
-function UploadFontDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+type UploadItem = {
+  id: string;
+  file: File;
+  weight: number;
+  style: FontStyle;
+  r2Key: string | null;
+  state: "uploading" | "ready" | "failed";
+};
+
+/**
+ * One family, many files: drop Regular / Bold / Italic / Bold Italic together, confirm the
+ * family name once, adjust each file's weight and style, save — every file becomes its
+ * own variant under the same family card. Nothing is ever replaced.
+ */
+function UploadFontDialog({ open, onClose, initialFamily }: { open: boolean; onClose: () => void; initialFamily?: string }) {
   const t = useTranslations("admin.brand");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
   const { showToast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [r2Key, setR2Key] = useState<string | null>(null);
-  const [family, setFamily] = useState("");
-  const [weight, setWeight] = useState(400);
-  const [style, setStyle] = useState<FontStyle>("normal");
+  const [family, setFamily] = useState(initialFamily ?? "");
+  const [items, setItems] = useState<UploadItem[]>([]);
+  const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
 
-  function handleFile(file: File) {
-    const formData = new FormData();
-    formData.set("file", file);
-    startTransition(async () => {
-      const result = await uploadFontFileAction(formData);
-      if (result.ok) {
-        setR2Key(result.r2Key);
-      } else {
-        showToast({
-          state: "error",
-          title: tCommon("failed"),
-          message: result.error === "unsupported_file" ? tErrors("unsupportedFont") : tErrors("generic"),
-        });
-      }
+  useEffect(() => {
+    if (open) {
+      // One-time reset when the dialog opens (fresh family, no leftover rows).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFamily(initialFamily ?? "");
+      setItems([]);
+      setRowErrors({});
+    }
+  }, [open, initialFamily]);
+
+  function handleFiles(files: File[]) {
+    const next: UploadItem[] = files.map((file) => {
+      const guess = guessFontMetadata(file.name);
+      return {
+        id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        file,
+        weight: guess.weight ?? 400,
+        style: guess.style ?? "normal",
+        r2Key: null,
+        state: "uploading",
+      };
     });
+    const firstGuess = files[0] ? guessFontMetadata(files[0].name) : null;
+    if (!family && firstGuess?.family) setFamily(firstGuess.family);
+    setItems((current) => [...current, ...next]);
+
+    for (const item of next) {
+      const formData = new FormData();
+      formData.set("file", item.file);
+      void uploadFontFileAction(formData).then((result) => {
+        setItems((current) =>
+          current.map((row) =>
+            row.id === item.id ? { ...row, state: result.ok ? "ready" : "failed", r2Key: result.ok ? result.r2Key : null } : row,
+          ),
+        );
+        if (!result.ok) {
+          showToast({
+            state: "error",
+            title: tCommon("failed"),
+            message: result.error === "unsupported_file" ? tErrors("unsupportedFont") : tErrors("generic"),
+          });
+        }
+      });
+    }
   }
 
-  function handleCreate() {
-    if (!r2Key || !family) return;
+  function updateItem(id: string, patch: Partial<Pick<UploadItem, "weight" | "style">>) {
+    setItems((current) => current.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  }
+
+  const ready = items.filter((row) => row.state === "ready" && row.r2Key);
+  const duplicateInBatch = new Set(
+    ready.filter((row, i) => ready.some((other, j) => j < i && other.weight === row.weight && other.style === row.style)).map((r) => r.id),
+  );
+  const canSave = Boolean(family.trim()) && ready.length > 0 && duplicateInBatch.size === 0 && !items.some((r) => r.state === "uploading");
+
+  function handleSave() {
+    if (!canSave) return;
     startTransition(async () => {
-      await createCustomFontAction({ family, weight, style, r2Key });
-      showToast({ state: "success", title: t("saved"), message: family });
-      setR2Key(null);
-      setFamily("");
-      onClose();
+      const errors: Record<string, string> = {};
+      let added = 0;
+      for (const row of ready) {
+        const result = await createCustomFontAction({ family, weight: row.weight, style: row.style, r2Key: row.r2Key! });
+        if (result.ok) added += 1;
+        else errors[row.id] = t("variantExistsRow");
+      }
+      setRowErrors(errors);
+      if (added > 0) showToast({ state: "success", title: t("fontsSaved", { count: added, family }), message: "" });
+      if (Object.keys(errors).length === 0) {
+        onClose();
+      } else {
+        // Keep only the rows that still need attention.
+        setItems((current) => current.filter((row) => errors[row.id]));
+      }
       router.refresh();
     });
   }
 
+  const styleLabel = (style: FontStyle) => (style === "italic" ? t("styleItalic") : t("styleNormal"));
+
   return (
-    <Dialog open={open} onClose={onClose} title={t("uploadFont")}>
+    <Dialog open={open} onClose={onClose} title={t("uploadFont")} size="md">
       <div className="flex flex-col gap-4">
-        {!r2Key ? (
-          <Dropzone
-            title={t("uploadFont")}
-            hint={t("uploadFontHelper")}
-            chooseFileLabel={tCommon("upload")}
-            accept=".woff,.woff2,.ttf,.otf,font/woff,font/woff2,font/ttf,font/otf"
-            onFile={handleFile}
-            disabled={isPending}
-          />
-        ) : (
+        <Dropzone
+          title={t("uploadFont")}
+          hint={t("uploadFontHelper")}
+          chooseFileLabel={t("chooseFiles")}
+          accept=".woff,.woff2,.ttf,.otf,font/woff,font/woff2,font/ttf,font/otf"
+          multiple
+          onFiles={handleFiles}
+          onFile={(file) => handleFiles([file])}
+          disabled={isPending}
+        />
+
+        {items.length > 0 ? (
           <>
             <Input id="font-family" label={t("family")} value={family} onChange={(e) => setFamily(e.target.value)} />
-            <Select
-              id="font-weight"
-              label={t("weight")}
-              value={String(weight)}
-              onChange={(e) => setWeight(Number(e.target.value))}
-              options={[
-                { value: "400", label: "400" },
-                { value: "700", label: "700" },
-              ]}
-            />
-            <Select
-              id="font-style"
-              label={t("style")}
-              value={style}
-              onChange={(e) => setStyle(e.target.value as FontStyle)}
-              options={[
-                { value: "normal", label: t("styleNormal") },
-                { value: "italic", label: t("styleItalic") },
-              ]}
-            />
+            <ul className="flex flex-col gap-2" aria-label={t("filesToAdd")}>
+              {items.map((row) => (
+                <li key={row.id} className="flex flex-col gap-2 rounded-md bg-surface-subtle p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="min-w-0 truncate text-label font-bold text-fg">{row.file.name}</span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      {row.state === "uploading" ? (
+                        <span className="flex items-center gap-1.5 text-caption text-fg-secondary">
+                          <Spinner size={16} />
+                          {t("uploading")}
+                        </span>
+                      ) : row.state === "failed" ? (
+                        <StatusBadge status="failed" />
+                      ) : null}
+                      <IconButton
+                        icon={Trash2}
+                        variant="ghost"
+                        size={36}
+                        aria-label={t("removeFile", { file: row.file.name })}
+                        onClick={() => setItems((current) => current.filter((r) => r.id !== row.id))}
+                      />
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select
+                      id={`font-weight-${row.id}`}
+                      label={t("weight")}
+                      value={String(row.weight)}
+                      onChange={(e) => updateItem(row.id, { weight: Number(e.target.value) })}
+                      options={FONT_WEIGHTS.map((w) => ({ value: String(w), label: `${w} · ${t(`weightNames.${w}`)}` }))}
+                    />
+                    <Select
+                      id={`font-style-${row.id}`}
+                      label={t("style")}
+                      value={row.style}
+                      onChange={(e) => updateItem(row.id, { style: e.target.value as FontStyle })}
+                      options={[
+                        { value: "normal", label: styleLabel("normal") },
+                        { value: "italic", label: styleLabel("italic") },
+                      ]}
+                    />
+                  </div>
+                  {duplicateInBatch.has(row.id) ? (
+                    <p className="text-caption text-error-fg">{t("duplicateInBatch")}</p>
+                  ) : rowErrors[row.id] ? (
+                    <p className="text-caption text-error-fg">{rowErrors[row.id]}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
           </>
-        )}
+        ) : null}
+
         <div className="flex items-center justify-end gap-2.5 pt-2">
           <Button variant="secondary" onClick={onClose}>
             {tCommon("cancel")}
           </Button>
-          {r2Key ? (
-            <Button variant="primary" loading={isPending} disabled={!family} onClick={handleCreate}>
-              {tCommon("save")}
-            </Button>
-          ) : null}
+          <Button variant="primary" loading={isPending} disabled={!canSave} onClick={handleSave}>
+            {t("addVariants", { count: ready.length })}
+          </Button>
         </div>
       </div>
     </Dialog>
@@ -202,12 +327,126 @@ function EnableGoogleFontRow() {
   );
 }
 
+// Light → heavy, and within a weight the upright face before its italic.
+const VARIANT_ORDER = (a: FontRecord, b: FontRecord) =>
+  a.weight - b.weight || (a.style === b.style ? 0 : a.style === "normal" ? -1 : 1);
+const FILE_KIND = (r2Key: string) => (r2Key.split(".").pop() ?? "").toUpperCase();
+
+/** One collapsible card per family: header (name, count, badge, enable, delete), then each variant file. */
+function FontFamilyCard({
+  group,
+  isPending,
+  onToggle,
+  onDeleteFamily,
+  onDeleteVariant,
+  onAddVariant,
+}: {
+  group: FamilyGroup;
+  isPending: boolean;
+  onToggle: (group: FamilyGroup) => void;
+  onDeleteFamily: (group: FamilyGroup) => void;
+  onDeleteVariant: (variant: FontRecord) => void;
+  onAddVariant: (family: string) => void;
+}) {
+  const t = useTranslations("admin.brand");
+  const [expanded, setExpanded] = useState(false);
+  const variants = [...group.variants].sort(VARIANT_ORDER);
+  const isGoogle = variants[0]?.source === "google";
+  const listId = `font-variants-${group.family.replace(/\W+/g, "-").toLowerCase()}`;
+  const variantLabel = (v: FontRecord) => `${v.weight} · ${t(`weightNames.${v.weight}` as never)}${v.style === "italic" ? ` · ${t("styleItalic")}` : ""}`;
+
+  return (
+    <div className="flex flex-col rounded-[10px] bg-surface-subtle">
+      <div className="flex min-h-[92px] items-center justify-between gap-3 px-3.5 py-3">
+        <div className="flex min-w-0 items-center gap-2">
+          {variants.length > 0 ? (
+            <IconButton
+              icon={expanded ? ChevronUp : ChevronDown}
+              variant="ghost"
+              size={36}
+              aria-expanded={expanded}
+              aria-controls={listId}
+              aria-label={expanded ? t("hideVariants", { family: group.family }) : t("showVariants", { family: group.family })}
+              onClick={() => setExpanded((v) => !v)}
+            />
+          ) : null}
+          <div className="min-w-0">
+            <p className="truncate text-label font-bold text-fg">{group.family}</p>
+            <p className="truncate text-caption text-fg-secondary">
+              {variants.length > 0
+                ? `${isGoogle ? t("googleFontsSource") : t("customFont")} · ${t("variantsCount", { count: variants.length })}`
+                : t("needsFontFileHelper")}
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <StatusBadge status={group.badge} />
+          {variants.length > 0 ? (
+            <>
+              <Toggle
+                checked={group.badge === "enabled"}
+                onChange={() => onToggle(group)}
+                label={<VisuallyHidden>{`${t("enable")} ${group.family}`}</VisuallyHidden>}
+              />
+              <IconButton
+                icon={Trash2}
+                variant="ghost"
+                aria-label={`${t("disable")} ${group.family}`}
+                disabled={isPending}
+                onClick={() => onDeleteFamily(group)}
+              />
+            </>
+          ) : (
+            <Button variant="secondary" leadingIcon={Upload} onClick={() => onAddVariant(group.family)}>
+              {t("uploadFiles")}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {expanded && variants.length > 0 ? (
+        <div id={listId} className="flex flex-col gap-1.5 border-t border-border px-3.5 py-3">
+          <ul className="flex flex-col gap-1.5">
+            {variants.map((variant) => (
+              <li key={variant.id} className="flex items-center justify-between gap-3 rounded-md bg-surface px-3 py-2">
+                <span className="min-w-0">
+                  <span className="block truncate text-label text-fg">{variantLabel(variant)}</span>
+                  <span className="block truncate text-caption text-fg-secondary">
+                    {variant.r2Key ? t("fileKind", { kind: FILE_KIND(variant.r2Key) }) : (variant.sourceIdentifier ?? "")}
+                  </span>
+                </span>
+                {!isGoogle ? (
+                  <IconButton
+                    icon={Trash2}
+                    variant="ghost"
+                    size={36}
+                    aria-label={t("removeVariant", { variant: variantLabel(variant) })}
+                    disabled={isPending}
+                    onClick={() => onDeleteVariant(variant)}
+                  />
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {!isGoogle ? (
+            <div className="pt-1">
+              <Button variant="ghost" leadingIcon={Plus} onClick={() => onAddVariant(group.family)}>
+                {t("addVariant")}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function FontLibraryCard({ fonts }: { fonts: FontRecord[] }) {
   const t = useTranslations("admin.brand");
   const { showToast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadFamily, setUploadFamily] = useState<string | null>(null);
   const groups = useMemo(() => groupFonts(fonts), [fonts]);
 
   function handleToggle(group: FamilyGroup) {
@@ -219,10 +458,9 @@ function FontLibraryCard({ fonts }: { fonts: FontRecord[] }) {
     });
   }
 
-  function handleDelete(group: FamilyGroup) {
-    if (group.variants.length === 0) return;
+  function deleteIds(ids: string[]) {
     startTransition(async () => {
-      const result = await deleteFontFamilyAction(group.variants.map((v) => v.id));
+      const result = await deleteFontFamilyAction(ids);
       if (!result.ok) {
         showToast({ state: "error", title: t("fontInUse"), message: result.templateNames.join(", ") });
       } else {
@@ -237,37 +475,15 @@ function FontLibraryCard({ fonts }: { fonts: FontRecord[] }) {
       <p className="text-caption text-fg-secondary">{t("fontLibraryHelper")}</p>
       <div className="flex flex-col gap-2">
         {groups.map((group) => (
-          <div key={group.family} className="flex min-h-[92px] items-center justify-between gap-3 rounded-[10px] bg-surface-subtle px-3.5 py-3">
-            <div className="min-w-0">
-              <p className="truncate text-label font-bold text-fg">{group.family}</p>
-              <p className="truncate text-caption text-fg-secondary">
-                {group.variants.length > 0
-                  ? `${group.variants[0]!.source === "google" ? t("googleFontsSource") : t("customFont")} · ${group.variants
-                      .map((v) => `${v.weight}${v.style === "italic" ? "i" : ""}`)
-                      .join(", ")}`
-                  : t("customFont")}
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <StatusBadge status={group.badge} />
-              {group.variants.length > 0 ? (
-                <>
-                  <Toggle
-                    checked={group.badge === "enabled"}
-                    onChange={() => handleToggle(group)}
-                    label={<VisuallyHidden>{`${t("enable")} ${group.family}`}</VisuallyHidden>}
-                  />
-                  <IconButton
-                    icon={Trash2}
-                    variant="ghost"
-                    aria-label={`${t("disable")} ${group.family}`}
-                    disabled={isPending}
-                    onClick={() => handleDelete(group)}
-                  />
-                </>
-              ) : null}
-            </div>
-          </div>
+          <FontFamilyCard
+            key={group.family}
+            group={group}
+            isPending={isPending}
+            onToggle={handleToggle}
+            onDeleteFamily={(g) => deleteIds(g.variants.map((v) => v.id))}
+            onDeleteVariant={(variant) => deleteIds([variant.id])}
+            onAddVariant={(family) => setUploadFamily(family)}
+          />
         ))}
       </div>
 
@@ -275,7 +491,7 @@ function FontLibraryCard({ fonts }: { fonts: FontRecord[] }) {
 
       <button
         type="button"
-        onClick={() => setUploadOpen(true)}
+        onClick={() => setUploadFamily("")}
         className="flex items-center gap-3 rounded-md border border-dashed border-border-strong p-3 text-left hover:bg-surface-subtle"
       >
         <Upload aria-hidden="true" size={20} className="text-fg-secondary" />
@@ -285,7 +501,7 @@ function FontLibraryCard({ fonts }: { fonts: FontRecord[] }) {
         </span>
       </button>
 
-      <UploadFontDialog open={uploadOpen} onClose={() => setUploadOpen(false)} />
+      <UploadFontDialog open={uploadFamily !== null} initialFamily={uploadFamily ?? ""} onClose={() => setUploadFamily(null)} />
     </Card>
   );
 }

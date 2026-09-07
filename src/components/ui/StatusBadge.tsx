@@ -19,7 +19,8 @@ export type StatusBadgeStatus =
   | "processing"
   | "queued"
   | "invalid"
-  | "waiting";
+  | "waiting"
+  | "used";
 
 type Tone = "success" | "warning" | "error" | "info" | "subtle";
 
@@ -51,6 +52,7 @@ const STATUS_MAP: Record<StatusBadgeStatus, { key: string; tone: Tone }> = {
   queued: { key: "queued", tone: "subtle" },
   invalid: { key: "invalid", tone: "error" },
   waiting: { key: "waitingForRunSheet", tone: "warning" },
+  used: { key: "used", tone: "subtle" },
 };
 
 export type StatusBadgeProps = {

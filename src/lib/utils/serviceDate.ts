@@ -30,3 +30,16 @@ export function isSundayDate(value: string): boolean {
   const d = new Date(`${value}T12:00:00Z`);
   return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(value) && d.getUTCDay() === 0;
 }
+
+/**
+ * The service date of the coming Sunday: `date` itself when it already is a Sunday,
+ * otherwise the next Sunday after it. This is what "the current service" means for the
+ * Sunday team — a Sunday created further ahead (a special event, a pre-planned deck)
+ * must never become the current queue.
+ */
+export function nextSundayOnOrAfter(date: string): string {
+  const d = new Date(`${date}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) throw new Error(`nextSundayOnOrAfter: invalid date "${date}"`);
+  d.setUTCDate(d.getUTCDate() + ((7 - d.getUTCDay()) % 7));
+  return d.toISOString().slice(0, 10);
+}

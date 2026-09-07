@@ -1,9 +1,12 @@
 import type { Page } from "@playwright/test";
 
 export const SUNDAY_PIN = "53787";
+/** The current service in mock mode: the mock `getNextSunday` fallback lands on the
+    richest seeded demo Sunday once the real clock has rolled past every seeded date —
+    see `src/lib/data/mockDb.ts`'s `getNextSunday`. */
 export const DEMO_SUNDAY_DATE = "2026-09-06";
 
-/** Fills the shared PIN and submits, landing on `/sunday/[date]` (or `/fr/sunday/[date]`). */
+/** Fills the shared PIN and submits, landing on `/sunday` (the single queue screen). */
 export async function loginPin(page: Page, opts: { locale?: "en" | "fr" } = {}) {
   const prefix = opts.locale === "fr" ? "/fr" : "";
   await page.goto(`${prefix}/sunday/pin`);
@@ -14,14 +17,15 @@ export async function loginPin(page: Page, opts: { locale?: "en" | "fr" } = {}) 
   }
 
   await page.getByRole("button", { name: /open sunday|ouvrir la présentation/i }).click();
-  await page.waitForURL(/\/(fr\/)?sunday\/\d{4}-\d{2}-\d{2}$/);
+  await page.waitForURL(/\/(fr\/)?sunday$/);
 }
 
-/**
- * Dashboard -> Sunday Flow. The Figma dashboard (node 5:14) has no "Open flow"
- * button — its flow panel rows are the link into the flow screen.
- */
-export async function openFlowFromDashboard(page: Page) {
-  await page.locator(`a[href*="/flow?slide="]`).first().click();
-  await page.waitForURL(/\/flow\?/);
+export async function loginPinAndWait(page: Page) {
+  await loginPin(page);
+  await page.locator("[data-slide-card]").first().waitFor();
+}
+
+export async function gotoQueue(page: Page) {
+  await page.goto("/sunday");
+  await page.locator("[data-slide-card]").first().waitFor();
 }

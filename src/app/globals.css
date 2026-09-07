@@ -3,6 +3,38 @@
 @import "../../public/fonts/tinos.css";
 
 /*
+ * Brand display serif. The church's licensed Times New Roman is uploaded under
+ * Brand & Fonts on production; until then (and on any machine without it) the
+ * metric-compatible Tinos stands in under the same family name so templates that ask
+ * for "Times New Roman" never fall back to a sans. Custom @font-face rules for the
+ * real files win over these because they are injected later (see SlideCanvas.buildFontFaceCss).
+ */
+@font-face {
+  font-family: "Times New Roman";
+  font-style: normal;
+  font-weight: 400;
+  src: local("Times New Roman"), url(/fonts/tinos/buE4poGnedXvwjX7fmQ.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Times New Roman";
+  font-style: normal;
+  font-weight: 700;
+  src: local("Times New Roman Bold"), local("Times New Roman"), url(/fonts/tinos/buE1poGnedXvwj1AW3Fu0C8.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Times New Roman";
+  font-style: italic;
+  font-weight: 400;
+  src: local("Times New Roman Italic"), local("Times New Roman"), url(/fonts/tinos/buE2poGnedXvwjX-TmZJ9Q.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Times New Roman";
+  font-style: italic;
+  font-weight: 700;
+  src: local("Times New Roman Bold Italic"), local("Times New Roman"), url(/fonts/tinos/buEzpoGnedXvwjX-Rt1s4C0f_Q.woff2) format("woff2");
+}
+
+/*
  * Semantic design tokens — mirrors Figma variables (01 — Foundations · CURRENT).
  * Components must reference these tokens (via Tailwind utilities below or var()) — never raw hex.
  */
@@ -158,4 +190,9 @@ dialog::backdrop {
   dialog::backdrop {
     animation: none;
   }
+}
+
+/* Native <dialog> must stay hidden while closed even when utility classes set display:flex/grid. */
+dialog:not([open]) {
+  display: none !important;
 }

@@ -45,6 +45,12 @@ const headlineField: TemplateField = {
   overflowMode: "auto_fit",
   sortOrder: 0,
   textTransform: "uppercase",
+  defaultValue: "",
+  rotation: 0,
+  boxColor: null,
+  boxPadding: 0,
+  frameColor: null,
+  frameWidth: 0,
 };
 
 const line1Field: TemplateField = {
@@ -74,6 +80,12 @@ const line1Field: TemplateField = {
   overflowMode: "fixed",
   sortOrder: 1,
   textTransform: "none",
+  defaultValue: "",
+  rotation: 0,
+  boxColor: null,
+  boxPadding: 0,
+  frameColor: null,
+  frameWidth: 0,
 };
 
 const template: Template = {

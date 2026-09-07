@@ -31,7 +31,7 @@ export type TemplateCategory =
 export type BackgroundType = "color" | "image";
 export type OverlayColor = "none" | "black" | "white";
 
-export type FieldType = "text";
+export type FieldType = "text" | "image";
 export type TextAlignment = "left" | "center" | "right";
 export type OverflowMode = "fixed" | "auto_fit" | "flex_height";
 export type FontStyle = "normal" | "italic";
@@ -113,6 +113,8 @@ export interface RunSheet {
   modelOutput?: unknown;
   receivedAt: string;
   processedAt: string | null;
+  /** Set the first time a Sunday Team member previews or uses this file (Import modal "new" dot). */
+  openedAt: string | null;
 }
 
 /** Strict OpenAI structured output, validated with Zod in lib/openai/schema.ts. */
@@ -169,6 +171,18 @@ export interface TemplateField {
   sortOrder: number;
   /** Optional CSS text-transform applied by the template (uppercase headlines). */
   textTransform: "none" | "uppercase";
+  /** Text shown when a slide has no value for the field. Locked (non-team-editable) fields ALWAYS render this. */
+  defaultValue: string;
+  /** Degrees, clockwise, around the box centre — for angled "sticker" labels. */
+  rotation: number;
+  /** Solid box painted behind the text (hex), or null for none. */
+  boxColor: string | null;
+  /** Extra box size around the text on every side (px at 1920 scale) when `boxColor` is set. */
+  boxPadding: number;
+  /** Image fields only: a solid frame around the picture (hex), or null. */
+  frameColor: string | null;
+  /** Image fields only: frame thickness (px at 1920 scale). */
+  frameWidth: number;
 }
 
 export interface Template {

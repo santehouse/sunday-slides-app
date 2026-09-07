@@ -55,6 +55,21 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * The date used in zip/MP4 export filenames: the applied run sheet's own parsed
+ * `serviceDate` when it's a real `YYYY-MM-DD` value (the pastor's document may name a
+ * different date than the Sunday record it landed on), falling back to the Sunday's own
+ * `serviceDate`. Never moves the Sunday itself — filenames only.
+ */
+async function resolveExportDate(db: ReturnType<typeof getDb>, sunday: { serviceDate: string; sourceRunSheetId: string | null }): Promise<string> {
+  if (!sunday.sourceRunSheetId) return sunday.serviceDate;
+  const runSheet = await db.getRunSheet(sunday.sourceRunSheetId);
+  const parsedDate = runSheet?.parsedJson?.serviceDate;
+  return parsedDate && ISO_DATE_RE.test(parsedDate) ? parsedDate : sunday.serviceDate;
+}
+
 /** Resolves `req`'s scope against the full Sunday Flow. `null` means the request itself is unusable. */
 function resolveScope(req: ExportRequest, allSlides: Slide[]): Slide[] | null {
   if (req.scope === "all") return allSlides;
@@ -123,6 +138,8 @@ export async function runExport(req: ExportRequest): Promise<ExportResult> {
 
   await db.updateExportJob(job.id, { status: "processing" });
 
+  const exportDate = await resolveExportDate(db, sunday);
+
   const renderInputs = await Promise.all(selected.map((slide) => buildRenderInput(slide, { showSafeZone: false })));
 
   let rendered: Awaited<ReturnType<typeof renderSlidesToJpegs>>;
@@ -140,6 +157,12 @@ export async function runExport(req: ExportRequest): Promise<ExportResult> {
 
   const overflowSlideIds = rendered.filter((r) => !r.fit.exportable).map((r) => r.fit.slideId);
   if (overflowSlideIds.length > 0) {
+    // Which field of which slide, and why — the function logs are the only place to see it.
+    for (const r of rendered) {
+      if (r.fit.exportable) continue;
+      const overflowing = r.fit.fields.filter((f) => f.status === "overflow").map((f) => `${f.fieldKey}:${f.reason ?? "?"}`);
+      console.warn(`export: text overflow on slide ${r.fit.slideId} — ${overflowing.join(", ")}`);
+    }
     await Promise.all(overflowSlideIds.map((id) => db.updateSlide(id, { status: "invalid" })));
     return fail("text_overflow", undefined, overflowSlideIds);
   }
@@ -164,7 +187,7 @@ export async function runExport(req: ExportRequest): Promise<ExportResult> {
       const zip = new JSZip();
       for (const file of files) zip.file(file.name, file.bytes);
       bytes = await zip.generateAsync({ type: "uint8array" });
-      filename = `${sunday.serviceDate}-sunday-flow.zip`;
+      filename = `${exportDate}-slides.zip`;
       contentType = "application/zip";
       exportKey = keys.exportsZip(sunday.serviceDate, job.id);
     }
@@ -192,7 +215,7 @@ export async function runExport(req: ExportRequest): Promise<ExportResult> {
     return fail("encode_failed", describeError(err));
   }
 
-  const filename = `${sunday.serviceDate}-sunday-flow.mp4`;
+  const filename = `${exportDate}-slides.mp4`;
   const exportKey = keys.exportsMp4(sunday.serviceDate, job.id);
   try {
     await putObject(exportKey, mp4Bytes, "video/mp4");

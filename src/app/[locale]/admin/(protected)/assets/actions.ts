@@ -9,7 +9,8 @@ import type { Asset, AssetCategory } from "@/lib/domain/types";
 import type { UpdateAssetPatch } from "@/lib/data";
 
 /** Mirrors the Dropzone's client-side limit — a crafted request must not bypass it. */
-const MAX_ASSET_BYTES = 10 * 1024 * 1024;
+// Server Actions are capped at 4 MB (next.config.ts) — keep the app-level check in step.
+const MAX_ASSET_BYTES = 4 * 1024 * 1024;
 
 const MIME_EXT: Record<string, string> = {
   "image/jpeg": "jpg",

@@ -137,7 +137,7 @@ async function main() {
   check("MP4 export succeeds", mp4.ok, mp4.ok ? "" : JSON.stringify(mp4));
   if (mp4.ok) {
     check("MP4 content type", mp4.contentType === "video/mp4", mp4.contentType);
-    check("MP4 filename", mp4.filename === `${DEMO_DATE}-sunday-flow.mp4`, mp4.filename);
+    check("MP4 filename", mp4.filename === `${DEMO_DATE}-slides.mp4`, mp4.filename);
 
     const expected = included.length * sunday.defaultSlideHoldSeconds;
     const boxDuration = mp4DurationSeconds(mp4.bytes);

@@ -6,7 +6,21 @@ Backgrounds: page `--bg-canvas`, cards `--bg-surface` + 1px `--border-default` +
 
 Build agents: call `mcp__Figma__get_design_context` with the node id for exact code + a screenshot. Never reference page `90 — ARCHIVED`.
 
-## Sunday Team — page `10 — Sunday Team` (2:108)
+## Simplified Sunday IA (Sept 2026)
+
+The Sunday Team side no longer matches the `10 — Sunday Team` frames below — it was rebuilt around a 3-step
+stepper (Run sheet → Check slides → Download) for volunteers who don't think in "flow / deck / merge / export"
+terms. `/sunday/[date]` is now Step 2 ("Check slides", the default screen) with an inline edit panel and add-slide
+picker; `/sunday/[date]/run-sheet` is Step 1 (an inbox across all Sundays, not per-Sunday upload); `/sunday/[date]/
+download` is Step 3 (two big download cards + a collapsed "Advanced options" section carrying the old Export
+Popover's custom-selection UI). The tab strip, Overview metrics page, and week switcher are gone from the Sunday
+side. Old routes (`/flow`, `/upload`, `/add`, `/slide/[slideId]`) still work as redirects into the new IA. Copy
+lives under the `sunday.simple.*` i18n namespace — see `src/components/sunday/{SundayStepper,CheckSlidesClient,
+RunSheetInbox,DownloadClient,SlideEditPanel,SlideAddPanel}.tsx`. The frames below are historical reference for the
+renderer/admin side and for what the Sunday screens looked like before this rebuild — do not implement new Sunday
+work against them.
+
+## Sunday Team — page `10 — Sunday Team` (2:108) — ARCHIVED, see note above
 
 ### 01 PIN Access · CURRENT — node `4:34`
 - App Header only. Centered Access Card 460×340 (radius 14, padding 34): title "Sunday team access" Arimo Bold 28 (2 lines allowed);

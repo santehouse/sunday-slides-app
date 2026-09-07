@@ -50,6 +50,12 @@ export function makeTemplateField(overrides: Partial<TemplateField> = {}): Templ
     teamEditable: true,
     sortOrder: 0,
     fontId: null,
+    defaultValue: "",
+    rotation: 0,
+    boxColor: null,
+    boxPadding: 0,
+    frameColor: null,
+    frameWidth: 0,
     ...makeFieldLayout(overrides),
     ...overrides,
   };

@@ -16,6 +16,28 @@
 ## Retention
 Temporary objects (run sheets, exports, tmp) expire from R2 after `temporary_retention_days` (default 60) via bucket lifecycle rules. Templates, assets and fonts never expire. Metadata stays in Supabase.
 
+## Migrations pending on production
+- `0002_run_sheet_opened_at.sql` (Import modal "new" dot)
+- `0003_template_field_layers.sql` (image fields, default text, rotated/boxed labels) — then run `scripts/apply-brand-templates.ts` (see docs/HANDOFF.md).
+
+## Admin magic-link email (Supabase Auth → Resend SMTP)
+
+Supabase's built-in mailer only delivers to project members and is capped at 2 emails/hour, so the
+production project sends Auth email through Resend's SMTP relay instead (configured via the
+Management API, `PATCH /v1/projects/{ref}/config/auth`):
+
+| Setting | Value |
+|---|---|
+| `smtp_host` / `smtp_port` | `smtp.resend.com` / `465` |
+| `smtp_user` / `smtp_pass` | `resend` / the Resend API key (full access) |
+| `smtp_admin_email` | `no-reply@eajc.sundaytomonday.church` (verified Resend domain) |
+| `smtp_sender_name` | `Church Panels` |
+| `rate_limit_email_sent` | `30` per hour |
+
+The link lands on `/api/auth/callback`, which exchanges the code for a session and redirects to
+`/admin`. `site_url` and `uri_allow_list` must include the environment's domain. Rotating the Resend
+key means re-applying `smtp_pass`. Staging (mock mode) never sends email — the sign-in form says so.
+
 ## Sunday PIN
 Stored hashed (bcrypt). Changing it in Admin → Settings bumps `sunday_pin_version`, which invalidates every Sunday session cookie.
 

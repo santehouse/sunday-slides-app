@@ -86,3 +86,48 @@ describe("mockDb.replaceSlidesForSunday", () => {
     expect(await db.listSlidesForSunday(sundayB!.id)).toEqual(beforeB);
   });
 });
+
+describe("mockDb.getNextSunday", () => {
+  it("returns the seeded demo deck when the coming Sunday does not exist yet", async () => {
+    const current = await db.getNextSunday("2026-09-07", { create: true });
+    expect(current?.serviceDate).toBe("2026-09-06");
+    expect((await db.listSlidesForSunday(current!.id)).length).toBeGreaterThan(0);
+  });
+
+  it("ignores a Sunday created further ahead — the current service is the coming Sunday only", async () => {
+    await db.getOrCreateSundayByDate("2027-01-10");
+    const current = await db.getNextSunday("2026-09-07", { create: true });
+    expect(current?.serviceDate).toBe("2026-09-06");
+    expect(await db.getNextSunday("2026-09-07", { create: false })).toBeNull();
+  });
+
+  it("returns the coming Sunday itself once it exists", async () => {
+    const created = await db.getOrCreateSundayByDate("2026-09-13");
+    const current = await db.getNextSunday("2026-09-07", { create: true });
+    expect(current?.id).toBe(created.id);
+    expect((await db.getNextSunday("2026-09-13", { create: false }))?.id).toBe(created.id);
+  });
+});
+
+describe("createSlideFromTemplate background", () => {
+  it("does not assign an approved colour to a template that locks its background", async () => {
+    const { createSlideFromTemplate } = await import("@/lib/sunday/slides");
+    const sunday = await db.getNextSunday("2026-09-07", { create: true });
+    const templates = await db.listTemplates();
+    const locked = templates.find((t) => t.backgroundType === "color" && !t.allowTeamBackgroundChoice)!;
+    const open = await db.createTemplate({
+      slug: "test-open-bg",
+      nameEn: "Open background",
+      nameFr: "Fond libre",
+      category: "general",
+      status: "published",
+      backgroundType: "color",
+      backgroundValue: "#000000",
+      allowTeamBackgroundChoice: true,
+    });
+    const lockedSlide = await createSlideFromTemplate(sunday!.id, locked.id);
+    const openSlide = await createSlideFromTemplate(sunday!.id, open.id);
+    expect(lockedSlide.approvedColorId).toBeNull();
+    expect(openSlide.approvedColorId).not.toBeNull();
+  });
+});

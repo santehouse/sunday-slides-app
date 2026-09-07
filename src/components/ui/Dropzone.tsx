@@ -10,6 +10,9 @@ export type DropzoneProps = {
   hint: string;
   chooseFileLabel: string;
   onFile: (file: File) => void;
+  /** Set with `onFiles` to accept several files in one drop / pick (e.g. every weight of a font). */
+  multiple?: boolean;
+  onFiles?: (files: File[]) => void;
   accept?: string;
   maxSizeMb?: number;
   className?: string;
@@ -22,6 +25,8 @@ export function Dropzone({
   hint,
   chooseFileLabel,
   onFile,
+  multiple = false,
+  onFiles,
   accept,
   maxSizeMb,
   className,
@@ -31,16 +36,21 @@ export function Dropzone({
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function acceptFile(file: File | undefined) {
-    if (!file || disabled) return;
-    if (maxSizeMb && file.size > maxSizeMb * 1024 * 1024) return;
-    onFile(file);
+  function acceptFiles(list: FileList | null | undefined) {
+    if (!list || disabled) return;
+    const files = Array.from(list).filter((file) => !maxSizeMb || file.size <= maxSizeMb * 1024 * 1024);
+    if (files.length === 0) return;
+    if (multiple && onFiles) {
+      onFiles(files);
+      return;
+    }
+    onFile(files[0]!);
   }
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setDragOver(false);
-    acceptFile(event.dataTransfer.files[0]);
+    acceptFiles(event.dataTransfer.files);
   }
 
   return (
@@ -73,9 +83,14 @@ export function Dropzone({
         tabIndex={-1}
         aria-label={chooseFileLabel}
         accept={accept}
+        multiple={multiple}
         disabled={disabled}
         className="sr-only"
-        onChange={(event) => acceptFile(event.target.files?.[0])}
+        onChange={(event) => {
+          acceptFiles(event.target.files);
+          // Allow picking the same file again after a removal.
+          event.target.value = "";
+        }}
       />
     </div>
   );

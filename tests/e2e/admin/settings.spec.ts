@@ -25,7 +25,7 @@ test.describe("Settings", () => {
     // ...and a session cookie minted before the rotation is rejected too (pinVersion bump).
     for (let i = 0; i < 5; i++) await digits.nth(i).fill("24681"[i]!);
     await sunday.getByRole("button", { name: /open sunday/i }).click();
-    await sunday.waitForURL(/\/sunday\/\d{4}-\d{2}-\d{2}$/);
+    await sunday.waitForURL(/\/sunday$/);
 
     // The mock store is shared by every spec in this dev-server process: restore the demo
     // PIN, and assert the restore really landed (a stale PIN breaks the whole Sunday suite).
@@ -43,7 +43,7 @@ test.describe("Settings", () => {
     const restoredDigits = restored.locator('input[inputmode="numeric"]');
     for (let i = 0; i < DEMO_PIN.length; i++) await restoredDigits.nth(i).fill(DEMO_PIN[i]!);
     await restored.getByRole("button", { name: /open sunday/i }).click();
-    await restored.waitForURL(/\/sunday\/\d{4}-\d{2}-\d{2}$/);
+    await restored.waitForURL(/\/sunday$/);
     await restored.close();
   });
 });
