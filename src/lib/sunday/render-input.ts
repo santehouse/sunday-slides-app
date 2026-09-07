@@ -9,6 +9,7 @@ import "server-only";
  * asset/font resolution never drifts between preview and export.
  */
 import { getDb } from "@/lib/data";
+import { resolveSlideBackgroundHex } from "@/lib/sunday/background";
 import { isMockMode } from "@/lib/env";
 import { mockAssetUrl } from "@/lib/data/mockSeed";
 import { getSignedReadUrl } from "@/lib/r2/client";
@@ -59,14 +60,8 @@ export async function buildRenderInput(slide: Slide, opts: BuildRenderInputOptio
     throw new Error(`buildRenderInput: template ${slide.templateId} not found for slide ${slide.id}`);
   }
 
-  let backgroundColorHex: string | null = null;
-  if (slide.approvedColorId) {
-    const colors = await db.listApprovedColors();
-    backgroundColorHex = colors.find((c) => c.id === slide.approvedColorId)?.hex ?? null;
-  }
-  if (!backgroundColorHex && template.backgroundType === "color") {
-    backgroundColorHex = template.backgroundValue;
-  }
+  const colors = slide.approvedColorId && template.allowTeamBackgroundChoice ? await db.listApprovedColors() : [];
+  const backgroundColorHex = resolveSlideBackgroundHex(template, slide, (id) => colors.find((c) => c.id === id)?.hex);
 
   const templateBackgroundAssetId = template.backgroundType === "image" ? template.backgroundValue : null;
   const assets = await resolveAssets([slide.assetId, templateBackgroundAssetId]);

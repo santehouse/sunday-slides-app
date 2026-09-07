@@ -4,6 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "r
 import { useLocale, useTranslations } from "next-intl";
 import type { AppLocale } from "@/i18n/routing";
 import type { Slide, SlideContent, Template } from "@/lib/domain/types";
+import { resolveSlideBackgroundHex } from "@/lib/sunday/background";
 import type { ResolvedAsset, SlideFitResult } from "@/lib/renderer/types";
 import { fitSlide } from "@/lib/renderer/fitText";
 import { createCanvasMeasurer, ensureFontsLoaded } from "@/lib/renderer/measure";
@@ -64,6 +65,7 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
 ) {
   const t = useTranslations("sunday.simple.edit");
   const tSafeZones = useTranslations("sunday.safeZones");
+  const tQueue = useTranslations("sunday.queue");
   const locale = useLocale() as AppLocale;
   const { showToast } = useToast();
 
@@ -283,7 +285,8 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
       </div>
 
       <div className="flex flex-col gap-3.5">
-        <div className="flex h-10 items-center justify-end">
+        <div className="flex h-10 items-center justify-between">
+          <span className="text-caption font-bold uppercase tracking-[0.08em] text-fg-secondary">{tQueue("previewLabel")}</span>
           <SafeZonesAction active={showSafeZone} onToggle={() => setShowSafeZone((v) => !v)} />
         </div>
         <div className="flex w-full items-center justify-center rounded-[12px] bg-surface-subtle p-3.5">
@@ -291,7 +294,7 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
             <SlidePreview
               template={template}
               slide={{ id: slide.id, headline: content.headline ?? "", content, backgroundMode, assetId }}
-              backgroundColorHex={approvedColorId ? (colorOptions.find((c) => c.id === approvedColorId)?.hex ?? null) : null}
+              backgroundColorHex={resolveSlideBackgroundHex(template, { approvedColorId }, (id) => colorOptions.find((c) => c.id === id)?.hex)}
               assets={availableAssets}
               safeZone={safeZone}
               showSafeZone={showSafeZone}

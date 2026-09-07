@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { loginPin } from "./helpers";
 
 /**
- * The Export dropdown (top-right of the queue screen): quick "Download pictures" /
+ * The Export dropdown (top-right of the queue screen): quick "Download panels" /
  * "Download video" rows, the seconds-per-slide stepper, and the Advanced disclosure
  * carrying the old ExportPopover's custom-selection UI (format, scope, range field
  * <-> thumbnails).
@@ -13,11 +13,11 @@ test("quick downloads produce a ZIP and an MP4 with the right content types", as
   await loginPin(page);
 
   await page.getByRole("button", { name: "Export", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Download pictures" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Download panels" })).toBeVisible();
 
   const picturesResponse = page.waitForResponse((res) => res.url().includes("/api/export") && res.request().method() === "POST");
   const picturesDownload = page.waitForEvent("download", { timeout: 180_000 });
-  await page.getByRole("button", { name: "Download pictures" }).click();
+  await page.getByRole("button", { name: "Download panels" }).click();
   const [picturesRes, picturesFile] = await Promise.all([picturesResponse, picturesDownload]);
   expect(picturesRes.headers()["content-type"]).toBe("application/zip");
   expect(picturesFile.suggestedFilename()).toMatch(/\.zip$/);

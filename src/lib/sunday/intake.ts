@@ -361,7 +361,7 @@ async function toCreateSlideInput(
     content: insert.content,
     assetId: backgroundMode === "image" ? (template?.backgroundValue ?? null) : null,
     backgroundMode,
-    approvedColorId: backgroundMode === "color" ? firstColorId : null,
+    approvedColorId: backgroundMode === "color" && template?.allowTeamBackgroundChoice ? firstColorId : null,
     sortOrder: insert.sortOrder,
     includeInVideo: insert.includeInVideo,
     status: insert.status,

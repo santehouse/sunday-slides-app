@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Inbox, Plus, Trash2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import type { Slide, Template } from "@/lib/domain/types";
+import { resolveSlideBackgroundHex } from "@/lib/sunday/background";
 import type { TemplateWithFields } from "@/lib/data";
 import type { ResolvedAsset } from "@/lib/renderer/types";
 import { serviceDateToDate } from "@/lib/utils/serviceDate";
@@ -202,7 +203,7 @@ export function SundayQueueClient({
         >
           {t("clearBody")}
         </ConfirmDialog>
-        <Button variant="ghost" leadingIcon={Trash2} onClick={() => setConfirmingClear(true)} disabled={slides.length === 0}>
+        <Button variant="secondary" leadingIcon={Trash2} onClick={() => setConfirmingClear(true)} disabled={slides.length === 0}>
           {t("clear")}
         </Button>
         <div className="flex items-center gap-2.5">
@@ -249,7 +250,8 @@ export function SundayQueueClient({
         </Card>
       ) : (
         <div className="flex flex-col-reverse gap-6 lg:flex-row lg:items-start">
-          <div className="min-w-0 flex-1">
+          {/* Queue and preview split the width 50/50 on desktop. */}
+          <div className="min-w-0 lg:flex-1 lg:basis-0">
             <QueueList
               slides={slides}
               templatesById={templatesById}
@@ -263,8 +265,9 @@ export function SundayQueueClient({
             />
           </div>
 
-          <Card padding="none" className="flex w-full shrink-0 flex-col gap-3 p-[18px] lg:w-[420px]">
-            <div className="flex h-9 items-center justify-end">
+          <Card padding="none" className="flex w-full min-w-0 flex-col gap-3 p-[18px] lg:flex-1 lg:basis-0 lg:self-start">
+            <div className="flex h-9 items-center justify-between">
+              <span className="text-caption font-bold uppercase tracking-[0.08em] text-fg-secondary">{t("previewLabel")}</span>
               <SafeZonesAction active={showSafeZone} onToggle={() => setShowSafeZone((v) => !v)} />
             </div>
             <div className="aspect-video w-full overflow-hidden rounded-[10px] bg-surface-subtle">
@@ -272,7 +275,7 @@ export function SundayQueueClient({
                 <SlidePreview
                   template={previewTemplate}
                   slide={previewSlide}
-                  backgroundColorHex={previewSlide.approvedColorId ? (colorHexById[previewSlide.approvedColorId] ?? null) : null}
+                  backgroundColorHex={resolveSlideBackgroundHex(previewTemplate, previewSlide, colorHexById)}
                   assets={assets}
                   safeZone={safeZone}
                   showSafeZone={showSafeZone}

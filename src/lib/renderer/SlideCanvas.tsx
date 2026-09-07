@@ -20,7 +20,12 @@ export interface SlideCanvasProps {
   layouts: SlideLayoutMap;
 }
 
-const SAFE_ZONE_COLOR = "#4f46e5";
+// QA: the guide must read as a danger zone (nothing may sit under the live camera),
+// so it is drawn as a red dashed frame over grey diagonal hatching — the UI label is
+// unchanged. Preview-only: exports never render it (see SlideCanvas below).
+const SAFE_ZONE_COLOR = "#dc2626";
+const SAFE_ZONE_HATCH =
+  "repeating-linear-gradient(135deg, rgba(107, 114, 128, 0.45) 0 10px, rgba(107, 114, 128, 0.08) 10px 24px)";
 
 function SafeZoneGuide({ zone, label }: { zone: SafeZone; label: string }) {
   return (
@@ -34,7 +39,7 @@ function SafeZoneGuide({ zone, label }: { zone: SafeZone; label: string }) {
         height: zone.height,
         boxSizing: "border-box",
         border: `4px dashed ${SAFE_ZONE_COLOR}`,
-        backgroundColor: "rgba(79, 70, 229, 0.12)",
+        backgroundImage: SAFE_ZONE_HATCH,
         pointerEvents: "none",
       }}
     >
@@ -46,8 +51,8 @@ function SafeZoneGuide({ zone, label }: { zone: SafeZone; label: string }) {
           fontFamily: '"Arimo", sans-serif',
           fontSize: 18,
           fontWeight: 700,
-          color: SAFE_ZONE_COLOR,
-          backgroundColor: "#ffffff",
+          color: "#ffffff",
+          backgroundColor: SAFE_ZONE_COLOR,
           borderRadius: 4,
         }}
       >

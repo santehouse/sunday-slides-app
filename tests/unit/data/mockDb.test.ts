@@ -108,3 +108,17 @@ describe("mockDb.getNextSunday", () => {
     expect((await db.getNextSunday("2026-09-13", { create: false }))?.id).toBe(created.id);
   });
 });
+
+describe("createSlideFromTemplate background", () => {
+  it("does not assign an approved colour to a template that locks its background", async () => {
+    const { createSlideFromTemplate } = await import("@/lib/sunday/slides");
+    const sunday = await db.getNextSunday("2026-09-07", { create: true });
+    const templates = await db.listTemplates();
+    const locked = templates.find((t) => t.backgroundType === "color" && !t.allowTeamBackgroundChoice)!;
+    const open = templates.find((t) => t.backgroundType === "color" && t.allowTeamBackgroundChoice)!;
+    const lockedSlide = await createSlideFromTemplate(sunday!.id, locked.id);
+    const openSlide = await createSlideFromTemplate(sunday!.id, open.id);
+    expect(lockedSlide.approvedColorId).toBeNull();
+    expect(openSlide.approvedColorId).not.toBeNull();
+  });
+});

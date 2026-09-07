@@ -20,6 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslations } from "next-intl";
 import type { Slide, Template } from "@/lib/domain/types";
+import { resolveSlideBackgroundHex } from "@/lib/sunday/background";
 import type { ResolvedAsset } from "@/lib/renderer/types";
 import { QueueRow } from "./QueueRow";
 
@@ -131,7 +132,7 @@ export function QueueList({ slides, templatesById, colorHexById, assets, selecte
           {orderedSlides.map((slide, index) => {
             const template = templatesById[slide.templateId];
             if (!template) return null;
-            const backgroundColorHex = slide.approvedColorId ? (colorHexById[slide.approvedColorId] ?? null) : null;
+            const backgroundColorHex = resolveSlideBackgroundHex(template, slide, colorHexById);
             return (
               <SortableRow
                 key={slide.id}

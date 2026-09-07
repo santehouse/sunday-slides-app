@@ -35,8 +35,12 @@ export async function createSlideFromTemplate(sundayId: string, templateId: stri
   let approvedColorId: string | null = null;
   let assetId: string | null = null;
   if (backgroundMode === "color") {
-    const enabledColors = await db.listApprovedColors({ enabledOnly: true });
-    approvedColorId = enabledColors[0]?.id ?? null;
+    // Only templates that let the team pick a colour start from an approved colour;
+    // locked templates paint their own `backgroundValue` (see lib/sunday/background.ts).
+    if (template.allowTeamBackgroundChoice) {
+      const enabledColors = await db.listApprovedColors({ enabledOnly: true });
+      approvedColorId = enabledColors[0]?.id ?? null;
+    }
   } else {
     assetId = template.backgroundValue;
   }

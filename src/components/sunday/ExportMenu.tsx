@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { ChevronDown, Film, Images } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { Slide, Template } from "@/lib/domain/types";
+import { resolveSlideBackgroundHex } from "@/lib/sunday/background";
 import type { ResolvedAsset } from "@/lib/renderer/types";
 import type { ExportBlocked } from "@/lib/sunday/contracts";
 import { formatSlideRange, parseSlideRange } from "@/lib/engines/exportRange";
@@ -302,7 +303,7 @@ export function ExportMenu({ sundayId, slides, templatesById, colorHexById, asse
                             <SlidePreview
                               template={template}
                               slide={slide}
-                              backgroundColorHex={slide.approvedColorId ? (colorHexById[slide.approvedColorId] ?? null) : null}
+                              backgroundColorHex={resolveSlideBackgroundHex(template, slide, colorHexById)}
                               assets={assets}
                             />
                           ) : null}

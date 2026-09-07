@@ -35,6 +35,35 @@ type FamilyGroup = {
   badge: "enabled" | "available" | "needsFontFile";
 };
 
+const FONT_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
+
+const WEIGHT_TOKENS: Array<[RegExp, number]> = [
+  [/extra ?black|ultra ?black|heavy/i, 900],
+  [/black/i, 900],
+  [/extra ?bold|ultra ?bold/i, 800],
+  [/semi ?bold|demi ?bold/i, 600],
+  [/bold/i, 700],
+  [/medium/i, 500],
+  [/extra ?light|ultra ?light/i, 200],
+  [/light/i, 300],
+  [/thin|hairline/i, 100],
+  [/regular|book|normal|roman/i, 400],
+];
+
+/** Best-effort family / weight / style from a font file name such as "Inter-SemiBoldItalic.ttf". */
+function guessFontMetadata(filename: string): { family: string; weight: number | null; style: FontStyle | null } {
+  const stem = filename.replace(/\.(woff2?|ttf|otf)$/i, "");
+  const [rawFamily, ...rest] = stem.split(/[-_]/);
+  const descriptor = rest.join(" ") || stem.replace(rawFamily ?? "", "");
+  const weight = WEIGHT_TOKENS.find(([pattern]) => pattern.test(descriptor))?.[1] ?? null;
+  const style: FontStyle | null = /italic|oblique/i.test(descriptor) ? "italic" : descriptor ? "normal" : null;
+  const family = (rawFamily ?? "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+  return { family, weight, style };
+}
+
 function groupFonts(fonts: FontRecord[]): FamilyGroup[] {
   const byFamily = new Map<string, FontRecord[]>();
   for (const font of fonts) {
@@ -70,6 +99,12 @@ function UploadFontDialog({ open, onClose }: { open: boolean; onClose: () => voi
   function handleFile(file: File) {
     const formData = new FormData();
     formData.set("file", file);
+    // Prefill family / weight / style from the file name ("Inter-SemiBoldItalic.ttf") —
+    // the admin only confirms, and each weight lands in its own variant.
+    const guess = guessFontMetadata(file.name);
+    if (guess.family && !family) setFamily(guess.family);
+    if (guess.weight) setWeight(guess.weight);
+    if (guess.style) setStyle(guess.style);
     startTransition(async () => {
       const result = await uploadFontFileAction(formData);
       if (result.ok) {
@@ -87,10 +122,20 @@ function UploadFontDialog({ open, onClose }: { open: boolean; onClose: () => voi
   function handleCreate() {
     if (!r2Key || !family) return;
     startTransition(async () => {
-      await createCustomFontAction({ family, weight, style, r2Key });
-      showToast({ state: "success", title: t("saved"), message: family });
+      const result = await createCustomFontAction({ family, weight, style, r2Key });
+      if (!result.ok) {
+        showToast({
+          state: "error",
+          title: t("variantExistsTitle"),
+          message: t("variantExistsBody", { family, weight, style: style === "italic" ? t("styleItalic") : t("styleNormal") }),
+        });
+        return;
+      }
+      showToast({ state: "success", title: t("fontSaved"), message: `${family} · ${weight}${style === "italic" ? "i" : ""}` });
       setR2Key(null);
       setFamily("");
+      setWeight(400);
+      setStyle("normal");
       onClose();
       router.refresh();
     });
@@ -116,10 +161,7 @@ function UploadFontDialog({ open, onClose }: { open: boolean; onClose: () => voi
               label={t("weight")}
               value={String(weight)}
               onChange={(e) => setWeight(Number(e.target.value))}
-              options={[
-                { value: "400", label: "400" },
-                { value: "700", label: "700" },
-              ]}
+              options={FONT_WEIGHTS.map((w) => ({ value: String(w), label: `${w} · ${t(`weightNames.${w}`)}` }))}
             />
             <Select
               id="font-style"

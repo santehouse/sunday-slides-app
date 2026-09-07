@@ -7,7 +7,7 @@
 export type SignInFormState =
   | { mode: "idle" }
   | { mode: "invalid_credentials" }
-  | { mode: "magic_link_sent"; email: string }
+  | { mode: "magic_link_sent"; email: string; mock?: boolean }
   | { mode: "magic_link_error" };
 
 export const initialSignInFormState: SignInFormState = { mode: "idle" };
