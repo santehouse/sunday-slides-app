@@ -219,3 +219,32 @@ describe("reprocessRunSheet", () => {
     expect(["ready_to_apply", "needs_review"]).toContain(reprocessed.parseStatus);
   });
 });
+
+describe("applyRunSheetToSunday (Import modal → Use this file)", () => {
+  it("applies an inbox file filed under an older Sunday to the service on screen", async () => {
+    const { applyRunSheetToSunday } = await import("@/lib/sunday/intake");
+    const db = getDb();
+    // Filed under an earlier date (the way an email that arrived last week is stored)…
+    const runSheet = await ingestRunSheet({
+      bytes: loadFixtureBytes(),
+      filename: "260906.docx",
+      mimeType: DOCX_MIME,
+      sourceType: "email",
+      sundayDate: "2026-11-01",
+      parse: false,
+    });
+    expect(runSheet.parseStatus).toBe("queued");
+    // …but the team uses it for the coming service.
+    const target = await db.getOrCreateSundayByDate("2026-11-08");
+
+    const result = await applyRunSheetToSunday(runSheet.id, target.id);
+    expect(result.ok).toBe(true);
+    expect(result.summary?.found).toBeGreaterThan(0);
+
+    const slides = await db.listSlidesForSunday(target.id);
+    expect(slides.length).toBeGreaterThan(4);
+    // The Sunday it was first filed under stays untouched.
+    expect(await db.listSlidesForSunday(runSheet.sundayId)).toHaveLength(0);
+    expect((await db.getRunSheet(runSheet.id))!.sundayId).toBe(target.id);
+  });
+});

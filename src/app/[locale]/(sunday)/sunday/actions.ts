@@ -11,7 +11,7 @@ import { randomUUID } from "node:crypto";
 import { getObjectStore, getSignedReadUrl, getSignedUploadUrl, keys, putObject } from "@/lib/r2/client";
 import type { UploadTicket } from "@/lib/uploads/direct";
 import { hasR2 } from "@/lib/env";
-import { ingestRunSheet, applyRunSheet, previewRunSheet, reprocessRunSheet } from "@/lib/sunday/intake";
+import { ingestRunSheet, previewRunSheet, applyRunSheetToSunday } from "@/lib/sunday/intake";
 import { createSlideFromTemplate, duplicateSlide, removeSlide, rememberMapping } from "@/lib/sunday/slides";
 import type { RunSheetPreview } from "@/lib/sunday/contracts";
 import type { Slide, SlideBackgroundMode, SlideContent, SlideStatus } from "@/lib/domain/types";
@@ -224,26 +224,11 @@ export interface UseRunSheetResult {
  * "queued"`, e.g. inbound email), then applies it to the current service — replacing the
  * queue when nothing has been manually edited yet, merging (preserving edits) otherwise.
  */
-export async function activateRunSheetFileAction(runSheetId: string): Promise<UseRunSheetResult> {
-  const db = getDb();
-  let runSheet = await db.getRunSheet(runSheetId);
-  if (!runSheet) throw new Error(`activateRunSheetFileAction: run sheet ${runSheetId} not found`);
-
-  if (runSheet.parseStatus === "queued") {
-    runSheet = await reprocessRunSheet(runSheetId);
-  }
-
-  if (!runSheet.parsedJson) {
-    return { ok: false };
-  }
-
-  const beforeSlides = await db.listSlidesForSunday(runSheet.sundayId);
-  const mode: "merge" | "replace" = beforeSlides.some((s) => s.manuallyEdited) ? "merge" : "replace";
-
-  const result = await applyRunSheet(runSheetId, mode);
+export async function activateRunSheetFileAction(runSheetId: string, sundayId: string): Promise<UseRunSheetResult> {
+  const result = await applyRunSheetToSunday(runSheetId, sundayId);
   await markRunSheetOpenedAction(runSheetId);
   revalidateQueue();
-  return { ok: true, summary: result.summary };
+  return result.ok ? { ok: true, summary: result.summary } : { ok: false };
 }
 
 // ---------------------------------------------------------------------------

@@ -102,6 +102,8 @@ export interface CreateRunSheetInput {
 }
 
 export type UpdateRunSheetPatch = Partial<{
+  /** Re-targets the file to another service (the team used an older inbox file for this Sunday). */
+  sundayId: string;
   extractedText: string | null;
   parseStatus: RunSheetParseStatus;
   parseError: string | null;
