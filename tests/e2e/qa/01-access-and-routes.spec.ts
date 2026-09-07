@@ -14,9 +14,9 @@ function isolatedIp(): string {
  */
 
 test.describe("Sunday PIN access", () => {
-  test("a valid PIN opens the Sunday dashboard and sets an httpOnly session cookie", async ({ page, context }) => {
+  test("a valid PIN opens the Sunday queue and sets an httpOnly session cookie", async ({ page, context }) => {
     await loginPinAndWait(page);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Sunday, September 6");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("This service");
 
     const cookie = (await context.cookies()).find((c) => c.name.startsWith("cp_sunday"));
     expect(cookie, "Sunday session cookie must exist").toBeTruthy();
@@ -70,12 +70,10 @@ test.describe("Sunday PIN access", () => {
 
 test.describe("Unauthenticated gating", () => {
   for (const path of [
+    "/sunday",
     `/sunday/${DEMO_SUNDAY_DATE}`,
     `/sunday/${DEMO_SUNDAY_DATE}/run-sheet`,
-    `/sunday/${DEMO_SUNDAY_DATE}/download`,
     `/sunday/${DEMO_SUNDAY_DATE}/flow`,
-    `/sunday/${DEMO_SUNDAY_DATE}/add`,
-    `/sunday/${DEMO_SUNDAY_DATE}/upload`,
   ]) {
     test(`${path} redirects to the PIN screen`, async ({ page }) => {
       await page.goto(path);
@@ -136,7 +134,9 @@ test.describe("API surface", () => {
         attachments: [
           {
             id: "att-1",
-            filename: "260906.docx",
+            // Distinct name: the Sunday Import specs assert on the seeded "260906.docx" rows,
+            // and this unopened copy must never be mistaken for one of them.
+            filename: "qa-inbound.docx",
             content_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             content: docx,
           },

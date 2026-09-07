@@ -200,7 +200,7 @@ export default async function AdminDashboardPage({
                 </div>
               </div>
               <div>
-                <Button variant="primary" href={`/sunday/${upcoming.serviceDate}/flow`}>
+                <Button variant="primary" href="/sunday">
                   {t("openSundayFlow")}
                 </Button>
               </div>

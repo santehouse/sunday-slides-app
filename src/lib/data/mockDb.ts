@@ -6,6 +6,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { addDays, subDays, format } from "date-fns";
+import { nextSundayOnOrAfter } from "@/lib/utils/serviceDate";
 import type {
   AdminUser,
   AnnouncementAlias,
@@ -268,6 +269,7 @@ function buildInitialStore(): MockStore {
         parsedJson: s.runSheet.parsedJson ?? null,
         receivedAt,
         processedAt: s.runSheet.processed ? receivedAt : null,
+        openedAt: s.runSheet.processed ? receivedAt : null,
       });
     }
 
@@ -529,22 +531,22 @@ export function createMockDb(): Db {
     },
     async getNextSunday(fromDate: string, opts) {
       const store = getStore();
-      const upcoming = [...store.sundays]
-        .filter((s) => s.serviceDate >= fromDate)
-        .sort((a, b) => (a.serviceDate < b.serviceDate ? -1 : 1))[0];
-      if (upcoming) return clone(upcoming);
+      // "The current service" is the coming Sunday's exact date — never a Sunday created
+      // further ahead (a special event, a pre-planned deck) just because it sorts first.
+      const target = nextSundayOnOrAfter(fromDate);
+      const existing = store.sundays.find((s) => s.serviceDate === target);
+      if (existing) return clone(existing);
       if (!opts?.create) return null;
-      const created: Sunday = {
-        id: randomUUID(),
-        serviceDate: fromDate,
-        status: "draft",
-        sourceRunSheetId: null,
-        defaultSlideHoldSeconds: store.settings.defaultSlideHoldSeconds,
-        createdAt: nowIso(),
-        updatedAt: nowIso(),
-      };
-      store.sundays.push(created);
-      return clone(created);
+      // Mock-mode fallback: the seeded demo Sundays are fixed calendar dates, so once the
+      // real clock rolls past the last one, the naive "create a blank Sunday" behaviour
+      // below would land the whole app on an empty deck instead of the rich Figma demo.
+      // Land on the latest seeded Sunday that actually has slides instead — documented in
+      // docs/BUILD_HANDOFF.md's mock-mode section.
+      const richestSeeded = [...store.sundays]
+        .filter((s) => store.slides.some((slide) => slide.sundayId === s.id))
+        .sort((a, b) => (a.serviceDate < b.serviceDate ? 1 : -1))[0];
+      if (richestSeeded) return clone(richestSeeded);
+      return this.getOrCreateSundayByDate(target);
     },
     async getAdjacentSundayDates(date: string): Promise<AdjacentSundayDates> {
       const store = getStore();
@@ -580,6 +582,7 @@ export function createMockDb(): Db {
         parsedJson: input.parsedJson ?? null,
         receivedAt: input.receivedAt ?? nowIso(),
         processedAt: null,
+        openedAt: null,
       };
       store.runSheets.push(created);
       if (input.inboundEventId) {
@@ -603,6 +606,11 @@ export function createMockDb(): Db {
         .runSheets.filter((r) => r.sundayId === sundayId)
         .sort((a, b) => (a.receivedAt < b.receivedAt ? 1 : -1));
       return list[0] ? clone(list[0]) : null;
+    },
+    async listRecentRunSheets(limit: number) {
+      return clone(
+        [...getStore().runSheets].sort((a, b) => (a.receivedAt < b.receivedAt ? 1 : -1)).slice(0, limit),
+      );
     },
     async updateRunSheet(id: string, patch: UpdateRunSheetPatch) {
       const store = getStore();

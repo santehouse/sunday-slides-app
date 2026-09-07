@@ -34,7 +34,7 @@ describe.skipIf(!process.env.RUN_INTEGRATION)("runExport (real renderer + ffmpeg
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.contentType).toBe("application/zip");
-    expect(result.filename).toBe(`${DEMO_SUNDAY_DATE}-sunday-flow.zip`);
+    expect(result.filename).toBe(`${DEMO_SUNDAY_DATE}-slides.zip`);
     expect(result.bytes.byteLength).toBeGreaterThan(0);
     // A real ZIP starts with the local file header signature "PK\x03\x04".
     expect(result.bytes[0]).toBe(0x50);
@@ -74,7 +74,7 @@ describe.skipIf(!process.env.RUN_INTEGRATION)("runExport (real renderer + ffmpeg
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.contentType).toBe("video/mp4");
-    expect(result.filename).toBe(`${DEMO_SUNDAY_DATE}-sunday-flow.mp4`);
+    expect(result.filename).toBe(`${DEMO_SUNDAY_DATE}-slides.mp4`);
     expect(result.bytes.byteLength).toBeGreaterThan(0);
     // MP4 "ftyp" box signature at byte offset 4.
     expect(Buffer.from(result.bytes.slice(4, 8)).toString("ascii")).toBe("ftyp");

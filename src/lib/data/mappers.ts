@@ -238,6 +238,7 @@ export function runSheetFromRow(row: RunSheetRow): RunSheet {
     parsedJson: (row.parsed_json as unknown as ParsedRunSheet | null) ?? null,
     receivedAt: row.received_at,
     processedAt: row.processed_at,
+    openedAt: row.opened_at,
   };
 }
 

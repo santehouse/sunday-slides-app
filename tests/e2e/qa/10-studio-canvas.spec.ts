@@ -83,7 +83,7 @@ test.describe("Admin — Template Studio interactive canvas", () => {
     // --- The moved headline reaches the Sunday Flow thumbnail — one renderer (CLAUDE.md rule 6) ---
     const sundayPage = await context.newPage();
     await loginPinAndWait(sundayPage);
-    await sundayPage.goto("/sunday/2026-09-06/flow");
+    await sundayPage.goto("/sunday");
     await sundayPage.locator("[data-slide-card]").first().waitFor();
     // The flow list's thumbnails and the big preview both run the renderer's async
     // font-load + text-fit pass client-side — "BIENVENUE" is also the static page
@@ -145,10 +145,12 @@ test.describe("Admin — Template Studio interactive canvas", () => {
     await expect(page.locator("#settings-pip-width")).toHaveValue(String(widthAfterDrag));
     await expect(page.locator("#settings-pip-height")).toHaveValue(String(heightAfterDrag));
 
-    // The Sunday Flow safe-zone overlay (same renderer) reflects the new size too.
+    // The Sunday queue's safe-zone overlay (same renderer) reflects the new size too —
+    // the safe zone is global (every template, every Sunday), so the current service is
+    // as good a check as any other Sunday.
     const sundayPage = await context.newPage();
     await loginPinAndWait(sundayPage);
-    await sundayPage.goto("/sunday/2026-08-30/flow");
+    await sundayPage.goto("/sunday");
     await sundayPage.locator("[data-slide-card]").first().waitFor();
     await sundayPage.getByRole("button", { name: "Show safe zones" }).click();
     const overlay = sundayPage.locator("[data-safe-zone]").first();

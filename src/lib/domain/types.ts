@@ -113,6 +113,8 @@ export interface RunSheet {
   modelOutput?: unknown;
   receivedAt: string;
   processedAt: string | null;
+  /** Set the first time a Sunday Team member previews or uses this file (Import modal "new" dot). */
+  openedAt: string | null;
 }
 
 /** Strict OpenAI structured output, validated with Zod in lib/openai/schema.ts. */

@@ -194,7 +194,8 @@
       "done": "Exportation prête",
       "failed": "Échec de l’exportation",
       "mp4Failed": "Le MP4 n’a pas pu être créé. L’exportation JPG reste disponible.",
-      "nothingToExport": "Aucune diapositive à exporter."
+      "nothingToExport": "Aucune diapositive à exporter.",
+      "secondsPerSlide": "Secondes par diapositive dans la vidéo"
     },
     "editor": {
       "content": "Contenu",
@@ -379,7 +380,11 @@
         "textTooLongBody": "Raccourcissez le texte pour qu’il rentre sur la diapositive.",
         "rememberMapping": "Se souvenir de ce modèle pour « {name} »",
         "mappingRemembered": "C’est noté — on s’en souviendra la prochaine fois.",
-        "untitledSlide": "Diapositive sans titre"
+        "untitledSlide": "Diapositive sans titre",
+        "unsavedTitle": "Garder vos changements?",
+        "unsavedBody": "Cette diapositive a des changements non enregistrés.",
+        "discard": "Annuler les changements",
+        "keepEditing": "Continuer à modifier"
       },
       "add": {
         "title": "Ajouter une diapositive",
@@ -419,6 +424,43 @@
         "download": "Télécharger",
         "emptyTitle": "Rien à télécharger pour l’instant"
       }
+    },
+    "queue": {
+      "title": "Diapositives de ce culte",
+      "dateCaption": "{date, date, sundayLong}",
+      "clear": "Vider la file",
+      "clearTitle": "Vider la file?",
+      "clearBody": "Toutes les diapositives de ce culte seront retirées. Cette action est irréversible.",
+      "clearFinalTitle": "Vraiment tout effacer?",
+      "clearFinalBody": "Cette action est irréversible. Toutes les diapositives de ce culte disparaîtront.",
+      "clearConfirm": "Oui, vider la file",
+      "cleared": "File vidée",
+      "importAnnouncements": "Importer les annonces",
+      "newSlide": "Nouvelle diapositive",
+      "needsLook": "{count, plural, one {# diapositive a besoin d’un coup d’œil} other {# diapositives ont besoin d’un coup d’œil}}",
+      "checkTag": "À vérifier",
+      "inVideo": "Affichée dans la vidéo",
+      "notInVideo": "Pas affichée dans la vidéo",
+      "empty": "Aucune diapositive pour l’instant. Importez les annonces ou ajoutez une diapositive.",
+      "listLabel": "Diapositives de ce culte",
+      "untitledSlide": "Diapositive sans titre"
+    },
+    "import": {
+      "title": "Importer les annonces",
+      "dropTitle": "Ajouter un fichier",
+      "dropHint": "Word ou PDF, jusqu’à 10 Mo",
+      "recentFiles": "Fichiers reçus",
+      "receivedOn": "Reçu le {date}",
+      "sourceEmail": "Par courriel",
+      "sourceManual": "Importé",
+      "newFile": "Nouveau — pas encore ouvert",
+      "previewFile": "Aperçu de {filename}",
+      "useThisFile": "Utiliser ce fichier",
+      "working": "Lecture des annonces…",
+      "applied": "Annonces ajoutées — {count, plural, one {# diapositive prête} other {# diapositives prêtes}}, {review, plural, =0 {rien à vérifier} one {# à vérifier} other {# à vérifier}}",
+      "noFilesYet": "Aucun fichier pour l’instant.",
+      "emptyPreview": "Rien à afficher pour l’instant.",
+      "previewUnavailable": "Ce fichier ne peut pas être prévisualisé ici."
     }
   },
   "adminAuth": {

@@ -227,6 +227,7 @@ export type RunSheetRow = {
   inbound_event_id: string | null;
   received_at: string;
   processed_at: string | null;
+  opened_at: string | null;
 };
 
 export type SlideRow = {

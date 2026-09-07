@@ -39,7 +39,7 @@ async function openSundaySession(page: Page) {
   const digits = page.locator('input[inputmode="numeric"]');
   for (const [i, d] of [..."53787"].entries()) await digits.nth(i).fill(d);
   await page.getByRole("button", { name: /open sunday/i }).click();
-  await page.waitForURL(/\/sunday\/\d{4}-\d{2}-\d{2}$/);
+  await page.waitForURL(/\/sunday$/);
 }
 
 test.describe("Admin — Sundays", () => {
@@ -85,13 +85,15 @@ test.describe("Admin — template lifecycle", () => {
 
     const sunday = await context.newPage();
     await openSundaySession(sunday);
-    await sunday.goto("/sunday/2026-09-06/add");
+    await sunday.goto("/sunday?add=1");
+    await sunday.getByRole("heading", { name: "Add a slide" }).waitFor();
     await expect(sunday.locator(`button[aria-label="Use ${name}"]`)).toHaveCount(0);
 
     // Publish → the Sunday team can now pick it.
     await page.getByRole("button", { name: "Publish", exact: true }).click();
     await expect(page.getByText("Template saved")).toBeVisible({ timeout: 30_000 });
     await sunday.reload();
+    await sunday.getByRole("heading", { name: "Add a slide" }).waitFor();
     await expect(sunday.locator(`button[aria-label="Use ${name}"]`)).toBeVisible({ timeout: 30_000 });
 
     // Archive → gone from Add Slide, still listed in the library, and the existing
@@ -99,9 +101,10 @@ test.describe("Admin — template lifecycle", () => {
     await page.getByRole("button", { name: "Archive", exact: true }).click();
     await expect(page.getByText("Template saved").last()).toBeVisible({ timeout: 30_000 });
     await sunday.reload();
+    await sunday.getByRole("heading", { name: "Add a slide" }).waitFor();
     await expect(sunday.locator(`button[aria-label="Use ${name}"]`)).toHaveCount(0);
 
-    await sunday.goto("/sunday/2026-09-06/flow");
+    await sunday.goto("/sunday");
     await sunday.locator("[data-slide-card]").first().waitFor();
     expect(await sunday.locator("[data-slide-card]").count()).toBeGreaterThan(0);
     await sunday.close();
@@ -135,16 +138,16 @@ test.describe("Admin — assets", () => {
     await detail.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 30_000 });
 
-    // The Sunday "Check slides" edit panel can now pick it for a slide on that template.
+    // The Sunday Edit modal can now pick it for a slide on that template.
     const sunday = await context.newPage();
     await openSundaySession(sunday);
-    await sunday.goto("/sunday/2026-09-06");
+    await sunday.goto("/sunday");
     await sunday.locator("[data-slide-card]").first().waitFor();
     // Pick the Annual theme slide by title, not by position: other specs may reorder the deck.
-    // Selecting a card loads it straight into the inline edit panel — no separate "Edit slide" step.
-    await sunday.locator("[data-slide-card]", { hasText: "Je suis avec vous" }).first().click();
-    await sunday.getByRole("radiogroup", { name: "Background" }).getByRole("radio", { name: "Image" }).click();
-    await expect(sunday.locator('button[aria-label="QA background"]')).toBeVisible({ timeout: 30_000 });
+    await sunday.locator("[data-slide-card]", { hasText: "Je suis avec vous" }).getByRole("button", { name: "Edit" }).click();
+    const dialog = sunday.getByRole("dialog").filter({ hasText: "Je suis avec vous" });
+    await dialog.getByRole("radiogroup", { name: "Background" }).getByRole("radio", { name: "Image" }).click();
+    await expect(dialog.locator('button[aria-label="QA background"]')).toBeVisible({ timeout: 30_000 });
     await sunday.close();
   });
 });

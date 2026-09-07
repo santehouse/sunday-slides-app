@@ -108,6 +108,7 @@ export type UpdateRunSheetPatch = Partial<{
   parsedJson: ParsedRunSheet | null;
   modelOutput: unknown;
   processedAt: string | null;
+  openedAt: string | null;
 }>;
 
 export interface CreateSlideInput {
@@ -315,6 +316,8 @@ export interface Db {
   getSundayByDate(date: string): Promise<Sunday | null>;
   getSundayById(id: string): Promise<Sunday | null>;
   getOrCreateSundayByDate(date: string): Promise<Sunday>;
+  /** The current service: the Sunday falling on or right after `fromDate` (exact date —
+      a Sunday created further ahead never wins). `create` makes it on first visit. */
   getNextSunday(fromDate: string, opts?: { create?: boolean }): Promise<Sunday | null>;
   getAdjacentSundayDates(date: string): Promise<AdjacentSundayDates>;
   updateSunday(id: string, patch: UpdateSundayPatch): Promise<Sunday>;
@@ -324,6 +327,8 @@ export interface Db {
   getRunSheet(id: string): Promise<RunSheet | null>;
   listRunSheetsForSunday(sundayId: string): Promise<RunSheet[]>;
   getLatestRunSheetForSunday(sundayId: string): Promise<RunSheet | null>;
+  /** The most recent run sheets across every Sunday, newest first — Import modal "Received files". */
+  listRecentRunSheets(limit: number): Promise<RunSheet[]>;
   updateRunSheet(id: string, patch: UpdateRunSheetPatch): Promise<RunSheet>;
   findRunSheetByInboundEventId(eventId: string): Promise<RunSheet | null>;
 

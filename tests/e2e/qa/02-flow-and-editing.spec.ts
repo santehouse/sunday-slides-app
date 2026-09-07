@@ -1,20 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
-import { gotoFlow, loginPinAndWait } from "./helpers";
+import { gotoQueue, loginPinAndWait, queueTitles } from "./helpers";
 
 /**
- * BUILD_HANDOFF section 7/48 — Sunday Flow drag/keyboard reorder. The week switcher and
- * duration stepper this file used to cover were removed from the Sunday side by the
- * Simplified Sunday IA (Sept 2026) — the duration stepper now lives on Step 3
- * ("Download") and is covered by `tests/e2e/sunday/04-download.spec.ts`; there is no
- * week switcher any more (see `sunday.simple.stepper.switchTo` instead).
+ * BUILD_HANDOFF section 7/48 — the Sunday queue's drag/keyboard reorder (single-screen
+ * Sunday IA, replacing the old per-Sunday "Sunday Flow" page). The week switcher and
+ * duration stepper this file used to cover were removed from the Sunday side earlier;
+ * the duration stepper now lives in the Export dropdown (see
+ * `tests/e2e/sunday/04-export.spec.ts`).
  */
-
-/** Slide-flow card titles ("01 Welcome", ...) in Sunday Flow order. */
-async function cardTitles(page: Page): Promise<string[]> {
-  return page
-    .locator("[data-slide-card]")
-    .evaluateAll((cards) => cards.map((c) => c.querySelector(".text-label")?.textContent?.trim() ?? ""));
-}
 
 /** dnd-kit keyboard sorting: pick up, move, drop — with a tick between keystrokes. */
 async function keyboardMove(page: Page, handleLabel: string, key: "ArrowUp" | "ArrowDown") {
@@ -27,34 +20,38 @@ async function keyboardMove(page: Page, handleLabel: string, key: "ArrowUp" | "A
   await page.waitForTimeout(700);
 }
 
-test.describe("Sunday flow", () => {
-  test("selected card uses a border, not a fill, and the status pill is last in the row", async ({ page }) => {
+test.describe("Sunday queue", () => {
+  test("selected row uses a border, not a fill, and controls sit last in the row", async ({ page }) => {
     await loginPinAndWait(page);
-    await gotoFlow(page);
+    await gotoQueue(page);
 
     const first = page.locator("[data-slide-card]").first();
-    await expect(first, "the first card is selected by default").toHaveAttribute("aria-current", "true");
+    await first.locator("[data-slide-select]").click();
+    await expect(first, "the clicked row is marked current").toHaveAttribute("aria-current", "true");
 
     const selectedBg = await first.evaluate((el) => getComputedStyle(el).backgroundColor);
     const unselectedBg = await page.locator("[data-slide-card]").nth(1).evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(selectedBg, "selected card keeps the same surface background").toBe(unselectedBg);
+    expect(selectedBg, "selected row keeps the same surface background").toBe(unselectedBg);
     await expect(first).toHaveCSS("border-color", "rgb(79, 70, 229)");
 
-    // The status pill is the final element in the row (Figma 6:19 / design QA checklist).
-    const lastChildText = await first.evaluate((el) => el.lastElementChild?.textContent?.trim() ?? "");
-    expect(lastChildText).toMatch(/^(Ready|Needs review|Text is too long)$/);
+    // The icon controls (film / edit / delete) are the final element in the row.
+    // Each row also owns its (closed) delete confirmation <dialog>; ignore it.
+    const lastChildTag = await first.evaluate(
+      (el) => Array.from(el.children).filter((c) => c.tagName !== "DIALOG").pop()?.tagName,
+    );
+    expect(lastChildTag).toBe("DIV");
   });
 
   test("keyboard reorder persists and renumbers the deck", async ({ page }) => {
     await loginPinAndWait(page);
-    await gotoFlow(page);
+    await gotoQueue(page);
 
-    const before = await cardTitles(page);
+    const before = await queueTitles(page);
     expect(before[0]).toMatch(/^01 /);
 
     await keyboardMove(page, "Drag to reorder slide 1", "ArrowDown");
 
-    const after = await cardTitles(page);
+    const after = await queueTitles(page);
     expect(after[0], "the first two slides swapped").not.toBe(before[0]);
     // Numbers are recomputed from position, so the deck still reads 01, 02, ...
     expect(after[0]).toMatch(/^01 /);
@@ -63,19 +60,19 @@ test.describe("Sunday flow", () => {
 
     await page.reload();
     await page.locator("[data-slide-card]").first().waitFor();
-    expect(await cardTitles(page), "the new order survives a reload").toEqual(after);
+    expect(await queueTitles(page), "the new order survives a reload").toEqual(after);
 
     // Move it back so later specs see the order they started from.
     await keyboardMove(page, "Drag to reorder slide 2", "ArrowUp");
     await page.reload();
     await page.locator("[data-slide-card]").first().waitFor();
-    expect(await cardTitles(page)).toEqual(before);
+    expect(await queueTitles(page)).toEqual(before);
   });
 
   test("pointer drag reorders the deck", async ({ page }) => {
     await loginPinAndWait(page);
-    await gotoFlow(page);
-    const before = await cardTitles(page);
+    await gotoQueue(page);
+    const before = await queueTitles(page);
 
     const handle = page.getByRole("button", { name: "Drag to reorder slide 1", exact: true });
     const target = page.locator("[data-slide-card]").nth(2);
@@ -88,19 +85,19 @@ test.describe("Sunday flow", () => {
     await page.mouse.up();
     await page.waitForTimeout(800);
 
-    const after = await cardTitles(page);
+    const after = await queueTitles(page);
     expect(after).not.toEqual(before);
     expect(after[0]).toMatch(/^01 /);
 
     await page.reload();
     await page.locator("[data-slide-card]").first().waitFor();
-    expect(await cardTitles(page), "drag order is persisted").toEqual(after);
+    expect(await queueTitles(page), "drag order is persisted").toEqual(after);
 
     // Restore the starting order for the specs that follow.
     await keyboardMove(page, "Drag to reorder slide 3", "ArrowUp");
     await keyboardMove(page, "Drag to reorder slide 2", "ArrowUp");
     await page.reload();
     await page.locator("[data-slide-card]").first().waitFor();
-    expect(await cardTitles(page)).toEqual(before);
+    expect(await queueTitles(page)).toEqual(before);
   });
 });

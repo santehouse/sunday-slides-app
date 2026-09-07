@@ -194,7 +194,8 @@
       "done": "Export ready",
       "failed": "Export failed",
       "mp4Failed": "The MP4 couldn’t be created. JPG export is still available.",
-      "nothingToExport": "No slides to export."
+      "nothingToExport": "No slides to export.",
+      "secondsPerSlide": "Seconds per slide in the video"
     },
     "editor": {
       "content": "Content",
@@ -379,7 +380,11 @@
         "textTooLongBody": "Shorten the text so it fits on the slide.",
         "rememberMapping": "Remember this design for \"{name}\"",
         "mappingRemembered": "Got it — remembered for next time.",
-        "untitledSlide": "Untitled slide"
+        "untitledSlide": "Untitled slide",
+        "unsavedTitle": "Keep your changes?",
+        "unsavedBody": "This slide has changes that aren’t saved yet.",
+        "discard": "Discard changes",
+        "keepEditing": "Keep editing"
       },
       "add": {
         "title": "Add a slide",
@@ -419,6 +424,43 @@
         "download": "Download",
         "emptyTitle": "Nothing to download yet"
       }
+    },
+    "queue": {
+      "title": "This service’s slides",
+      "dateCaption": "{date, date, sundayLong}",
+      "clear": "Clear queue",
+      "clearTitle": "Clear the queue?",
+      "clearBody": "Every slide for this service will be removed. This can’t be undone.",
+      "clearFinalTitle": "Really clear everything?",
+      "clearFinalBody": "This can’t be undone. Every slide for this service will be gone.",
+      "clearConfirm": "Yes, clear the queue",
+      "cleared": "Queue cleared",
+      "importAnnouncements": "Import announcements",
+      "newSlide": "New slide",
+      "needsLook": "{count, plural, one {# slide needs a look} other {# slides need a look}}",
+      "checkTag": "Check",
+      "inVideo": "Shown in the video",
+      "notInVideo": "Not shown in the video",
+      "empty": "No slides yet. Import the announcements or add a slide.",
+      "listLabel": "This service’s slides",
+      "untitledSlide": "Untitled slide"
+    },
+    "import": {
+      "title": "Import announcements",
+      "dropTitle": "Add a file",
+      "dropHint": "Word or PDF, up to 10 MB",
+      "recentFiles": "Received files",
+      "receivedOn": "Received {date}",
+      "sourceEmail": "From email",
+      "sourceManual": "Uploaded",
+      "newFile": "New — not opened yet",
+      "previewFile": "Preview {filename}",
+      "useThisFile": "Use this file",
+      "working": "Reading the announcements…",
+      "applied": "Announcements added — {count, plural, one {# slide ready} other {# slides ready}}, {review, plural, =0 {nothing to check} one {# to check} other {# to check}}",
+      "noFilesYet": "No files yet.",
+      "emptyPreview": "Nothing to show yet.",
+      "previewUnavailable": "This file can’t be previewed here."
     }
   },
   "adminAuth": {

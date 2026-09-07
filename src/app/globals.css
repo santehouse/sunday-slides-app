@@ -159,3 +159,8 @@ dialog::backdrop {
     animation: none;
   }
 }
+
+/* Native <dialog> must stay hidden while closed even when utility classes set display:flex/grid. */
+dialog:not([open]) {
+  display: none !important;
+}
