@@ -18,7 +18,13 @@ import { Select } from "@/components/ui/Select";
 import { Toggle } from "@/components/ui/Toggle";
 import { useToast } from "@/components/ui/Toast";
 import { SlidePreview } from "@/components/sunday/SlidePreview";
-import { duplicateSlideAction, saveSlideAction, uploadSlideImageAction } from "@/app/[locale]/(sunday)/sunday/actions";
+import {
+  createSlideImageUploadTicketAction,
+  duplicateSlideAction,
+  saveSlideAction,
+  uploadSlideImageAction,
+} from "@/app/[locale]/(sunday)/sunday/actions";
+import { putFileDirect } from "@/lib/uploads/direct";
 import { slideImageBrowserUrl } from "@/lib/renderer/imageUrls";
 import { Button } from "@/components/ui/Button";
 import { ImagePlus, Trash2 } from "lucide-react";
@@ -362,9 +368,19 @@ function ImageFieldInput({
     if (!file) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.set("file", file);
-      const result = await uploadSlideImageAction(formData);
+      let result: Awaited<ReturnType<typeof uploadSlideImageAction>>;
+      const ticket = await createSlideImageUploadTicketAction({ filename: file.name, contentType: file.type, size: file.size });
+      if (ticket.mode === "error") {
+        result = { ok: false, error: ticket.error };
+      } else if (ticket.mode === "direct") {
+        // Straight to the object store — never through a Server Action body.
+        await putFileDirect(ticket.url, file);
+        result = { ok: true, key: ticket.key };
+      } else {
+        const formData = new FormData();
+        formData.set("file", file);
+        result = await uploadSlideImageAction(formData);
+      }
       if (result.ok) {
         onChange(result.key);
       } else {
@@ -373,12 +389,15 @@ function ImageFieldInput({
           title: t("photoFailed"),
           message:
             result.error === "file_too_large"
-              ? tErrors("fileTooLarge", { max: 4 })
+              ? tErrors("fileTooLarge", { max: 25 })
               : result.error === "unsupported_file"
                 ? t("photoUnsupported")
                 : tErrors("generic"),
         });
       }
+    } catch (error) {
+      console.error("slide image upload failed", error);
+      showToast({ state: "error", title: t("photoFailed"), message: tErrors("generic") });
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";

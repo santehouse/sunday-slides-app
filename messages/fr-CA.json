@@ -366,7 +366,7 @@
         "removePhoto": "Retirer la photo",
         "photoFailed": "La photo n’a pas pu être téléversée",
         "photoUnsupported": "Utilisez une image JPG, PNG ou WebP.",
-        "photoHint": "JPG, PNG ou WebP, jusqu’à 4 Mo. Les photos en portrait conviennent le mieux à cet emplacement.",
+        "photoHint": "JPG, PNG ou WebP, jusqu’à 25 Mo. Les photos en portrait conviennent le mieux à cet emplacement.",
         "saved": "Enregistré",
         "duplicate": "Dupliquer",
         "duplicated": "Diapositive dupliquée",

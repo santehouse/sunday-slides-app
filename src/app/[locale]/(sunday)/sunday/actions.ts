@@ -8,7 +8,8 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/data";
 import { extractText } from "@/lib/run-sheets/extract";
 import { randomUUID } from "node:crypto";
-import { getObjectStore, getSignedReadUrl, keys, putObject } from "@/lib/r2/client";
+import { getObjectStore, getSignedReadUrl, getSignedUploadUrl, keys, putObject } from "@/lib/r2/client";
+import type { UploadTicket } from "@/lib/uploads/direct";
 import { hasR2 } from "@/lib/env";
 import { ingestRunSheet, applyRunSheet, previewRunSheet, reprocessRunSheet } from "@/lib/sunday/intake";
 import { createSlideFromTemplate, duplicateSlide, removeSlide, rememberMapping } from "@/lib/sunday/slides";
@@ -273,4 +274,23 @@ export async function uploadSlideImageAction(formData: FormData): Promise<Upload
     return { ok: false, error: "storage_failed" };
   }
   return { ok: true, key };
+}
+
+const MAX_DIRECT_SLIDE_IMAGE_BYTES = 25 * 1024 * 1024;
+
+/** Signed PUT ticket for an image-field picture (see lib/uploads/direct.ts); the key it returns is the slide's value. */
+export async function createSlideImageUploadTicketAction(input: {
+  filename: string;
+  contentType: string;
+  size: number;
+}): Promise<UploadTicket> {
+  const ext = SLIDE_IMAGE_EXT[input.contentType];
+  if (!ext) return { mode: "error", error: "unsupported_file" };
+  if (!hasR2()) {
+    return input.size > MAX_SLIDE_IMAGE_BYTES ? { mode: "error", error: "file_too_large" } : { mode: "action" };
+  }
+  if (input.size > MAX_DIRECT_SLIDE_IMAGE_BYTES) return { mode: "error", error: "file_too_large" };
+  const key = keys.slideImages(randomUUID(), ext);
+  const url = await getSignedUploadUrl(key, input.contentType, 600);
+  return { mode: "direct", url, key };
 }
