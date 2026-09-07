@@ -509,3 +509,38 @@ export async function reprocessRunSheet(runSheetId: string): Promise<RunSheet> {
 }
 
 export type { RunSheetParseStatus };
+
+export interface ApplyRunSheetToSundayResult {
+  ok: boolean;
+  summary?: ApplyRunSheetResult["summary"];
+}
+
+/**
+ * "Use this file" from the Import modal: applies a received/uploaded run sheet to the
+ * service the team is looking at — NOT to the Sunday the file was first filed under. An
+ * email that arrived last week (filed under last Sunday) is the normal case for the
+ * coming service, so the file is re-targeted to `sundayId` before the apply. Parses
+ * on demand (inbound email only stores the file), and merges when the deck already has
+ * hand-edited slides, otherwise replaces it.
+ */
+export async function applyRunSheetToSunday(runSheetId: string, sundayId: string): Promise<ApplyRunSheetToSundayResult> {
+  const db = getDb();
+  let runSheet = await db.getRunSheet(runSheetId);
+  if (!runSheet) throw new Error(`applyRunSheetToSunday: run sheet ${runSheetId} not found`);
+
+  if (runSheet.sundayId !== sundayId) {
+    const target = await db.getSundayById(sundayId);
+    if (!target) throw new Error(`applyRunSheetToSunday: Sunday ${sundayId} not found`);
+    runSheet = await db.updateRunSheet(runSheetId, { sundayId });
+  }
+
+  if (runSheet.parseStatus === "queued" || !runSheet.parsedJson) {
+    runSheet = await reprocessRunSheet(runSheetId);
+  }
+  if (!runSheet.parsedJson) return { ok: false };
+
+  const existing = await db.listSlidesForSunday(sundayId);
+  const mode: "merge" | "replace" = existing.some((s) => s.manuallyEdited) ? "merge" : "replace";
+  const result = await applyRunSheet(runSheetId, mode);
+  return { ok: true, summary: result.summary };
+}

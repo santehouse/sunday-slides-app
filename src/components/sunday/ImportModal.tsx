@@ -116,7 +116,15 @@ function PreviewDialog({
   );
 }
 
-function FileRow({ file, onUsed }: { file: RecentRunSheetData; onUsed: (summary: { found: number; mapped: number; needsReview: number }) => void }) {
+function FileRow({
+  file,
+  sundayId,
+  onUsed,
+}: {
+  file: RecentRunSheetData;
+  sundayId: string;
+  onUsed: (summary: { found: number; mapped: number; needsReview: number }) => void;
+}) {
   const t = useTranslations("sunday.import");
   const tInbox = useTranslations("sunday.simple.inbox");
   const format = useFormatter();
@@ -135,7 +143,7 @@ function FileRow({ file, onUsed }: { file: RecentRunSheetData; onUsed: (summary:
   async function handleUse() {
     setUsing(true);
     try {
-      const result = await activateRunSheetFileAction(file.id);
+      const result = await activateRunSheetFileAction(file.id, sundayId);
       setOpened(true);
       if (result.ok && result.summary) {
         onUsed(result.summary);
@@ -229,7 +237,7 @@ export function ImportModal({ open, sundayId, recentFiles, onClose, onUploaded, 
           ) : (
             <ul className="flex flex-col gap-2.5">
               {recentFiles.map((file) => (
-                <FileRow key={file.id} file={file} onUsed={handleUsed} />
+                <FileRow key={file.id} file={file} sundayId={sundayId} onUsed={handleUsed} />
               ))}
             </ul>
           )}

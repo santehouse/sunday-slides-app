@@ -333,6 +333,7 @@ export function createSupabaseDb(): Db {
     },
     async updateRunSheet(id: string, patch: UpdateRunSheetPatch): Promise<RunSheet> {
       const row: Partial<RunSheetRow> = {};
+      if (patch.sundayId !== undefined) row.sunday_id = patch.sundayId;
       if (patch.extractedText !== undefined) row.extracted_text = patch.extractedText;
       if (patch.parseStatus !== undefined) row.parse_status = patch.parseStatus;
       if (patch.parseError !== undefined) row.parse_error = patch.parseError;
