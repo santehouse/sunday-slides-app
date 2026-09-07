@@ -16,6 +16,9 @@ async function analyse(page: Page) {
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     // Next's dev-tools overlay is not part of the product.
     .exclude("nextjs-portal")
+    // Slide artwork (thumbnails, previews) is the church's design, not UI — its text
+    // contrast is a template decision, and the row title carries the accessible name.
+    .exclude("[data-slide-canvas]")
     .analyze();
 }
 

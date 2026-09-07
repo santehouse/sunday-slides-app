@@ -147,8 +147,9 @@ describe("applyRunSheet", () => {
     expect(slides[slides.length - 1].isStructural).toBe(true);
     expect(slides[slides.length - 1].headline).toBe("À LA SEMAINE PROCHAINE");
 
-    // "Rendez-vous de la semaine" sits right before the announcement block.
-    const rendezVousIndex = slides.findIndex((s) => s.headline === "RENDEZ-VOUS DE LA SEMAINE");
+    // "Rendez-vous de la semaine" (its first-day headline is "Mercredi") sits right before
+    // the announcement block.
+    const rendezVousIndex = slides.findIndex((s) => s.headline === "Mercredi");
     expect(rendezVousIndex).toBeGreaterThan(0);
     expect(slides[rendezVousIndex].isStructural).toBe(true);
     expect(slides[rendezVousIndex + 1].isStructural).toBe(false);

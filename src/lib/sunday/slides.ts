@@ -6,6 +6,7 @@ import "server-only";
  * this mapping", and slide removal (with the structural-slide guard).
  */
 import { getDb, normalizeAlias } from "@/lib/data";
+import { stripInlineMarkup } from "@/lib/renderer/engine";
 import type { Slide, SlideBackgroundMode, SlideContent, SlideStatus } from "@/lib/domain/types";
 
 export type RemoveSlideResult = { ok: true } | { ok: false; error: "not_removable" };
@@ -24,10 +25,14 @@ export async function createSlideFromTemplate(sundayId: string, templateId: stri
     throw new Error(`createSlideFromTemplate: template ${templateId} not found`);
   }
 
+  // Editable fields start from the template's default text (image fields start empty);
+  // locked fields always render their default and need no slide entry.
   const content: SlideContent = {};
   for (const field of template.fields) {
-    if (field.teamEditable && field.fieldKey !== "headline") content[field.fieldKey] = "";
+    if (!field.teamEditable || field.fieldKey === "headline") continue;
+    content[field.fieldKey] = field.fieldType === "image" ? "" : field.defaultValue;
   }
+  const headlineField = template.fields.find((f) => f.fieldKey === "headline");
 
   const status: SlideStatus = template.fields.some((f) => f.required) ? "invalid" : "ready";
 
@@ -48,7 +53,7 @@ export async function createSlideFromTemplate(sundayId: string, templateId: stri
   return db.createSlide({
     sundayId,
     templateId,
-    headline: "",
+    headline: headlineField?.teamEditable ? stripInlineMarkup(headlineField.defaultValue) : "",
     content,
     assetId,
     backgroundMode,

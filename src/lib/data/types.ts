@@ -197,6 +197,13 @@ export interface CreateTemplateFieldInput {
   overflowMode: TemplateField["overflowMode"];
   textTransform: TemplateField["textTransform"];
   sortOrder: number;
+  fieldType?: TemplateField["fieldType"];
+  defaultValue?: string;
+  rotation?: number;
+  boxColor?: string | null;
+  boxPadding?: number;
+  frameColor?: string | null;
+  frameWidth?: number;
 }
 
 export interface CreateTemplateInput {

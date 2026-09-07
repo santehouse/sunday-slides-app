@@ -157,6 +157,12 @@ export async function runExport(req: ExportRequest): Promise<ExportResult> {
 
   const overflowSlideIds = rendered.filter((r) => !r.fit.exportable).map((r) => r.fit.slideId);
   if (overflowSlideIds.length > 0) {
+    // Which field of which slide, and why — the function logs are the only place to see it.
+    for (const r of rendered) {
+      if (r.fit.exportable) continue;
+      const overflowing = r.fit.fields.filter((f) => f.status === "overflow").map((f) => `${f.fieldKey}:${f.reason ?? "?"}`);
+      console.warn(`export: text overflow on slide ${r.fit.slideId} — ${overflowing.join(", ")}`);
+    }
     await Promise.all(overflowSlideIds.map((id) => db.updateSlide(id, { status: "invalid" })));
     return fail("text_overflow", undefined, overflowSlideIds);
   }

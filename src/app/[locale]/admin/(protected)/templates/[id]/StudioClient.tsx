@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Toggle } from "@/components/ui/Toggle";
+import { Textarea } from "@/components/ui/Textarea";
 import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge";
 import { MessageState } from "@/components/ui/MessageState";
 import { useToast } from "@/components/ui/Toast";
@@ -26,6 +27,7 @@ import type {
   OverlayColor,
   SafeZone,
   TemplateCategory,
+  FieldType,
   TemplateField,
   TemplateStatus,
   TextAlignment,
@@ -69,10 +71,10 @@ const TEMPLATE_STATUS_BADGE: Record<TemplateStatus, StatusBadgeStatus> = {
 };
 
 function toFieldDraft(field: TemplateWithFields["fields"][number]): FieldDraft {
-  // Drop server-owned id/templateId/fieldType — `upsertTemplateFields` fully replaces the
-  // field set on save and assigns fresh ids, so the draft only carries editable data + `key`.
+  // Drop server-owned id/templateId — `upsertTemplateFields` fully replaces the field set
+  // on save and assigns fresh ids, so the draft only carries editable data + `key`.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id, templateId, fieldType, ...rest } = field;
+  const { id, templateId, ...rest } = field;
   return { ...rest, key: field.id };
 }
 
@@ -271,16 +273,25 @@ export function StudioClient({
       fields.map((f) => ({
         id: f.key,
         templateId: template.id,
-        fieldType: "text" as const,
         ...f,
+        fieldType: f.fieldType ?? ("text" as const),
         fontId: f.fontId ?? null,
+        defaultValue: f.defaultValue ?? "",
+        rotation: f.rotation ?? 0,
+        boxColor: f.boxColor ?? null,
+        boxPadding: f.boxPadding ?? 0,
+        frameColor: f.frameColor ?? null,
+        frameWidth: f.frameWidth ?? 0,
       })),
     [fields, template.id],
   );
 
   const previewContent = useMemo(() => {
     const content: Record<string, string> = {};
-    for (const f of fields) content[f.fieldKey] = f.labelEn.toUpperCase();
+    for (const f of fields) {
+      if ((f.fieldType ?? "text") === "image") continue;
+      content[f.fieldKey] = f.defaultValue?.trim() ? f.defaultValue : f.labelEn.toUpperCase();
+    }
     return content;
   }, [fields]);
 
@@ -581,7 +592,76 @@ export function StudioClient({
                 value={selectedField.sortOrder}
                 onChange={(e) => updateField(selectedField.key, { sortOrder: Number(e.target.value) })}
               />
+              <Select
+                id="field-type"
+                label={t("fieldType")}
+                value={selectedField.fieldType ?? "text"}
+                onChange={(e) => updateField(selectedField.key, { fieldType: e.target.value as FieldType })}
+                options={[
+                  { value: "text", label: t("fieldTypeText") },
+                  { value: "image", label: t("fieldTypeImage") },
+                ]}
+              />
+              {(selectedField.fieldType ?? "text") === "text" ? (
+                <Textarea
+                  id="field-default-value"
+                  label={t("defaultValue")}
+                  helper={t("defaultValueHelp")}
+                  rows={3}
+                  value={selectedField.defaultValue ?? ""}
+                  onChange={(e) => updateField(selectedField.key, { defaultValue: e.target.value })}
+                />
+              ) : null}
 
+              <h4 className="text-caption font-bold text-fg-secondary">{t("layers")}</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  id="field-rotation"
+                  type="number"
+                  step={0.5}
+                  label={t("rotation")}
+                  value={selectedField.rotation ?? 0}
+                  onChange={(e) => updateField(selectedField.key, { rotation: Number(e.target.value) })}
+                />
+                {(selectedField.fieldType ?? "text") === "image" ? (
+                  <>
+                    <Input
+                      id="field-frame-color"
+                      label={t("frameColor")}
+                      placeholder="#ffc957"
+                      value={selectedField.frameColor ?? ""}
+                      onChange={(e) => updateField(selectedField.key, { frameColor: e.target.value.trim() === "" ? null : e.target.value })}
+                    />
+                    <Input
+                      id="field-frame-width"
+                      type="number"
+                      label={t("frameWidth")}
+                      value={selectedField.frameWidth ?? 0}
+                      onChange={(e) => updateField(selectedField.key, { frameWidth: Number(e.target.value) })}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      id="field-box-color"
+                      label={t("boxColor")}
+                      placeholder="#ffffff"
+                      value={selectedField.boxColor ?? ""}
+                      onChange={(e) => updateField(selectedField.key, { boxColor: e.target.value.trim() === "" ? null : e.target.value })}
+                    />
+                    <Input
+                      id="field-box-padding"
+                      type="number"
+                      label={t("boxPadding")}
+                      value={selectedField.boxPadding ?? 0}
+                      onChange={(e) => updateField(selectedField.key, { boxPadding: Number(e.target.value) })}
+                    />
+                  </>
+                )}
+              </div>
+
+              {(selectedField.fieldType ?? "text") === "text" ? (
+              <>
               <h4 className="text-caption font-bold text-fg-secondary">{t("typography")}</h4>
               <Select
                 id="field-font-family"
@@ -711,6 +791,8 @@ export function StudioClient({
                   onChange={(e) => updateField(selectedField.key, { height: Number(e.target.value) })}
                 />
               </div>
+              </>
+              ) : null}
             </Card>
             </div>
           ) : null}

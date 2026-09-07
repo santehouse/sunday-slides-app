@@ -7,12 +7,14 @@
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/data";
 import { extractText } from "@/lib/run-sheets/extract";
-import { getObjectStore, getSignedReadUrl } from "@/lib/r2/client";
+import { randomUUID } from "node:crypto";
+import { getObjectStore, getSignedReadUrl, keys, putObject } from "@/lib/r2/client";
 import { hasR2 } from "@/lib/env";
 import { ingestRunSheet, applyRunSheet, previewRunSheet, reprocessRunSheet } from "@/lib/sunday/intake";
 import { createSlideFromTemplate, duplicateSlide, removeSlide, rememberMapping } from "@/lib/sunday/slides";
 import type { RunSheetPreview } from "@/lib/sunday/contracts";
 import type { Slide, SlideBackgroundMode, SlideContent, SlideStatus } from "@/lib/domain/types";
+import { readImageDimensions } from "@/components/admin/imageDimensions";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_MIME_TYPES = new Set([
@@ -241,4 +243,34 @@ export async function activateRunSheetFileAction(runSheetId: string): Promise<Us
   await markRunSheetOpenedAction(runSheetId);
   revalidateQueue();
   return { ok: true, summary: result.summary };
+}
+
+// ---------------------------------------------------------------------------
+// Image fields: the Sunday team drops a picture into a template's image slot
+// ---------------------------------------------------------------------------
+
+const MAX_SLIDE_IMAGE_BYTES = 4 * 1024 * 1024; // Server Actions cap (next.config.ts)
+const SLIDE_IMAGE_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+
+export type UploadSlideImageResult =
+  | { ok: true; key: string }
+  | { ok: false; error: "missing_file" | "unsupported_file" | "file_too_large" | "storage_failed" };
+
+/** Stores a picture for an image field and returns the storage key the slide content holds. */
+export async function uploadSlideImageAction(formData: FormData): Promise<UploadSlideImageResult> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "missing_file" };
+  if (file.size > MAX_SLIDE_IMAGE_BYTES) return { ok: false, error: "file_too_large" };
+  const ext = SLIDE_IMAGE_EXT[file.type];
+  if (!ext) return { ok: false, error: "unsupported_file" };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!readImageDimensions(bytes)) return { ok: false, error: "unsupported_file" };
+  const key = keys.slideImages(randomUUID(), ext);
+  try {
+    await putObject(key, bytes, file.type);
+  } catch (error) {
+    console.error("uploadSlideImageAction: storage failed", error);
+    return { ok: false, error: "storage_failed" };
+  }
+  return { ok: true, key };
 }

@@ -133,7 +133,7 @@ describe("removeSlide", () => {
 
   it("allows removing a 'default' (removable) structural slide", async () => {
     const { db, sundayId, slides } = await seedAppliedSunday("2026-12-13");
-    const rendezVous = slides.find((s) => s.headline === "RENDEZ-VOUS DE LA SEMAINE");
+    const rendezVous = slides.find((s) => s.isStructural && s.headline === "Mercredi");
     expect(rendezVous).toBeDefined();
 
     const result = await removeSlide(rendezVous!.id);

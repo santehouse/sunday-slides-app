@@ -154,6 +154,12 @@ export type TemplateFieldRow = {
   overflow_mode: OverflowModeEnum;
   text_transform: string;
   sort_order: number;
+  default_value: string;
+  rotation: number;
+  box_color: string | null;
+  box_padding: number;
+  frame_color: string | null;
+  frame_width: number;
 };
 
 export type TemplateAssetRow = {

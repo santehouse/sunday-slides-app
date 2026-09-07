@@ -8,7 +8,7 @@ import { signInAsAdmin, loginPinAndWait } from "./helpers";
  * suite shares one in-memory mock store (playwright.config.ts runs with one worker).
  */
 
-const WELCOME_TEMPLATE_PATH = "/admin/templates/tmpl-welcome";
+const WELCOME_TEMPLATE_PATH = "/admin/templates/tmpl-rendez-vous";
 
 test.describe("Admin — Template Studio interactive canvas", () => {
   test("drag, resize, and keyboard-nudge a field box; changes persist and reach Sunday Flow", async ({
@@ -19,8 +19,11 @@ test.describe("Admin — Template Studio interactive canvas", () => {
     await signInAsAdmin(page);
     await page.goto(WELCOME_TEMPLATE_PATH);
 
+    // The weekly schedule's first-day title: a big box to grab by its body, and far
+    // enough from the right edge that drag + resize + nudge never clamp against it.
     const fieldBox = page.locator('[data-field-box="headline"]');
     await fieldBox.waitFor();
+    await fieldBox.click();
 
     const originalX = await page.locator("#field-x").inputValue();
     const originalY = await page.locator("#field-y").inputValue();
@@ -76,6 +79,7 @@ test.describe("Admin — Template Studio interactive canvas", () => {
     await expect(page.getByText("Template saved")).toBeVisible({ timeout: 30_000 });
     await page.reload();
     await page.locator('[data-field-box="headline"]').waitFor();
+    await page.locator('[data-field-box="headline"]').click();
     expect(Number(await page.locator("#field-x").inputValue())).toBe(xAfterNudges);
     expect(Number(await page.locator("#field-width").inputValue())).toBe(widthAfterResize);
     expect(Number(await page.locator("#field-height").inputValue())).toBe(heightAfterResize);
@@ -89,7 +93,7 @@ test.describe("Admin — Template Studio interactive canvas", () => {
     // font-load + text-fit pass client-side — "BIENVENUE" is also the static page
     // heading, so wait for the church name (only ever rendered inside the canvas
     // itself) rather than racing the canvas render with a screenshot.
-    await sundayPage.getByText("EAJC", { exact: true }).first().waitFor();
+    await sundayPage.getByText("ÉGLISE DES APÔTRES DE JÉSUS-CHRIST", { exact: true }).first().waitFor();
     await sundayPage.screenshot({ path: "tmp/studio-canvas-flow-after-save.png" });
     await sundayPage.close();
 

@@ -115,7 +115,16 @@ describe("createSlideFromTemplate background", () => {
     const sunday = await db.getNextSunday("2026-09-07", { create: true });
     const templates = await db.listTemplates();
     const locked = templates.find((t) => t.backgroundType === "color" && !t.allowTeamBackgroundChoice)!;
-    const open = templates.find((t) => t.backgroundType === "color" && t.allowTeamBackgroundChoice)!;
+    const open = await db.createTemplate({
+      slug: "test-open-bg",
+      nameEn: "Open background",
+      nameFr: "Fond libre",
+      category: "general",
+      status: "published",
+      backgroundType: "color",
+      backgroundValue: "#000000",
+      allowTeamBackgroundChoice: true,
+    });
     const lockedSlide = await createSlideFromTemplate(sunday!.id, locked.id);
     const openSlide = await createSlideFromTemplate(sunday!.id, open.id);
     expect(lockedSlide.approvedColorId).toBeNull();

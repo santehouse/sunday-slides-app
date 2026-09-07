@@ -153,7 +153,7 @@ function buildInitialStore(): MockStore {
       id: `field-${t.slug}-${f.fieldKey}`,
       templateId,
       fieldKey: f.fieldKey,
-      fieldType: "text",
+      fieldType: f.fieldType ?? "text",
       labelEn: f.labelEn,
       labelFr: f.labelFr,
       teamEditable: f.teamEditable,
@@ -176,6 +176,12 @@ function buildInitialStore(): MockStore {
       overflowMode: f.overflowMode,
       sortOrder: f.sortOrder,
       textTransform: f.textTransform,
+      defaultValue: f.defaultValue ?? "",
+      rotation: f.rotation ?? 0,
+      boxColor: f.boxColor ?? null,
+      boxPadding: f.boxPadding ?? 0,
+      frameColor: f.frameColor ?? null,
+      frameWidth: f.frameWidth ?? 0,
     }));
     const backgroundValue =
       t.backgroundType === "image" ? (assetIdBySlug.get(t.backgroundValue) ?? t.backgroundValue) : t.backgroundValue;
@@ -749,9 +755,15 @@ export function createMockDb(): Db {
       template.fields = fields.map((f) => ({
         id: randomUUID(),
         templateId,
-        fieldType: "text" as const,
         ...f,
+        fieldType: f.fieldType ?? ("text" as const),
         fontId: f.fontId ?? null,
+        defaultValue: f.defaultValue ?? "",
+        rotation: f.rotation ?? 0,
+        boxColor: f.boxColor ?? null,
+        boxPadding: f.boxPadding ?? 0,
+        frameColor: f.frameColor ?? null,
+        frameWidth: f.frameWidth ?? 0,
       }));
       return clone(template.fields);
     },

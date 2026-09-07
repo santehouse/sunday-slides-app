@@ -6,6 +6,7 @@ import { Film, GripVertical, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/cn";
 import type { Slide, Template } from "@/lib/domain/types";
+import { stripInlineMarkup } from "@/lib/renderer/engine";
 import type { ResolvedAsset } from "@/lib/renderer/types";
 import { ConfirmDialog } from "@/components/ui/Dialog";
 import { IconButton } from "@/components/ui/IconButton";
@@ -119,7 +120,7 @@ export function QueueRow({
           <SlidePreview template={template} slide={slide} backgroundColorHex={backgroundColorHex} assets={assets} />
         </span>
         <span className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="truncate text-label font-bold text-fg">{slide.headline || t("untitledSlide")}</span>
+          <span className="truncate text-label font-bold text-fg">{stripInlineMarkup(slide.headline) || t("untitledSlide")}</span>
           {needsLook ? (
             <span className="shrink-0 rounded-full bg-warning-bg px-2 py-0.5 text-[11px] font-bold text-warning-fg">
               {t("checkTag")}

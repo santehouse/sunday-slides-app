@@ -122,7 +122,7 @@ export function templateFieldFromRow(row: TemplateFieldRow): TemplateField {
     id: row.id,
     templateId: row.template_id,
     fieldKey: row.field_key,
-    fieldType: "text",
+    fieldType: row.field_type === "image" ? "image" : "text",
     labelEn: row.label_en,
     labelFr: row.label_fr,
     teamEditable: row.team_editable,
@@ -145,6 +145,12 @@ export function templateFieldFromRow(row: TemplateFieldRow): TemplateField {
     overflowMode: row.overflow_mode,
     sortOrder: row.sort_order,
     textTransform: row.text_transform as "none" | "uppercase",
+    defaultValue: row.default_value ?? "",
+    rotation: Number(row.rotation ?? 0),
+    boxColor: row.box_color ?? null,
+    boxPadding: row.box_padding ?? 0,
+    frameColor: row.frame_color ?? null,
+    frameWidth: row.frame_width ?? 0,
   };
 }
 

@@ -33,6 +33,8 @@ export interface RenderSlideInput {
   backgroundColorHex: string | null;
   assets: ResolvedAsset[];
   fonts: ResolvedFont[];
+  /** URLs for image-field pictures, keyed by the storage key held in `slide.content[fieldKey]`. */
+  imageUrls?: Record<string, string>;
   safeZone?: SafeZone;
   showSafeZone?: boolean;
   /** Optional locale for the safe-zone label only. Slide content is never translated. */
@@ -103,11 +105,34 @@ export type FieldLayout = Pick<
   | "overflowMode"
   | "textTransform"
   | "required"
->;
+> & {
+  /** "image" fields hold no text and are never fitted; defaults to "text". */
+  fieldType?: "text" | "image";
+};
+
+/** A word with the inline style it was marked up with (`*bold*`, `_italic_`). */
+export interface StyledWord {
+  text: string;
+  bold: boolean;
+  italic: boolean;
+}
+
+/** A same-styled slice of a laid-out line; runs concatenate (spaces included) into the rendered line. */
+export interface LayoutRun {
+  text: string;
+  /** Offset from the line's own x. */
+  x: number;
+  width: number;
+  bold: boolean;
+  italic: boolean;
+}
 
 /** One positioned, pre-measured line of text — ready to render as an absolutely positioned block. */
 export interface LayoutLine {
+  /** Plain text (inline markup stripped). */
   text: string;
+  /** Styled slices making up the line, in order. */
+  runs: LayoutRun[];
   /** Absolute x in the 1920×1080 canvas. */
   x: number;
   /** Absolute y in the 1920×1080 canvas. */

@@ -30,7 +30,9 @@ async function makePng(page: Page): Promise<{ name: string; mimeType: string; bu
 /** A Sunday in 2027 that no other spec (or earlier run) has claimed. */
 function nextFreeSunday(): string {
   const base = Date.UTC(2027, 0, 3); // 2027-01-03 is a Sunday
-  const week = Math.floor(Date.now() / 1000) % 52;
+  // Ten years of candidate Sundays so repeated runs against one long-lived mock server
+  // don't collide on the same date (which would make "create" fail as a duplicate).
+  const week = Math.floor(Date.now() / 1000) % 520;
   return new Date(base + week * 7 * 86_400_000).toISOString().slice(0, 10);
 }
 
@@ -131,8 +133,14 @@ test.describe("Admin — assets", () => {
     await expect(page.getByText("QA background").first()).toBeVisible({ timeout: 30_000 });
 
     // Uploaded assets start as Draft; publish it and allow it on the Annual theme template.
-    await page.getByText("QA background").first().click();
+    // The grid re-renders right after the upload dialog closes (router.refresh), so open
+    // the card by its accessible name and re-click once if that first click was swallowed.
+    const card = page.getByRole("button", { name: /QA background/ }).first();
+    await card.click();
     const detail = page.getByRole("dialog");
+    if (!(await detail.getByLabel("Status").isVisible({ timeout: 5_000 }).catch(() => false))) {
+      await card.click();
+    }
     await detail.getByLabel("Status").selectOption("published");
     await detail.locator("label", { hasText: "Annual theme" }).getByRole("checkbox").check();
     await detail.getByRole("button", { name: "Save changes" }).click();

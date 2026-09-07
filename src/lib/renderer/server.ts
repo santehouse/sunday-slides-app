@@ -153,6 +153,8 @@ function collectFontsToLoad(fields: FieldLayout[]): { family: string; weight: nu
 // ---------------------------------------------------------------------------
 
 const SELF_HOSTED_FAMILIES = new Set(["Arimo", "Tinos"]);
+/** Families served from a self-hosted metric twin when no custom font file was uploaded for them. */
+const SELF_HOSTED_ALIASES: Record<string, string> = { "Times New Roman": "Tinos" };
 const SELF_HOSTED_SUBSETS = new Set(["latin", "latin-ext"]);
 
 interface ParsedFontFace {
@@ -206,7 +208,7 @@ function nearestSelfHostedWeight(weight: number): number {
 }
 
 async function inlineSelfHostedFont(family: string, fields: FieldLayout[]): Promise<string> {
-  const entries = await loadSelfHostedFontCss(family);
+  const entries = await loadSelfHostedFontCss(SELF_HOSTED_ALIASES[family] ?? family);
   const combos = new Map<string, { weight: number; style: string }>();
   for (const field of fields) {
     const weight = nearestSelfHostedWeight(field.fontWeight);
@@ -255,8 +257,10 @@ async function buildInlineFontFaceCss(input: RenderSlideInput): Promise<string> 
   const families = new Set(input.template.fields.map((f) => f.fontFamily));
   const parts: string[] = [];
 
+  const customFamilies = new Set(input.fonts.map((f) => f.font.family));
   for (const family of families) {
-    if (SELF_HOSTED_FAMILIES.has(family)) {
+    const aliased = Boolean(SELF_HOSTED_ALIASES[family]) && !customFamilies.has(family);
+    if (SELF_HOSTED_FAMILIES.has(family) || aliased) {
       const fields = input.template.fields.filter((f) => f.fontFamily === family);
       parts.push(await inlineSelfHostedFont(family, fields));
     }
@@ -294,29 +298,61 @@ async function buildDocument(input: RenderSlideInput): Promise<string> {
 
   const layoutInputJson = escapeForInlineScript(JSON.stringify(layoutInput));
   const fontsToLoadJson = escapeForInlineScript(JSON.stringify(fontsToLoad));
+  // Full field records (rotation, box colour/padding…) — the layout input only carries
+  // what the engine measures with.
+  const fieldsJson = escapeForInlineScript(JSON.stringify(input.template.fields));
 
+  // Mirrors GenericRenderer's text layer exactly: one wrapper per field (rotated around
+  // its centre, optional solid box), the engine's lines inside it, spans per styled run.
   const driverScript = `
 (function () {
   var layoutInput = ${layoutInputJson};
   var fontsToLoad = ${fontsToLoadJson};
+  var templateFields = ${fieldsJson};
   var fieldsByKey = {};
-  layoutInput.fields.forEach(function (f) { fieldsByKey[f.fieldKey] = f; });
+  templateFields.forEach(function (f) { fieldsByKey[f.fieldKey] = f; });
+  function fontStack(family) {
+    return /times|tinos|serif|georgia|garamond/i.test(family) ? '"' + family + '", "Tinos", serif' : '"' + family + '", sans-serif';
+  }
 
   window.__engine.ensureFontsLoaded(fontsToLoad, document).then(function () {
     var measurer = window.__engine.createCanvasMeasurer(document);
     var layoutMap = window.__engine.computeSlideLayout(layoutInput, measurer);
     var root = document.querySelector("[data-slide-canvas]");
+    var guide = root.querySelector("[data-safe-zone]");
 
     Object.keys(layoutMap).forEach(function (fieldKey) {
       var field = fieldsByKey[fieldKey];
+      if (!field || field.fieldType === "image") return;
       var fieldResult = layoutMap[fieldKey];
+      var wrapper = document.createElement("div");
+      wrapper.setAttribute("data-text-field", fieldKey);
+      wrapper.style.position = "absolute";
+      wrapper.style.left = field.x + "px";
+      wrapper.style.top = field.y + "px";
+      wrapper.style.width = field.width + "px";
+      wrapper.style.height = field.height + "px";
+      if (field.rotation) {
+        wrapper.style.transform = "rotate(" + field.rotation + "deg)";
+        wrapper.style.transformOrigin = "center center";
+      }
+      if (field.boxColor) {
+        var pad = field.boxPadding || 0;
+        var box = document.createElement("div");
+        box.style.position = "absolute";
+        box.style.left = -pad + "px";
+        box.style.top = -pad + "px";
+        box.style.width = (field.width + pad * 2) + "px";
+        box.style.height = (field.height + pad * 2) + "px";
+        box.style.backgroundColor = field.boxColor;
+        wrapper.appendChild(box);
+      }
       fieldResult.lines.forEach(function (line) {
         var div = document.createElement("div");
-        div.textContent = line.text;
         div.style.position = "absolute";
-        div.style.left = line.x + "px";
-        div.style.top = line.y + "px";
-        div.style.fontFamily = '"' + field.fontFamily + '", sans-serif';
+        div.style.left = (line.x - field.x) + "px";
+        div.style.top = (line.y - field.y) + "px";
+        div.style.fontFamily = fontStack(field.fontFamily);
         div.style.fontSize = fieldResult.fontSize + "px";
         div.style.fontWeight = String(field.fontWeight);
         div.style.fontStyle = field.fontStyle;
@@ -324,8 +360,25 @@ async function buildDocument(input: RenderSlideInput): Promise<string> {
         div.style.color = field.textColor;
         div.style.lineHeight = "1";
         div.style.whiteSpace = "pre";
-        root.appendChild(div);
+        if (!line.runs || line.runs.length === 0) {
+          div.textContent = line.text;
+        } else {
+          line.runs.forEach(function (run) {
+            if (!run.bold && !run.italic) {
+              div.appendChild(document.createTextNode(run.text));
+              return;
+            }
+            var span = document.createElement("span");
+            span.textContent = run.text;
+            if (run.bold) span.style.fontWeight = String(Math.max(700, field.fontWeight));
+            if (run.italic) span.style.fontStyle = "italic";
+            div.appendChild(span);
+          });
+        }
+        wrapper.appendChild(div);
       });
+      // Keep the (preview-only) safe-zone guide above the text, like the React renderer does.
+      if (guide) root.insertBefore(wrapper, guide); else root.appendChild(wrapper);
     });
 
     window.__fitResult = layoutInput.fields.map(function (f) { return layoutMap[f.fieldKey].fit; });
@@ -389,7 +442,7 @@ async function renderOne(browser: Browser, input: RenderSlideInput): Promise<Ren
     const fit = buildSlideFitResult(
       input.slide.id,
       layoutInput.fields,
-      buildContentMap(input.slide),
+      buildContentMap(input.slide, input.template.fields),
       fitFields,
     );
 

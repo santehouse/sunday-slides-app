@@ -16,6 +16,10 @@
 ## Retention
 Temporary objects (run sheets, exports, tmp) expire from R2 after `temporary_retention_days` (default 60) via bucket lifecycle rules. Templates, assets and fonts never expire. Metadata stays in Supabase.
 
+## Migrations pending on production
+- `0002_run_sheet_opened_at.sql` (Import modal "new" dot)
+- `0003_template_field_layers.sql` (image fields, default text, rotated/boxed labels) — then run `scripts/apply-brand-templates.ts` (see docs/HANDOFF.md).
+
 ## Admin magic-link email (Supabase Auth → Resend SMTP)
 
 Supabase's built-in mailer only delivers to project members and is capped at 2 emails/hour, so the

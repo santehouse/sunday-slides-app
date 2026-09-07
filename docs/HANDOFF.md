@@ -23,6 +23,15 @@ The Sunday team opens `/sunday` with the PIN and lands on one queue: the slides 
 - **Export** (top-right) → JPG ZIP or MP4; "Advanced" expands hold-time and range options. **Clear queue** (double confirm) empties the service.
 - Slides in Sunday Flow order = JPG numbering = MP4 order.
 
+## Brand templates (rebuilt from the Canva "Panel" file)
+Definitions live in `src/lib/data/brandTemplates.ts` (exact Canva geometry, fonts, colours) and seed the mock/staging data automatically.
+To apply them to production (after migration `0003_template_field_layers.sql`):
+```
+NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… pnpm tsx --tsconfig scripts/tsconfig.json scripts/apply-brand-templates.ts
+```
+Upload the three background pictures under Admin → Assets first, named exactly **Annual theme sky**, **Baptêmes water**, **Conference gold** (publish them); the script binds them by name and otherwise applies a solid stand-in colour. The display serif is **Times New Roman** (upload the licensed files under Brand & Fonts; the metric-compatible Tinos stands in until then).
+Field text accepts `*bold*` and `_italic_` around words. Locked fields (church name, dots, the theme line) always show their template default; the Sunday team only sees the editable ones.
+
 ## Development
 `pnpm dev` (mock mode when `CP_MOCK_DATA=1` or Supabase env missing) · `pnpm check` · `pnpm test:e2e` · `pnpm engine:bundle` (auto-run by `pnpm build`).
 See `docs/OPERATIONS.md`, `docs/RENDERING.md`, `docs/INTAKE.md`, `docs/QA_REPORT.md`.

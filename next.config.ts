@@ -4,6 +4,14 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Asset/font uploads go through Server Actions. Next's default is 1 MB, which a
+      // 1920×1080 photo exceeds; Vercel's own request cap is 4.5 MB, so 4 MB is the
+      // practical ceiling (the dialogs explain the limit when a file is bigger).
+      bodySizeLimit: "4mb",
+    },
+  },
   serverExternalPackages: [
     "puppeteer-core",
     "@sparticuz/chromium",

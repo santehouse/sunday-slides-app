@@ -14,6 +14,7 @@ import { SlideFrame } from "@/lib/renderer/SlideFrame";
 import { buildSlideLayoutInput, computeSlideLayout } from "@/lib/renderer/fitText";
 import { createCanvasMeasurer, ensureFontsLoaded } from "@/lib/renderer/measure";
 import type { ResolvedAsset, SlideLayoutMap } from "@/lib/renderer/types";
+import { browserImageUrls } from "@/lib/renderer/imageUrls";
 
 export type SlidePreviewSlide = Pick<Slide, "id" | "headline" | "content" | "backgroundMode" | "assetId">;
 
@@ -41,6 +42,7 @@ export function SlidePreview({
 }: SlidePreviewProps) {
   const [layouts, setLayouts] = useState<SlideLayoutMap | null>(null);
   const contentKey = JSON.stringify(slide.content);
+  const imageUrls = browserImageUrls(template, slide);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +67,7 @@ export function SlidePreview({
   }, [template.id, slide.headline, contentKey]);
 
   return (
-    <div className={className} style={{ width: "100%", height: "100%" }}>
+    <div className={className} style={{ width: "100%", height: "100%" }} aria-hidden="true">
       <SlideFrame>
         {layouts ? (
           <SlideCanvas
@@ -75,6 +77,7 @@ export function SlidePreview({
               backgroundColorHex,
               assets,
               fonts: [],
+              imageUrls,
               safeZone,
               showSafeZone,
               safeZoneLabel,

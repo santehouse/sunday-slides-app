@@ -14,10 +14,11 @@ test("New slide modal: picking a design swaps straight into the edit form, and s
   await page.getByRole("button", { name: "New slide" }).click();
   await expect(page.getByRole("heading", { name: "Add a slide" })).toBeVisible();
 
-  await page.getByRole("button", { name: /^Use /i }).first().click();
-  await expect(page.getByLabel("Headline")).toBeVisible({ timeout: 10_000 });
+  // "Event" has team-editable fields (the Welcome design that sorts first is fully locked).
+  await page.getByRole("button", { name: "Use Event", exact: true }).click();
+  await expect(page.getByLabel("Title")).toBeVisible({ timeout: 10_000 });
 
-  await page.getByLabel("Headline").fill("E2E TEST SLIDE");
+  await page.getByLabel("Title").fill("E2E TEST SLIDE");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 10_000 });
 

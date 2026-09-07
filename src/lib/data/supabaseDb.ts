@@ -478,7 +478,7 @@ export function createSupabaseDb(): Db {
       const rows = fields.map((f) => ({
         template_id: templateId,
         field_key: f.fieldKey,
-        field_type: "text",
+        field_type: f.fieldType ?? "text",
         label_en: f.labelEn,
         label_fr: f.labelFr,
         team_editable: f.teamEditable,
@@ -501,6 +501,12 @@ export function createSupabaseDb(): Db {
         overflow_mode: f.overflowMode,
         text_transform: f.textTransform,
         sort_order: f.sortOrder,
+        default_value: f.defaultValue ?? "",
+        rotation: f.rotation ?? 0,
+        box_color: f.boxColor ?? null,
+        box_padding: f.boxPadding ?? 0,
+        frame_color: f.frameColor ?? null,
+        frame_width: f.frameWidth ?? 0,
       }));
       const { data, error } = await db.from("template_fields").insert(rows).select("*");
       if (error) throw new Error(`upsertTemplateFields (insert): ${error.message}`);

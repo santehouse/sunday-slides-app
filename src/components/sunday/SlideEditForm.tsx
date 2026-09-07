@@ -1,15 +1,16 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { AppLocale } from "@/i18n/routing";
 import type { Slide, SlideContent, Template } from "@/lib/domain/types";
 import { resolveSlideBackgroundHex } from "@/lib/sunday/background";
 import type { ResolvedAsset, SlideFitResult } from "@/lib/renderer/types";
-import { fitSlide } from "@/lib/renderer/fitText";
+import { fitSlide, stripInlineMarkup } from "@/lib/renderer/fitText";
 import { createCanvasMeasurer, ensureFontsLoaded } from "@/lib/renderer/measure";
 import { ColorSelect } from "@/components/ui/ColorSelect";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { MessageState } from "@/components/ui/MessageState";
 import { SafeZonesAction } from "@/components/ui/SafeZonesAction";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -17,7 +18,10 @@ import { Select } from "@/components/ui/Select";
 import { Toggle } from "@/components/ui/Toggle";
 import { useToast } from "@/components/ui/Toast";
 import { SlidePreview } from "@/components/sunday/SlidePreview";
-import { duplicateSlideAction, saveSlideAction } from "@/app/[locale]/(sunday)/sunday/actions";
+import { duplicateSlideAction, saveSlideAction, uploadSlideImageAction } from "@/app/[locale]/(sunday)/sunday/actions";
+import { slideImageBrowserUrl } from "@/lib/renderer/imageUrls";
+import { Button } from "@/components/ui/Button";
+import { ImagePlus, Trash2 } from "lucide-react";
 
 export type ApprovedColorOption = { id: string; nameEn: string; nameFr: string; hex: string };
 
@@ -47,10 +51,11 @@ export type SlideEditFormProps = {
 
 type BackgroundMode = "color" | "image";
 
-function fitKind(fit: SlideFitResult | null): "success" | "warning" | "error" {
+/** Overflow anywhere blocks; "tight" only matters on fields the team can actually shorten. */
+function fitKind(fit: SlideFitResult | null, editableKeys: Set<string>): "success" | "warning" | "error" {
   if (!fit) return "success";
   if (fit.fields.some((f) => f.status === "overflow")) return "error";
-  if (fit.fields.some((f) => f.status === "tight")) return "warning";
+  if (fit.fields.some((f) => f.status === "tight" && editableKeys.has(f.fieldKey))) return "warning";
   return "success";
 }
 
@@ -108,10 +113,6 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
     onBusyChange?.({ saving, duplicating });
   }, [saving, duplicating, onBusyChange]);
 
-  // `handleSave` / `handleDuplicate` are function declarations below (hoisted); the host
-  // modal's sticky footer drives them through this handle.
-  useImperativeHandle(ref, () => ({ isDirty: () => dirty, save: handleSave, duplicate: handleDuplicate }));
-
   const contentKey = JSON.stringify(content);
   useEffect(() => {
     if (!template) return;
@@ -130,10 +131,12 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId, contentKey]);
 
-  if (!template) return null;
-
-  const editableFields = [...template.fields].filter((f) => f.teamEditable).sort((a, b) => a.sortOrder - b.sortOrder);
-  const availableAssets = assetsByTemplateId[template.id] ?? [];
+  // No early return before the hooks below — `template` can only be missing for a stale
+  // template id, in which case the JSX at the end renders nothing.
+  const editableFields = template
+    ? [...template.fields].filter((f) => f.teamEditable).sort((a, b) => a.sortOrder - b.sortOrder)
+    : [];
+  const availableAssets = template ? (assetsByTemplateId[template.id] ?? []) : [];
   const colorOptions = colors.map((c) => ({ id: c.id, name: locale === "fr-CA" ? c.nameFr : c.nameEn, hex: c.hex }));
   const templateChanged = templateId !== slide.templateId;
   const canRememberMapping = Boolean(slide.sourceAnnouncement) && templateChanged;
@@ -160,7 +163,8 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
     setSaving(true);
     try {
       const firstFieldKey = editableFields[0]?.fieldKey;
-      const headline = content.headline ?? (firstFieldKey ? content[firstFieldKey] : undefined) ?? slide.headline;
+      // The slide's headline is its row title / export filename: never carries markup.
+      const headline = stripInlineMarkup(content.headline ?? (firstFieldKey ? content[firstFieldKey] : undefined) ?? slide.headline);
       const status = fit?.exportable === false ? "invalid" : "ready";
       const saved = await saveSlideAction(slide.id, {
         templateId,
@@ -195,7 +199,12 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
     }
   }
 
-  const messageKind = fitKind(fit);
+  // The host modal's sticky footer drives Save / Duplicate through this handle.
+  useImperativeHandle(ref, () => ({ isDirty: () => dirty, save: handleSave, duplicate: handleDuplicate }));
+
+  if (!template) return null;
+
+  const messageKind = fitKind(fit, new Set(editableFields.map((f) => f.fieldKey)));
   const messageCopy =
     messageKind === "success"
       ? { title: t("textFitGood"), message: t("textFitGoodBody") }
@@ -219,6 +228,30 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
           const value = content[field.fieldKey] ?? "";
           const label = locale === "fr-CA" ? field.labelFr : field.labelEn;
           const showRequiredError = attemptedSave && field.required && value.trim() === "";
+          if (field.fieldType === "image") {
+            return (
+              <ImageFieldInput
+                key={field.fieldKey}
+                label={field.required ? `${label} *` : label}
+                value={value}
+                error={showRequiredError ? t("requiredField") : undefined}
+                onChange={(next) => updateField(field.fieldKey, next)}
+              />
+            );
+          }
+          if (field.maxLines > 1) {
+            // Multi-line fields keep their line breaks (a single-line input would swallow them).
+            return (
+              <Textarea
+                key={field.fieldKey}
+                label={field.required ? `${label} *` : label}
+                rows={Math.min(field.maxLines, 4)}
+                value={value}
+                onChange={(event) => updateField(field.fieldKey, event.target.value)}
+                error={showRequiredError ? t("requiredField") : undefined}
+              />
+            );
+          }
           return (
             <Input
               key={field.fieldKey}
@@ -306,3 +339,84 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
     </div>
   );
 });
+
+/** Picture slot of a template (e.g. the conference speaker photo): upload, replace, remove. */
+function ImageFieldInput({
+  label,
+  value,
+  error,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  error?: string;
+  onChange: (key: string) => void;
+}) {
+  const t = useTranslations("sunday.simple.edit");
+  const tErrors = useTranslations("errors");
+  const { showToast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const result = await uploadSlideImageAction(formData);
+      if (result.ok) {
+        onChange(result.key);
+      } else {
+        showToast({
+          state: "error",
+          title: t("photoFailed"),
+          message:
+            result.error === "file_too_large"
+              ? tErrors("fileTooLarge", { max: 4 })
+              : result.error === "unsupported_file"
+                ? t("photoUnsupported")
+                : tErrors("generic"),
+        });
+      }
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-caption font-bold text-fg">{label}</span>
+      <div className="flex items-center gap-3 rounded-md bg-surface-subtle p-3">
+        <div className="h-[72px] w-[54px] shrink-0 overflow-hidden rounded-sm bg-surface">
+          {value ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={slideImageBrowserUrl(value)} alt="" className="h-full w-full object-cover" />
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" size="sm" leadingIcon={ImagePlus} loading={uploading} onClick={() => inputRef.current?.click()}>
+            {value ? t("replacePhoto") : t("uploadPhoto")}
+          </Button>
+          {value ? (
+            <Button variant="ghost" size="sm" leadingIcon={Trash2} onClick={() => onChange("")} disabled={uploading}>
+              {t("removePhoto")}
+            </Button>
+          ) : null}
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          aria-label={label}
+          tabIndex={-1}
+          className="sr-only"
+          onChange={(event) => void handleFile(event.target.files?.[0])}
+        />
+      </div>
+      {error ? <span className="text-caption text-error-fg">{error}</span> : null}
+      <span className="text-caption text-fg-secondary">{t("photoHint")}</span>
+    </div>
+  );
+}
