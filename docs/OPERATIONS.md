@@ -20,6 +20,12 @@ Temporary objects (run sheets, exports, tmp) expire from R2 after `temporary_ret
 - `0002_run_sheet_opened_at.sql` (Import modal "new" dot)
 - `0003_template_field_layers.sql` (image fields, default text, rotated/boxed labels) — then run `scripts/apply-brand-templates.ts` (see docs/HANDOFF.md).
 
+## Picture uploads go straight to R2
+Assets and slide pictures are uploaded by the browser to a signed R2 PUT URL (Server Actions
+only carry metadata; their body cap is 4 MB). The bucket needs a CORS rule for every app
+origin — `node scripts/r2-cors.mjs` sets it (production, staging, localhost). Without R2
+(local/mock) the dialogs fall back to the 4 MB Server Action path.
+
 ## Admin magic-link email (Supabase Auth → Resend SMTP)
 
 Supabase's built-in mailer only delivers to project members and is capped at 2 emails/hour, so the

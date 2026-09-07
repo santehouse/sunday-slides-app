@@ -41,6 +41,12 @@ export default defineConfig({
           // Keep e2e deterministic and offline even when .env.local has real keys.
           OPENAI_API_KEY: "",
           RESEND_INBOUND_WEBHOOK_SECRET: "",
+          // No object store in e2e: uploads take the in-process fallback path instead of a
+          // browser PUT to R2 (which needs real network access from the test browser).
+          R2_ACCOUNT_ID: "",
+          R2_ACCESS_KEY_ID: "",
+          R2_SECRET_ACCESS_KEY: "",
+          R2_BUCKET: "",
         },
       },
 });

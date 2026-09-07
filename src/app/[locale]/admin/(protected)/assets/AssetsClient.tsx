@@ -10,7 +10,8 @@ import { Dropzone } from "@/components/ui/Dropzone";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import { uploadAssetAction } from "./actions";
+import { createAssetUploadTicketAction, finalizeAssetUploadAction, uploadAssetAction } from "./actions";
+import { putFileDirect, readImageSize } from "@/lib/uploads/direct";
 import { AssetDetailDialog, type TemplateOption } from "./AssetDetailDialog";
 import type { Asset, AssetCategory, AssetStatus } from "@/lib/domain/types";
 
@@ -29,12 +30,36 @@ function UploadAssetDialog({ open, onClose }: { open: boolean; onClose: () => vo
 
   function handleUpload() {
     if (!file) return;
-    const formData = new FormData();
-    formData.set("file", file);
-    formData.set("nameEn", nameEn || file.name);
-    formData.set("category", category);
     startTransition(async () => {
-      const result = await uploadAssetAction(formData);
+      let result: Awaited<ReturnType<typeof uploadAssetAction>>;
+      try {
+        // Pictures go straight to the object store (signed PUT); the Server Action only
+        // ever sees metadata, so file size is no longer bounded by the action body limit.
+        const ticket = await createAssetUploadTicketAction({ filename: file.name, contentType: file.type, size: file.size });
+        if (ticket.mode === "error") {
+          result = { status: "error", message: ticket.error };
+        } else if (ticket.mode === "direct") {
+          const size = await readImageSize(file);
+          await putFileDirect(ticket.url, file);
+          result = await finalizeAssetUploadAction({
+            key: ticket.key,
+            contentType: file.type,
+            nameEn: nameEn || file.name,
+            category,
+            width: size.width,
+            height: size.height,
+          });
+        } else {
+          const formData = new FormData();
+          formData.set("file", file);
+          formData.set("nameEn", nameEn || file.name);
+          formData.set("category", category);
+          result = await uploadAssetAction(formData);
+        }
+      } catch (error) {
+        console.error("asset upload failed", error);
+        result = { status: "error", message: "storage_failed" };
+      }
       if (result.status === "success") {
         showToast({ state: "success", title: t("saved"), message: result.asset.nameEn });
         setFile(null);
@@ -45,7 +70,12 @@ function UploadAssetDialog({ open, onClose }: { open: boolean; onClose: () => vo
         showToast({
           state: "error",
           title: tCommon("failed"),
-          message: result.status === "error" && result.message === "unsupported_file" ? tErrors("unsupportedFile") : tErrors("generic"),
+          message:
+            result.status === "error" && result.message === "unsupported_file"
+              ? tErrors("unsupportedFile")
+              : result.status === "error" && result.message === "file_too_large"
+                ? tErrors("fileTooLarge", { max: 25 })
+                : tErrors("generic"),
         });
       }
     });
@@ -56,10 +86,10 @@ function UploadAssetDialog({ open, onClose }: { open: boolean; onClose: () => vo
       <div className="flex flex-col gap-4">
         <Dropzone
           title={t("dropHere")}
-          hint={t("formats", { max: 10 })}
+          hint={t("formats", { max: 25 })}
           chooseFileLabel={tCommon("chooseFile")}
           accept="image/jpeg,image/png,image/webp"
-          maxSizeMb={10}
+          maxSizeMb={25}
           onFile={setFile}
           disabled={isPending}
         />
