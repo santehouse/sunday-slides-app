@@ -113,19 +113,76 @@ function stripAccents(text: string): string {
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function extractDateFromText(text: string, referenceYear: number): Date | null {
-  const isoMatch = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * An explicit date further than this from the received date is treated as noise (a phone
+ * number, an old reference, a misread) rather than intent — the email is then filed under
+ * the next Sunday after it was received, like an email with no date at all.
+ */
+const MAX_EXPLICIT_DATE_DRIFT_DAYS = 400;
+
+function utcDate(year: number, month: number, day: number): Date | null {
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  // Reject roll-overs such as 31 February.
+  return date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? date : null;
+}
+
+function daysBetween(a: Date, b: Date): number {
+  return Math.abs(a.getTime() - b.getTime()) / MS_PER_DAY;
+}
+
+/** Of the valid candidates, the one closest to the reference date. */
+function closestTo(reference: Date, candidates: Array<Date | null>): Date | null {
+  let best: Date | null = null;
+  for (const candidate of candidates) {
+    if (candidate && (!best || daysBetween(candidate, reference) < daysBetween(best, reference))) {
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+/**
+ * Six-digit dates are the church's filename convention (`260920.docx` = 2026-09-20), but
+ * a short numeric date with separators is genuinely ambiguous: `26-09-20` is 2026-09-20
+ * (yy-mm-dd) while `06-09-26` is 2026-09-06 (dd-mm-yy). Both readings are tried and the
+ * one nearest the received date wins, so a run sheet never lands years away.
+ */
+function extractDateFromText(text: string, referenceDate: Date): Date | null {
+  const isoMatch = text.match(/\b(\d{4})[-/.](\d{2})[-/.](\d{2})\b/);
   if (isoMatch) {
     const [, y, m, d] = isoMatch;
-    return new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
+    const date = utcDate(Number(y), Number(m), Number(d));
+    if (date) return date;
   }
 
-  const shortMatch = text.match(/\b(\d{2})-(\d{2})-(\d{2})\b/);
+  const compactLongMatch = text.match(/\b(20\d{2})(\d{2})(\d{2})\b/);
+  if (compactLongMatch) {
+    const [, y, m, d] = compactLongMatch;
+    const date = utcDate(Number(y), Number(m), Number(d));
+    if (date) return date;
+  }
+
+  const shortMatch = text.match(/\b(\d{2})[-/._](\d{2})[-/._](\d{2})\b/);
   if (shortMatch) {
-    const [, d, m, y] = shortMatch;
-    return new Date(Date.UTC(2000 + Number(y), Number(m) - 1, Number(d)));
+    const [, a, b, c] = shortMatch.map(Number);
+    const date = closestTo(referenceDate, [
+      utcDate(2000 + a, b, c), // yy-mm-dd
+      utcDate(2000 + c, b, a), // dd-mm-yy
+    ]);
+    if (date) return date;
   }
 
+  const compactShortMatch = text.match(/\b(\d{2})(\d{2})(\d{2})\b/);
+  if (compactShortMatch) {
+    const [, y, m, d] = compactShortMatch;
+    const date = utcDate(2000 + Number(y), Number(m), Number(d));
+    if (date) return date;
+  }
+
+  const referenceYear = referenceDate.getUTCFullYear();
   const normalized = stripAccents(text.toLowerCase());
 
   const frRegex = new RegExp(`\\b(\\d{1,2})\\s+(${FR_MONTHS.join("|")})\\b(?:\\s+(\\d{4}))?`, "i");
@@ -134,7 +191,7 @@ function extractDateFromText(text: string, referenceYear: number): Date | null {
     const day = Number(frMatch[1]);
     const monthIndex = FR_MONTHS.indexOf(frMatch[2]);
     const year = frMatch[3] ? Number(frMatch[3]) : referenceYear;
-    return new Date(Date.UTC(year, monthIndex, day));
+    return utcDate(year, monthIndex + 1, day);
   }
 
   const enRegex = new RegExp(`\\b(${EN_MONTHS.join("|")})[a-z]*\\.?\\s+(\\d{1,2})\\b(?:,?\\s+(\\d{4}))?`, "i");
@@ -143,7 +200,7 @@ function extractDateFromText(text: string, referenceYear: number): Date | null {
     const monthIndex = EN_MONTHS.indexOf(enMatch[1]);
     const day = Number(enMatch[2]);
     const year = enMatch[3] ? Number(enMatch[3]) : referenceYear;
-    return new Date(Date.UTC(year, monthIndex, day));
+    return utcDate(year, monthIndex + 1, day);
   }
 
   return null;
@@ -164,8 +221,6 @@ function toZonedDateOnly(date: Date, timeZone: string): Date {
   return new Date(Date.UTC(year, month - 1, day));
 }
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
 /** The same UTC-midnight date if it's already a Sunday, otherwise the next Sunday after it. */
 function nextSundayOnOrAfter(date: Date): Date {
   const dayOfWeek = date.getUTCDay(); // 0 = Sunday
@@ -180,8 +235,9 @@ function formatIsoDate(date: Date): string {
 /**
  * Resolves which Sunday an inbound run sheet email is for: the next Sunday
  * on/after the email's received date, UNLESS the subject/body contains an
- * explicit date (`2026-09-06`, `6 septembre`, `Sept 6`, `06-09-26`), in
- * which case the Sunday of that date's week is used instead.
+ * explicit date (`2026-09-06`, `6 septembre`, `Sept 6`, `26-09-06`, `260906`), in
+ * which case the Sunday of that date's week is used instead. A date more than about a
+ * year away from the received date is ignored rather than filing the sheet in the past.
  */
 export function resolveTargetSundayDate(
   emailSubject: string,
@@ -193,8 +249,10 @@ export function resolveTargetSundayDate(
   const receivedLocalDay = toZonedDateOnly(received, timezone);
 
   const combinedText = `${emailSubject}\n${emailBody}`;
-  const explicitDate = extractDateFromText(combinedText, receivedLocalDay.getUTCFullYear());
+  const explicitDate = extractDateFromText(combinedText, receivedLocalDay);
+  const usableDate =
+    explicitDate && daysBetween(explicitDate, receivedLocalDay) <= MAX_EXPLICIT_DATE_DRIFT_DAYS ? explicitDate : null;
 
-  const target = explicitDate ? nextSundayOnOrAfter(explicitDate) : nextSundayOnOrAfter(receivedLocalDay);
+  const target = nextSundayOnOrAfter(usableDate ?? receivedLocalDay);
   return formatIsoDate(target);
 }

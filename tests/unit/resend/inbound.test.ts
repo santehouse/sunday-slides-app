@@ -182,4 +182,30 @@ describe("resolveTargetSundayDate", () => {
     const result = resolveTargetSundayDate("Feuille de route", "le 6 septembre", "2026-08-30T14:00:00Z", TZ);
     expect(result).toBe("2026-09-06");
   });
+  it("reads the church's yy-mm-dd filename convention (26-09-20.docx → Sunday 2026-09-20)", () => {
+    // Received on Friday 2026-09-18 with the bare filename as the subject.
+    const result = resolveTargetSundayDate("26-09-20.docx", "", "2026-09-18T00:56:52Z", TZ);
+    expect(result).toBe("2026-09-20");
+  });
+
+  it("reads a compact yymmdd filename (260906.docx)", () => {
+    const result = resolveTargetSundayDate("260906.docx", "", "2026-09-01T14:00:00Z", TZ);
+    expect(result).toBe("2026-09-06");
+  });
+
+  it("reads a compact yyyymmdd date (20260913)", () => {
+    const result = resolveTargetSundayDate("Annonces 20260913", "", "2026-09-08T14:00:00Z", TZ);
+    expect(result).toBe("2026-09-13");
+  });
+
+  it("ignores an explicit date years away and falls back to the received week", () => {
+    // 2019-03-03 is a Sunday, but nobody wants a run sheet filed seven years back.
+    const result = resolveTargetSundayDate("Re: run sheet 2019-03-03", "", "2026-09-18T00:56:52Z", TZ);
+    expect(result).toBe("2026-09-20");
+  });
+
+  it("never files under an impossible calendar date", () => {
+    const result = resolveTargetSundayDate("Annonces 2026-02-31", "", "2026-09-01T14:00:00Z", TZ);
+    expect(result).toBe("2026-09-06");
+  });
 });
