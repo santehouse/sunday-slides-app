@@ -21,7 +21,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return { title: t("title") };
 }
 
-const RECENT_RUN_SHEETS_LIMIT = 6;
+/** Newest first, across every service — the team may use any of them (see intake.applyRunSheetToSunday). */
+const RECENT_RUN_SHEETS_LIMIT = 10;
 
 /**
  * `/sunday` — the single Sunday Team screen (simplified IA): one queue of slides for the

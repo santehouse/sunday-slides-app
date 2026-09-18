@@ -25,14 +25,13 @@ test("clearing the queue needs two confirms, then shows the empty state; using t
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByText("Queue cleared")).toBeVisible();
 
-  // "Always" structural slides (Welcome, See you next week) are never removable, so
-  // they're all that's left — not a fully empty queue.
-  await expect(page.locator("[data-slide-card]")).toHaveCount(2);
-  await expect(page.locator("[data-slide-card]").filter({ hasText: /bienvenue/i })).toBeVisible();
-  await expect(page.locator("[data-slide-card]").filter({ hasText: /à la semaine prochaine/i })).toBeVisible();
+  // Clear means clear — the structural slides go too, leaving the empty state.
+  await expect(page.locator("[data-slide-card]")).toHaveCount(0);
+  await expect(page.getByText("No slides yet. Import the announcements or add a slide.")).toBeVisible();
 
-  // Restore the demo deck from the Sunday's own already-received run sheet.
-  await page.getByRole("button", { name: "Import announcements" }).click();
+  // Restore the demo deck from the Sunday's own already-received run sheet (the empty
+  // state offers a second Import button — use the header one).
+  await page.getByRole("button", { name: "Import announcements" }).first().click();
   const row = page.locator("li").filter({ hasText: "260906.docx" }).first();
   await row.getByRole("button", { name: "Use this file" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 30_000 });

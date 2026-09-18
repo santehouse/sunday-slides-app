@@ -9,7 +9,17 @@ import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge
 import { CreateSundayDialog } from "@/components/admin/CreateSundayDialog";
 import { UploadRunSheetDialog } from "@/components/admin/UploadRunSheetDialog";
 import type { SundayListItem } from "@/lib/data";
+import type { RunSheet } from "@/lib/domain/types";
 import { serviceDateToDate } from "@/lib/utils/serviceDate";
+
+const PARSE_STATUS_MAP: Record<RunSheet["parseStatus"], StatusBadgeStatus> = {
+  queued: "queued",
+  processing: "processing",
+  ready_to_apply: "apply",
+  added_to_flow: "added",
+  needs_review: "needsReview",
+  failed: "failed",
+};
 
 const SUNDAY_STATUS_MAP: Record<SundayListItem["status"], StatusBadgeStatus> = {
   draft: "draft",
@@ -26,10 +36,12 @@ function isToday(iso: string): boolean {
 
 export function SundaysClient({
   sundays,
+  recentRunSheets,
   inboundEmail,
   initialUploadOpen,
 }: {
   sundays: SundayListItem[];
+  recentRunSheets: RunSheet[];
   inboundEmail: string | null;
   initialUploadOpen: boolean;
 }) {
@@ -54,6 +66,8 @@ export function SundaysClient({
     [sundays, t, tCommon, format],
   );
 
+  const sundayById = useMemo(() => new Map(sundays.map((sunday) => [sunday.id, sunday])), [sundays]);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -68,6 +82,53 @@ export function SundaysClient({
           <CreateSundayDialog />
         </div>
       </div>
+
+      {/* Every received/uploaded file, newest first — never filtered by date. Any of them can
+          be used for the current service from the Sunday screen's Import modal. */}
+      <Card className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-h3 font-bold text-fg">{t("receivedFiles")}</h2>
+          <p className="text-caption text-fg-secondary">{t("receivedFilesHelper")}</p>
+        </div>
+        {recentRunSheets.length === 0 ? (
+          <p className="text-caption text-fg-secondary">{t("noReceivedFiles")}</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {recentRunSheets.map((runSheet) => {
+              const filedUnder = sundayById.get(runSheet.sundayId);
+              const received = new Date(runSheet.receivedAt);
+              return (
+                <li key={runSheet.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-surface-subtle px-3.5 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-label font-bold text-fg">{runSheet.originalFilename}</p>
+                    <p className="truncate text-caption text-fg-secondary">
+                      {format.dateTime(received, "dateMedium")} · {format.dateTime(received, "time")} ·{" "}
+                      {runSheet.sourceType === "email" ? t("sourceTypeEmail") : t("sourceTypeManual")}
+                      {filedUnder ? ` · ${t("filedUnder", { date: format.dateTime(serviceDateToDate(filedUnder.serviceDate), "dateMedium") })}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <StatusBadge status={PARSE_STATUS_MAP[runSheet.parseStatus]} />
+                    <a
+                      href={`/api/run-sheets/${runSheet.id}/file`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-label font-bold text-primary hover:underline"
+                    >
+                      {t("openFile")}
+                    </a>
+                    {filedUnder ? (
+                      <Link href={`/admin/sundays/${filedUnder.id}`} className="text-label font-bold text-fg hover:underline">
+                        {t("openSunday")}
+                      </Link>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
 
       <Card padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">

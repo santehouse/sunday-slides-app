@@ -155,3 +155,12 @@ describe("removeSlide", () => {
     expect(await db.getSlide(announcement.id)).toBeNull();
   });
 });
+
+describe("removeSlide with force (Clear queue)", () => {
+  it("removes 'always' structural slides when forced", async () => {
+    const { slides } = await seedAppliedSunday("2026-12-13");
+    const welcome = slides.find((s) => s.isStructural && s.headline === "BIENVENUE")!;
+    expect((await removeSlide(welcome.id)).ok).toBe(false);
+    expect((await removeSlide(welcome.id, { force: true })).ok).toBe(true);
+  });
+});

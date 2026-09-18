@@ -75,6 +75,8 @@ interface PinAttemptRecord {
 }
 
 interface MockStore {
+  /** The seeded Sunday the mock landed on as "the current service" (see getNextSunday). */
+  fallbackSundayId?: string;
   settings: AppSettings;
   adminUsers: AdminUser[];
   fonts: FontRecord[];
@@ -548,10 +550,16 @@ export function createMockDb(): Db {
       // below would land the whole app on an empty deck instead of the rich Figma demo.
       // Land on the latest seeded Sunday that actually has slides instead — documented in
       // docs/BUILD_HANDOFF.md's mock-mode section.
+      // Sticky once chosen: clearing the queue must not hop to another seeded Sunday.
+      const sticky = store.fallbackSundayId ? store.sundays.find((s) => s.id === store.fallbackSundayId) : undefined;
+      if (sticky) return clone(sticky);
       const richestSeeded = [...store.sundays]
         .filter((s) => store.slides.some((slide) => slide.sundayId === s.id))
         .sort((a, b) => (a.serviceDate < b.serviceDate ? 1 : -1))[0];
-      if (richestSeeded) return clone(richestSeeded);
+      if (richestSeeded) {
+        store.fallbackSundayId = richestSeeded.id;
+        return clone(richestSeeded);
+      }
       return this.getOrCreateSundayByDate(target);
     },
     async getAdjacentSundayDates(date: string): Promise<AdjacentSundayDates> {
