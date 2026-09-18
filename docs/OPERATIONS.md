@@ -19,6 +19,10 @@ Temporary objects (run sheets, exports, tmp) expire from R2 after `temporary_ret
 ## Migrations pending on production
 - `0002_run_sheet_opened_at.sql` (Import modal "new" dot)
 - `0003_template_field_layers.sql` (image fields, default text, rotated/boxed labels) — then run `scripts/apply-brand-templates.ts` (see docs/HANDOFF.md).
+- `0004_inbound_allowed_senders.sql` (Settings → Run sheet intake → Allowed senders). Until it is applied the allowlist reads as empty (everyone accepted) and saving Settings fails.
+
+## Inbound email rules
+Only senders on the allowlist get through (empty list = everyone). Strangers are dropped and logged as `inbound_sender_rejected`. An allowed sender whose email has no `.docx`/`.pdf`, or several, gets a bilingual auto-reply from `RESEND_FROM_EMAIL` (needs `RESEND_API_KEY`); automated senders (no-reply, mailer-daemon, our own addresses) never get one.
 
 ## Picture uploads go straight to R2
 Assets and slide pictures are uploaded by the browser to a signed R2 PUT URL (Server Actions

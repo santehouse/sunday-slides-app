@@ -60,6 +60,7 @@ export const SETTINGS_SEED = {
   defaultSlideHoldSeconds: 5,
   inboundEmail: "announcements@eajc.example.org",
   autoProcessInbound: true,
+  inboundAllowedSenders: [] as string[],
   safeZone: { x: 96, y: 640, width: 640, height: 360 },
   temporaryRetentionDays: 60,
 };

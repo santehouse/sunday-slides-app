@@ -53,6 +53,8 @@ export function settingsFromRow(row: AppSettingsRow): AppSettings {
     defaultSlideHoldSeconds: row.default_slide_hold_seconds,
     inboundEmail: row.inbound_email,
     autoProcessInbound: row.auto_process_inbound,
+    // Tolerates a deploy that lands before migration 0004 is applied.
+    inboundAllowedSenders: row.inbound_allowed_senders ?? [],
     safeZone: { x: row.pip_x, y: row.pip_y, width: row.pip_width, height: row.pip_height },
     temporaryRetentionDays: row.temporary_retention_days,
     updatedAt: row.updated_at,

@@ -332,6 +332,7 @@ function buildInitialStore(): MockStore {
     defaultSlideHoldSeconds: SETTINGS_SEED.defaultSlideHoldSeconds,
     inboundEmail: SETTINGS_SEED.inboundEmail,
     autoProcessInbound: SETTINGS_SEED.autoProcessInbound,
+    inboundAllowedSenders: [...SETTINGS_SEED.inboundAllowedSenders],
     safeZone: SETTINGS_SEED.safeZone,
     temporaryRetentionDays: SETTINGS_SEED.temporaryRetentionDays,
     updatedAt: now,

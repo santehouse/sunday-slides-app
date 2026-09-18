@@ -163,6 +163,7 @@ export type UpdateSettingsPatch = Partial<{
   defaultSlideHoldSeconds: number;
   inboundEmail: string | null;
   autoProcessInbound: boolean;
+  inboundAllowedSenders: string[];
   safeZone: SafeZone;
   temporaryRetentionDays: number;
 }>;

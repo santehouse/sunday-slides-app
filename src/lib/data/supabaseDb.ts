@@ -137,6 +137,7 @@ export function createSupabaseDb(): Db {
       if (patch.defaultSlideHoldSeconds !== undefined) row.default_slide_hold_seconds = patch.defaultSlideHoldSeconds;
       if (patch.inboundEmail !== undefined) row.inbound_email = patch.inboundEmail;
       if (patch.autoProcessInbound !== undefined) row.auto_process_inbound = patch.autoProcessInbound;
+      if (patch.inboundAllowedSenders !== undefined) row.inbound_allowed_senders = patch.inboundAllowedSenders;
       if (patch.temporaryRetentionDays !== undefined) row.temporary_retention_days = patch.temporaryRetentionDays;
       if (patch.safeZone !== undefined) {
         row.pip_x = patch.safeZone.x;

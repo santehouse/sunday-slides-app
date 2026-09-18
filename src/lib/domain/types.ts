@@ -82,6 +82,11 @@ export interface AppSettings {
   defaultSlideHoldSeconds: number;
   inboundEmail: string | null;
   autoProcessInbound: boolean;
+  /**
+   * Who may email run sheets in: lower-cased full addresses or `@domain` entries.
+   * Empty means everyone. See `src/lib/engines/senderAllowlist.ts`.
+   */
+  inboundAllowedSenders: string[];
   safeZone: SafeZone;
   temporaryRetentionDays: number;
   updatedAt: string;

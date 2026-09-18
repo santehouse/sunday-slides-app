@@ -61,6 +61,8 @@ export type AppSettingsRow = {
   default_slide_hold_seconds: number;
   inbound_email: string | null;
   auto_process_inbound: boolean;
+  /** Lower-cased addresses or `@domain` entries; empty accepts every sender. Added in 0004. */
+  inbound_allowed_senders: string[];
   pip_x: number;
   pip_y: number;
   pip_width: number;

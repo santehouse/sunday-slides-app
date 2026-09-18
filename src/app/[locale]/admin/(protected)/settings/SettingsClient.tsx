@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 import { Toggle } from "@/components/ui/Toggle";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dialog } from "@/components/ui/Dialog";
@@ -19,6 +20,7 @@ import {
   setAdminDisabledAction,
 } from "./actions";
 import type { AdminUser, AppSettings, Locale } from "@/lib/domain/types";
+import { parseAllowedSenders } from "@/lib/engines/senderAllowlist";
 
 const TIMEZONE_OPTIONS = [
   "America/Toronto",
@@ -103,6 +105,8 @@ export function SettingsClient({
   const [defaultSlideHoldSeconds, setDefaultSlideHoldSeconds] = useState(settings.defaultSlideHoldSeconds);
   const [inboundEmail, setInboundEmail] = useState(settings.inboundEmail ?? "");
   const [autoProcessInbound, setAutoProcessInbound] = useState(settings.autoProcessInbound);
+  const [allowedSendersText, setAllowedSendersText] = useState(settings.inboundAllowedSenders.join("\n"));
+  const allowedSenders = useMemo(() => parseAllowedSenders(allowedSendersText), [allowedSendersText]);
   const [safeZone, setSafeZone] = useState(settings.safeZone);
   const [retentionDays, setRetentionDays] = useState(settings.temporaryRetentionDays);
   const [pin, setPin] = useState("");
@@ -124,6 +128,7 @@ export function SettingsClient({
         defaultSlideHoldSeconds,
         inboundEmail: inboundEmail || null,
         autoProcessInbound,
+        inboundAllowedSenders: allowedSenders.entries,
         safeZone,
         temporaryRetentionDays: retentionDays,
       });
@@ -175,7 +180,7 @@ export function SettingsClient({
           <h1 className="text-h1 font-bold text-fg">{t("title")}</h1>
           <p className="mt-1.5 text-caption text-fg-secondary">{t("subtitle")}</p>
         </div>
-        <Button variant="primary" loading={isPending} onClick={handleSave}>
+        <Button variant="primary" loading={isPending} disabled={allowedSenders.invalid.length > 0} onClick={handleSave}>
           {tCommon("saveChanges")}
         </Button>
       </div>
@@ -231,6 +236,22 @@ export function SettingsClient({
             disabled
           />
           <Toggle checked={autoProcessInbound} onChange={setAutoProcessInbound} label={t("autoProcess")} />
+          <Textarea
+            id="settings-allowed-senders"
+            label={t("allowedSenders")}
+            value={allowedSendersText}
+            onChange={(e) => setAllowedSendersText(e.target.value)}
+            rows={4}
+            spellCheck={false}
+            autoCapitalize="off"
+            helper={t("allowedSendersHelper")}
+            error={
+              allowedSenders.invalid.length > 0
+                ? t("allowedSendersInvalid", { entries: allowedSenders.invalid.join(", ") })
+                : undefined
+            }
+          />
+          <p className="text-caption text-fg-secondary">{t("autoReplyNote")}</p>
           <Input id="settings-openai-model" label={t("openaiModel")} value={openaiModel} readOnly disabled />
           <div>
             <Button variant="secondary" loading={isReprocessPending} onClick={handleReprocessLast}>
