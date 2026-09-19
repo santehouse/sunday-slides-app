@@ -21,6 +21,7 @@ Temporary objects (run sheets, exports, tmp) expire from R2 after `temporary_ret
 - `0003_template_field_layers.sql` (image fields, default text, rotated/boxed labels) — then run `scripts/apply-brand-templates.ts` (see docs/HANDOFF.md).
 - `0004_inbound_allowed_senders.sql` (Settings → Run sheet intake → Allowed senders). Until it is applied the allowlist reads as empty (everyone accepted) and saving Settings fails.
 - `0005_slide_sections_and_scripture.sql` (Scriptures deck: `slides.section`, `template_category` gains `scripture`) — then run `scripts/apply-brand-templates.ts` again so the "Scripture verse" template exists. Upload a 1920×1080 photo named **Scripture sky** under Admin → Assets (publish it) and re-run the script to bind it; until then the template uses a solid fallback.
+- `0006_template_field_box_gradient.sql` (Studio → Box fill → Gradient, up to 7 colour stops) — re-run `scripts/apply-brand-templates.ts` so the Scripture verse seam gets its gradient.
 
 ## Scriptures deck
 The Sunday queue has two decks behind the Announcements / Scriptures toggle (`?section=scriptures`). Each keeps its own order; "Clear queue" and downloads act on the deck on screen. Scripture downloads are JPG only. Verses come from the bundled Louis Segond 1910 (`src/lib/bible`, public domain, rebuilt by `node scripts/import-lsg1910.mjs`); no API or key is involved.

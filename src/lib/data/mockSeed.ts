@@ -1,3 +1,4 @@
+import type { BoxGradient } from "@/lib/engines/boxGradient";
 /**
  * Church Panels demo dataset — the Figma "EAJC" Sunday.
  *
@@ -294,6 +295,7 @@ export interface TemplateFieldSeed {
   defaultValue?: string;
   rotation?: number;
   boxColor?: string | null;
+  boxGradient?: BoxGradient | null;
   boxPadding?: number;
   frameColor?: string | null;
   frameWidth?: number;

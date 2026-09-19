@@ -53,6 +53,7 @@ export function makeTemplateField(overrides: Partial<TemplateField> = {}): Templ
     defaultValue: "",
     rotation: 0,
     boxColor: null,
+    boxGradient: null,
     boxPadding: 0,
     frameColor: null,
     frameWidth: 0,

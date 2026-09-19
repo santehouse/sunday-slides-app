@@ -1,3 +1,4 @@
+import type { BoxGradient } from "@/lib/engines/boxGradient";
 /**
  * Domain types — the shared contract between UI, data layer, engines, renderer and parsing.
  * These mirror the Supabase schema in supabase/migrations/0001_init.sql. Keep them in sync.
@@ -153,6 +154,8 @@ export interface ParsedAnnouncement {
   reviewReasons: string[];
 }
 
+export type { BoxGradient } from "@/lib/engines/boxGradient";
+
 export interface TemplateField {
   id: string;
   templateId: string;
@@ -187,6 +190,8 @@ export interface TemplateField {
   rotation: number;
   /** Solid box painted behind the text (hex), or null for none. */
   boxColor: string | null;
+  /** Gradient box fill (2–7 stops); when set it wins over `boxColor`. */
+  boxGradient: BoxGradient | null;
   /** Extra box size around the text on every side (px at 1920 scale) when `boxColor` is set. */
   boxPadding: number;
   /** Image fields only: a solid frame around the picture (hex), or null. */

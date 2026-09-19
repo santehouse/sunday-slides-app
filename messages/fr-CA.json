@@ -725,7 +725,28 @@
       },
       "empty": "Aucun modèle ne correspond à ces filtres.",
       "newTemplateName": "Nouveau modèle",
-      "noPublishedAssets": "Aucun contenu visuel publié pour le moment."
+      "noPublishedAssets": "Aucun contenu visuel publié pour le moment.",
+      "boxFill": "Remplissage de la boîte",
+      "boxFillNone": "Aucun",
+      "boxFillSolid": "Uni",
+      "boxFillGradient": "Dégradé",
+      "gradient": {
+        "angle": "Angle",
+        "topToBottom": "Haut vers bas",
+        "leftToRight": "Gauche vers droite",
+        "bottomToTop": "Bas vers haut",
+        "rightToLeft": "Droite vers gauche",
+        "stops": "Couleurs, de la première à la dernière",
+        "max": "Jusqu’à {max} couleurs",
+        "add": "Ajouter une couleur",
+        "stop": "Couleur {n}",
+        "stopHex": "Couleur {n} (hex)",
+        "invalidHex": "Pas une couleur hex",
+        "drag": "Couleur {n} sur {total} : glissez, ou appuyez sur espace puis les flèches, pour réordonner",
+        "remove": "Retirer la couleur",
+        "direction": "Direction",
+        "custom": "Angle personnalisé"
+      }
     },
     "assets": {
       "title": "Bibliothèque de ressources",

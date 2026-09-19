@@ -1,3 +1,4 @@
+import type { BoxGradient } from "@/lib/engines/boxGradient";
 /**
  * Repository contract. `getDb()` (see index.ts) returns either the Supabase
  * service-role implementation (supabaseDb.ts) or the in-memory mock
@@ -208,6 +209,7 @@ export interface CreateTemplateFieldInput {
   defaultValue?: string;
   rotation?: number;
   boxColor?: string | null;
+  boxGradient?: BoxGradient | null;
   boxPadding?: number;
   frameColor?: string | null;
   frameWidth?: number;

@@ -510,6 +510,7 @@ export function createSupabaseDb(): Db {
         default_value: f.defaultValue ?? "",
         rotation: f.rotation ?? 0,
         box_color: f.boxColor ?? null,
+        box_gradient: f.boxGradient ?? null,
         box_padding: f.boxPadding ?? 0,
         frame_color: f.frameColor ?? null,
         frame_width: f.frameWidth ?? 0,

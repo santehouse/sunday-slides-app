@@ -159,6 +159,8 @@ export type TemplateFieldRow = {
   default_value: string;
   rotation: number;
   box_color: string | null;
+  /** Added in 0006; absent on rows read before the migration lands (mapper defaults it). */
+  box_gradient?: { angle: number; stops: string[] } | null;
   box_padding: number;
   frame_color: string | null;
   frame_width: number;

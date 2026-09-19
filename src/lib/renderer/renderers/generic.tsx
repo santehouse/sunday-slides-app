@@ -1,3 +1,4 @@
+import { boxGradientCss } from "@/lib/engines/boxGradient";
 /**
  * The default slide renderer — background, overlay, image slots and text-field layers
  * driven purely by `Template`/`TemplateField` configuration. Used for every template
@@ -112,10 +113,11 @@ export function GenericRenderer(input: RenderSlideInput, layouts: SlideLayoutMap
 
         const fieldLayout = layouts[field.fieldKey];
         if (!fieldLayout) return null;
-        const pad = field.boxColor ? field.boxPadding : 0;
+        const hasBox = Boolean(field.boxColor || field.boxGradient);
+        const pad = hasBox ? field.boxPadding : 0;
         return (
           <div key={field.fieldKey} data-text-field={field.fieldKey} style={fieldBoxStyle(field)}>
-            {field.boxColor ? (
+            {hasBox ? (
               <div
                 style={{
                   position: "absolute",
@@ -123,7 +125,8 @@ export function GenericRenderer(input: RenderSlideInput, layouts: SlideLayoutMap
                   top: -pad,
                   width: field.width + pad * 2,
                   height: field.height + pad * 2,
-                  backgroundColor: field.boxColor,
+                  backgroundColor: field.boxColor ?? undefined,
+                  backgroundImage: field.boxGradient ? boxGradientCss(field.boxGradient) : undefined,
                 }}
               />
             ) : null}

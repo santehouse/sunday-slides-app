@@ -1,3 +1,4 @@
+import { normalizeBoxGradient } from "@/lib/engines/boxGradient";
 /**
  * snake_case Supabase rows <-> camelCase domain types (src/lib/domain/types.ts).
  * Used only by supabaseDb.ts.
@@ -150,6 +151,7 @@ export function templateFieldFromRow(row: TemplateFieldRow): TemplateField {
     defaultValue: row.default_value ?? "",
     rotation: Number(row.rotation ?? 0),
     boxColor: row.box_color ?? null,
+    boxGradient: normalizeBoxGradient(row.box_gradient),
     boxPadding: row.box_padding ?? 0,
     frameColor: row.frame_color ?? null,
     frameWidth: row.frame_width ?? 0,

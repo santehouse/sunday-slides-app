@@ -725,7 +725,28 @@
       },
       "empty": "No templates match these filters.",
       "newTemplateName": "New template",
-      "noPublishedAssets": "No published assets yet."
+      "noPublishedAssets": "No published assets yet.",
+      "boxFill": "Box fill",
+      "boxFillNone": "None",
+      "boxFillSolid": "Solid",
+      "boxFillGradient": "Gradient",
+      "gradient": {
+        "angle": "Angle",
+        "topToBottom": "Top to bottom",
+        "leftToRight": "Left to right",
+        "bottomToTop": "Bottom to top",
+        "rightToLeft": "Right to left",
+        "stops": "Colours, first to last",
+        "max": "Up to {max} colours",
+        "add": "Add colour",
+        "stop": "Colour {n}",
+        "stopHex": "Colour {n} (hex)",
+        "invalidHex": "Not a hex colour",
+        "drag": "Colour {n} of {total}: drag, or press space then the arrow keys, to reorder",
+        "remove": "Remove colour",
+        "direction": "Direction",
+        "custom": "Custom angle"
+      }
     },
     "assets": {
       "title": "Asset library",

@@ -891,6 +891,7 @@ function build(): TemplateSeed[] {
           height: 1080,
           fontSize: 10,
           boxColor: BRAND_COLORS.sand,
+          boxGradient: { angle: 180, stops: ["#f7d6b3", "#e9b98a", "#f2cf8e"] },
           maxLines: 1,
           defaultValue: "",
         }),
