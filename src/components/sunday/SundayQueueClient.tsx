@@ -241,7 +241,7 @@ export function SundayQueueClient({
         <Button variant="secondary" leadingIcon={Trash2} onClick={() => setConfirmingClear(true)} disabled={slides.length === 0}>
           {t("clear")}
         </Button>
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           {isScriptures ? (
             <>
               <Button variant="secondary" leadingIcon={Plus} onClick={openNewSlide}>
@@ -287,7 +287,7 @@ export function SundayQueueClient({
       {slides.length === 0 ? (
         <Card padding="md" className="flex flex-col items-center gap-4 py-12 text-center">
           <p className="text-label text-fg-secondary">{isScriptures ? t("emptyScriptures") : t("empty")}</p>
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
             {isScriptures ? (
               <>
                 <Button variant="secondary" leadingIcon={Plus} onClick={openNewSlide}>

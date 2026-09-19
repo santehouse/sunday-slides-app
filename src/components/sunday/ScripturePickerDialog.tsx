@@ -137,11 +137,11 @@ export function ScripturePickerDialog({ open, sundayId, templates, onClose, onAd
       }
     >
       {scriptureTemplates.length === 0 ? (
-        <div className="p-6">
+        <div className="sm:p-6">
           <MessageState state="warning" title={t("noTemplateTitle")} message={t("noTemplate")} />
         </div>
       ) : (
-        <div className="flex h-full min-h-0 flex-col gap-4 p-6 lg:flex-row">
+        <div className="flex min-h-0 flex-col gap-4 sm:p-6 lg:h-full lg:flex-row">
           <div className="flex w-full flex-col gap-4 lg:w-[320px] lg:shrink-0">
             <p className="text-caption text-fg-secondary">{t("helper", { translation: BIBLE_TRANSLATION_NAME })}</p>
             <Select
@@ -187,7 +187,7 @@ export function ScripturePickerDialog({ open, sundayId, templates, onClose, onAd
           </div>
 
           <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-caption font-bold uppercase tracking-[0.08em] text-fg-secondary">
                 {book.name} {chapter}
               </span>
@@ -206,7 +206,9 @@ export function ScripturePickerDialog({ open, sundayId, templates, onClose, onAd
                 {t("loading")}
               </div>
             ) : (
-              <ul className="flex max-h-[52vh] flex-col gap-1 overflow-y-auto rounded-md border border-border p-2" aria-label={t("verses")}>
+              // On a phone the dialog body is the only scroller — an inner scroll box here
+              // would strand the verses below the fold behind a second, nested gesture.
+              <ul className="flex flex-col gap-1 overflow-y-auto rounded-md border border-border p-2 lg:max-h-[52vh]" aria-label={t("verses")}>
                 {verses.map((row) => {
                   const checked = selected.includes(row.verse);
                   return (

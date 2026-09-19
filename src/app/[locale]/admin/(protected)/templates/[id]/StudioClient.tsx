@@ -408,7 +408,7 @@ export function StudioClient({
           <h1 className="text-h2 font-bold text-fg">{name}</h1>
           <StatusBadge status={TEMPLATE_STATUS_BADGE[status]} />
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           {status === "archived" ? (
             <Button variant="secondary" loading={isPending} onClick={() => handleSave("draft")}>
               {t("restore")}
@@ -847,7 +847,7 @@ export function StudioClient({
             <CardHeader
               title={t("canvas.title")}
               action={
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <span className="text-caption font-bold text-fg-secondary">{t("canvas.fit")}</span>
                   <SegmentedControl
                     ariaLabel={t("canvas.fit")}

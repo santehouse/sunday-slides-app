@@ -11,13 +11,13 @@ export type AdminShellProps = {
   user: AdminNavProps["user"];
   onSignOut: AdminNavProps["onSignOut"];
   children: ReactNode;
-  /** "default" (px-12) for most Admin screens, "studio" (px-9) for Template Studio. */
+  /** "default" (px-12 on desktop) for most Admin screens, "studio" (px-9) for Template Studio; both drop to a 16px gutter on phones. */
   padding?: "default" | "studio";
 };
 
 const PADDING_CLASSES: Record<NonNullable<AdminShellProps["padding"]>, string> = {
-  default: "px-12",
-  studio: "px-9",
+  default: "px-4 sm:px-8 lg:px-12",
+  studio: "px-4 sm:px-6 lg:px-9",
 };
 
 /** Admin layout: sticky AdminNav + main content. Collapses to a top bar below 1024px. */

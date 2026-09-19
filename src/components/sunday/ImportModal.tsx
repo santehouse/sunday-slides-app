@@ -96,18 +96,18 @@ function PreviewDialog({
 
   return (
     <Dialog open onClose={onClose} size="lg" bareBody title={file.filename}>
-      <div className="h-full min-h-[50vh] rounded-[10px] bg-surface-subtle p-4">
+      <div className="h-full min-h-[50dvh] rounded-[10px] bg-surface-subtle p-4">
         {!preview ? (
           <span className="flex items-center gap-2 text-label text-fg-secondary">
             <Spinner size={18} />
             {t("working")}
           </span>
         ) : preview.kind === "text" ? (
-          <div className="h-full max-h-[60vh] overflow-y-auto">
+          <div className="h-full max-h-[60dvh] overflow-y-auto overscroll-contain">
             <DocPreview text={preview.text} />
           </div>
         ) : preview.kind === "pdf" ? (
-          <iframe title={file.filename} src={preview.url} className="h-[60vh] w-full rounded-[8px] border border-border bg-surface" />
+          <iframe title={file.filename} src={preview.url} className="h-[60dvh] w-full rounded-[8px] border border-border bg-surface" />
         ) : (
           <MessageState state="info" title={t("emptyPreview")} message={t("previewUnavailable")} />
         )}

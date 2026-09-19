@@ -73,8 +73,11 @@ export function Popover({ trigger, children, className, panelClassName, align = 
         <div
           role="dialog"
           className={cn(
-            "absolute top-full z-30 mt-2 rounded-[12px] border border-border bg-surface p-5 shadow-lg cp-page-enter",
-            align === "end" ? "right-0" : "left-0",
+            "absolute top-full z-30 mt-2 max-w-[calc(100vw-2rem)] rounded-[12px] border border-border bg-surface p-5 shadow-lg cp-page-enter",
+            // On a phone the trigger usually sits at the left edge, so an end-aligned panel
+            // would hang off-screen to the left with no way to scroll to it: anchor to the
+            // trigger's left edge below `sm`, and to its right edge from `sm` up.
+            align === "end" ? "left-0 sm:left-auto sm:right-0" : "left-0",
             panelClassName,
           )}
         >

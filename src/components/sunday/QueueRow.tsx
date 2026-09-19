@@ -101,7 +101,10 @@ export function QueueRow({
       <button
         type="button"
         aria-label={tFlow("dragHandle", { number: index + 1 })}
-        className="flex shrink-0 cursor-grab items-center justify-center text-fg-secondary active:cursor-grabbing"
+        // `touch-none` hands the drag gesture to dnd-kit's pointer sensor instead of the
+        // browser's scroller — without it the handle can't be dragged on a touch screen.
+        // The 44px-tall hit area sits inside the 88px row, so the row itself is unchanged.
+        className="flex h-11 shrink-0 cursor-grab touch-none items-center justify-center text-fg-secondary active:cursor-grabbing"
         {...dragHandleProps}
       >
         <GripVertical aria-hidden="true" size={24} />
