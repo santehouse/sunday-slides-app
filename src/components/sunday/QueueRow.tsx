@@ -130,17 +130,19 @@ export function QueueRow({
       </button>
 
       <div className="flex shrink-0 items-center gap-1">
-        <IconButton
-          icon={Film}
-          variant="ghost"
-          size={40}
-          aria-pressed={includeInVideo}
-          aria-label={includeInVideo ? t("inVideo") : t("notInVideo")}
-          title={includeInVideo ? t("inVideo") : t("notInVideo")}
-          disabled={toggling}
-          onClick={handleToggleFilm}
-          className={includeInVideo ? "text-primary" : "text-fg-muted"}
-        />
+        {slide.section === "scriptures" ? null : (
+          <IconButton
+            icon={Film}
+            variant="ghost"
+            size={40}
+            aria-pressed={includeInVideo}
+            aria-label={includeInVideo ? t("inVideo") : t("notInVideo")}
+            title={includeInVideo ? t("inVideo") : t("notInVideo")}
+            disabled={toggling}
+            onClick={handleToggleFilm}
+            className={includeInVideo ? "text-primary" : "text-fg-muted"}
+          />
+        )}
         <IconButton icon={Pencil} variant="ghost" size={40} aria-label={tCommon("edit")} onClick={onEdit} />
         <IconButton icon={Trash2} variant="ghost" size={40} aria-label={tCommon("delete")} onClick={() => setConfirmingRemove(true)} />
       </div>

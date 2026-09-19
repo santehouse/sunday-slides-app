@@ -92,7 +92,7 @@ export function SundayQueueClient({
     const idSetKey = slides.map((s) => s.id).join("|");
     if (prevIdSetKey.current === idSetKey) return;
     prevIdSetKey.current = idSetKey;
-    if (previewId && !slides.some((s) => s.id === previewId)) {
+    if (!previewId || !slides.some((s) => s.id === previewId)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreviewId(slides[0]?.id ?? null);
     }

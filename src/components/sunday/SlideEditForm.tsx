@@ -310,7 +310,9 @@ export const SlideEditForm = forwardRef<SlideEditFormHandle, SlideEditFormProps>
           </div>
         ) : null}
 
-        <Toggle checked={includeInVideo} onChange={setIncludeInVideo} label={t("includeInVideo")} />
+        {slide.section === "scriptures" ? null : (
+          <Toggle checked={includeInVideo} onChange={setIncludeInVideo} label={t("includeInVideo")} />
+        )}
 
         {canRememberMapping ? (
           <Toggle
