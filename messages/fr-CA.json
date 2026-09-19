@@ -244,7 +244,8 @@
         "giving": "Dons",
         "welcome": "Bienvenue",
         "theme": "Thème",
-        "closing": "Clôture"
+        "closing": "Clôture",
+        "scripture": "Écriture"
       },
       "cardMeta": "{category} · {status}",
       "use": "Utiliser {name}"
@@ -450,7 +451,14 @@
       "notInVideo": "Pas affichée dans la vidéo",
       "empty": "Aucune diapositive pour l’instant. Importez les annonces ou ajoutez une diapositive.",
       "listLabel": "Diapositives de ce culte",
-      "untitledSlide": "Diapositive sans titre"
+      "untitledSlide": "Diapositive sans titre",
+      "sectionLabel": "Section",
+      "sections": {
+        "announcements": "Annonces",
+        "scriptures": "Écritures"
+      },
+      "addScripture": "Ajouter un passage",
+      "emptyScriptures": "Aucune diapositive d’Écriture pour l’instant. Ajoutez un passage ou une diapositive."
     },
     "import": {
       "title": "Importer les annonces",
@@ -468,6 +476,25 @@
       "noFilesYet": "Aucun fichier pour l’instant.",
       "emptyPreview": "Rien à afficher pour l’instant.",
       "previewUnavailable": "Ce fichier ne peut pas être prévisualisé ici."
+    },
+    "scripture": {
+      "title": "Ajouter un passage",
+      "helper": "Les versets viennent de la {translation}. Cochez ceux que vous voulez; chacun devient une diapositive sur la mise en page choisie.",
+      "template": "Mise en page",
+      "book": "Livre",
+      "chapter": "Chapitre",
+      "verses": "Versets",
+      "perSlide": "Versets par diapositive",
+      "selectAll": "Tout sélectionner",
+      "clearSelection": "Effacer",
+      "loading": "Chargement du chapitre…",
+      "nothingSelected": "Aucun verset sélectionné.",
+      "selection": "{reference} · {count, plural, one {# diapositive} other {# diapositives}}",
+      "add": "{count, plural, =0 {Ajouter} one {Ajouter # diapositive} other {Ajouter # diapositives}}",
+      "added": "{count, plural, one {# diapositive d’Écriture ajoutée} other {# diapositives d’Écriture ajoutées}}",
+      "addFailed": "Les diapositives n’ont pas pu être ajoutées",
+      "noTemplateTitle": "Aucune mise en page d’Écriture",
+      "noTemplate": "Un administrateur doit d’abord publier un modèle de la catégorie Écriture (Admin → Modèles)."
     }
   },
   "adminAuth": {
@@ -693,11 +720,33 @@
         "giving": "Dons",
         "welcome": "Bienvenue",
         "theme": "Thème",
-        "closing": "Clôture"
+        "closing": "Clôture",
+        "scripture": "Écriture"
       },
       "empty": "Aucun modèle ne correspond à ces filtres.",
       "newTemplateName": "Nouveau modèle",
-      "noPublishedAssets": "Aucun contenu visuel publié pour le moment."
+      "noPublishedAssets": "Aucun contenu visuel publié pour le moment.",
+      "boxFill": "Remplissage de la boîte",
+      "boxFillNone": "Aucun",
+      "boxFillSolid": "Uni",
+      "boxFillGradient": "Dégradé",
+      "gradient": {
+        "angle": "Angle",
+        "topToBottom": "Haut vers bas",
+        "leftToRight": "Gauche vers droite",
+        "bottomToTop": "Bas vers haut",
+        "rightToLeft": "Droite vers gauche",
+        "stops": "Couleurs, de la première à la dernière",
+        "max": "Jusqu’à {max} couleurs",
+        "add": "Ajouter une couleur",
+        "stop": "Couleur {n}",
+        "stopHex": "Couleur {n} (hex)",
+        "invalidHex": "Pas une couleur hex",
+        "drag": "Couleur {n} sur {total} : glissez, ou appuyez sur espace puis les flèches, pour réordonner",
+        "remove": "Retirer la couleur",
+        "direction": "Direction",
+        "custom": "Angle personnalisé"
+      }
     },
     "assets": {
       "title": "Bibliothèque de ressources",
@@ -773,7 +822,17 @@
       "style": "Style",
       "styleNormal": "Normal",
       "styleItalic": "Italique",
-      "weightNames": { "100": "Fin", "200": "Extra-léger", "300": "Léger", "400": "Normal", "500": "Moyen", "600": "Demi-gras", "700": "Gras", "800": "Extra-gras", "900": "Noir" },
+      "weightNames": {
+        "100": "Fin",
+        "200": "Extra-léger",
+        "300": "Léger",
+        "400": "Normal",
+        "500": "Moyen",
+        "600": "Demi-gras",
+        "700": "Gras",
+        "800": "Extra-gras",
+        "900": "Noir"
+      },
       "fontSaved": "Variante de police ajoutée",
       "variantExistsTitle": "Cette graisse existe déjà",
       "variantExistsBody": "{family} a déjà une variante {weight} {style}. Choisissez une autre graisse ou un autre style, ou retirez d’abord la famille.",
@@ -850,12 +909,27 @@
       "cannotDisableSelf": "Vous ne pouvez pas désactiver votre propre compte.",
       "saved": "Paramètres enregistrés",
       "configured": "Configuré",
-      "notConfigured": "Non configuré"
+      "notConfigured": "Non configuré",
+      "allowedSenders": "Expéditeurs autorisés",
+      "allowedSendersHelper": "Une adresse courriel ou un domaine par ligne, par exemple pasteur@eajc.org ou @eajc.org. Laissez vide pour accepter les fichiers de n’importe qui. Les courriels des autres sont ignorés sans avis.",
+      "allowedSendersInvalid": "Ni une adresse ni un domaine : {entries}",
+      "autoReplyNote": "Quand le courriel d’un expéditeur autorisé n’a aucun fichier Word ou PDF, ou en a plus d’un, il reçoit une réponse automatique expliquant quoi envoyer."
     }
   },
   "dev": {
     "kit": {
       "title": "Trousse de composants"
+    }
+  },
+  "emails": {
+    "inboundRejected": {
+      "subject": "{churchName} : votre fichier n’a pas pu être reçu",
+      "greeting": "Bonjour,",
+      "intro": "Votre courriel à {inboundEmail} est bien arrivé à {churchName}, mais aucune feuille d’annonces n’a pu en être tirée.",
+      "unsupported": "Il ne contenait aucune pièce jointe Word (.docx) ni PDF. Merci d’envoyer les annonces dans un seul fichier .docx ou .pdf.",
+      "ambiguous": "Il contenait {count} fichiers Word ou PDF. Merci d’envoyer une seule feuille d’annonces, ou un courriel par fichier.",
+      "nextStep": "Rien n’a été ajouté aux panneaux. Répondez à ce message avec le bon fichier en pièce jointe et il apparaîtra dans la boîte de réception de l’équipe.",
+      "signoff": "— Panneaux {churchName} (message automatique)"
     }
   }
 }

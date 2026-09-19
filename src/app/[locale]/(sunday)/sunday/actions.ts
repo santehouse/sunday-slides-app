@@ -13,8 +13,10 @@ import type { UploadTicket } from "@/lib/uploads/direct";
 import { hasR2 } from "@/lib/env";
 import { ingestRunSheet, previewRunSheet, applyRunSheetToSunday } from "@/lib/sunday/intake";
 import { createSlideFromTemplate, duplicateSlide, removeSlide, rememberMapping } from "@/lib/sunday/slides";
+import { addScriptureSlides, type AddScriptureSlidesInput } from "@/lib/sunday/scripture";
+import { getChapter, isBibleBookId, type BibleVerse } from "@/lib/bible";
 import type { RunSheetPreview } from "@/lib/sunday/contracts";
-import type { Slide, SlideBackgroundMode, SlideContent, SlideStatus } from "@/lib/domain/types";
+import type { Slide, SlideBackgroundMode, SlideContent, SlideSection, SlideStatus } from "@/lib/domain/types";
 import { readImageDimensions } from "@/components/admin/imageDimensions";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -51,9 +53,12 @@ export async function toggleIncludeInVideoAction(slideId: string, includeInVideo
 }
 
 /** Removes every removable slide for the current service — structural "always" slides are left in place. */
-export async function clearQueueAction(sundayId: string): Promise<{ removed: number; kept: number }> {
+export async function clearQueueAction(
+  sundayId: string,
+  section: SlideSection = "announcements",
+): Promise<{ removed: number; kept: number }> {
   const db = getDb();
-  const slides = await db.listSlidesForSunday(sundayId);
+  const slides = await db.listSlidesForSunday(sundayId, { section });
   let removed = 0;
   let kept = 0;
   for (const slide of slides) {
@@ -120,10 +125,30 @@ export async function duplicateSlideAction(slideId: string): Promise<Slide> {
   return slide;
 }
 
-export async function createSlideFromTemplateAction(sundayId: string, templateId: string): Promise<Slide> {
-  const slide = await createSlideFromTemplate(sundayId, templateId);
+export async function createSlideFromTemplateAction(
+  sundayId: string,
+  templateId: string,
+  section: SlideSection = "announcements",
+): Promise<Slide> {
+  const slide = await createSlideFromTemplate(sundayId, templateId, section);
   revalidateQueue();
   return slide;
+}
+
+// ---------------------------------------------------------------------------
+// Scriptures
+// ---------------------------------------------------------------------------
+
+/** Every verse of a chapter (Louis Segond 1910), for the picker's checklist. */
+export async function getChapterVersesAction(bookId: string, chapter: number): Promise<BibleVerse[]> {
+  if (!isBibleBookId(bookId)) return [];
+  return (await getChapter(bookId, chapter)) ?? [];
+}
+
+export async function addScriptureSlidesAction(input: AddScriptureSlidesInput): Promise<Slide[]> {
+  const slides = await addScriptureSlides(input);
+  revalidateQueue();
+  return slides;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+import type { BoxGradient } from "@/lib/engines/boxGradient";
 /**
  * Repository contract. `getDb()` (see index.ts) returns either the Supabase
  * service-role implementation (supabaseDb.ts) or the in-memory mock
@@ -40,6 +41,7 @@ import type {
   TemplateCategory,
   TemplateField,
   TemplateStatus,
+  SlideSection,
 } from "@/lib/domain/types";
 
 /** Thrown by `deleteFont` when a Published template's field still references it. */
@@ -116,6 +118,8 @@ export type UpdateRunSheetPatch = Partial<{
 export interface CreateSlideInput {
   sundayId: string;
   templateId: string;
+  /** Defaults to "announcements". */
+  section?: SlideSection;
   headline?: string;
   content?: SlideContent;
   assetId?: string | null;
@@ -134,6 +138,7 @@ export interface CreateSlideInput {
 
 export type UpdateSlidePatch = Partial<{
   templateId: string;
+  section: SlideSection;
   headline: string;
   content: SlideContent;
   assetId: string | null;
@@ -163,6 +168,7 @@ export type UpdateSettingsPatch = Partial<{
   defaultSlideHoldSeconds: number;
   inboundEmail: string | null;
   autoProcessInbound: boolean;
+  inboundAllowedSenders: string[];
   safeZone: SafeZone;
   temporaryRetentionDays: number;
 }>;
@@ -203,6 +209,7 @@ export interface CreateTemplateFieldInput {
   defaultValue?: string;
   rotation?: number;
   boxColor?: string | null;
+  boxGradient?: BoxGradient | null;
   boxPadding?: number;
   frameColor?: string | null;
   frameWidth?: number;
@@ -342,14 +349,17 @@ export interface Db {
   findRunSheetByInboundEventId(eventId: string): Promise<RunSheet | null>;
 
   // slides
-  listSlidesForSunday(sundayId: string): Promise<Slide[]>;
+  /** All of a Sunday's slides in sort order, or just one section's. */
+  listSlidesForSunday(sundayId: string, opts?: { section?: SlideSection }): Promise<Slide[]>;
   getSlide(id: string): Promise<Slide | null>;
   createSlide(input: CreateSlideInput): Promise<Slide>;
   createSlides(inputs: CreateSlideInput[]): Promise<Slide[]>;
   updateSlide(id: string, patch: UpdateSlidePatch): Promise<Slide>;
   deleteSlide(id: string): Promise<void>;
+  /** Writes `sortOrder = index` for the ids given (one section's deck) and returns that Sunday's slides. */
   reorderSlides(sundayId: string, orderedIds: string[]): Promise<Slide[]>;
-  replaceSlidesForSunday(sundayId: string, inputs: CreateSlideInput[]): Promise<Slide[]>;
+  /** Replaces one section of a Sunday (announcements by default); the other section is untouched. */
+  replaceSlidesForSunday(sundayId: string, inputs: CreateSlideInput[], section?: SlideSection): Promise<Slide[]>;
 
   // templates
   listTemplates(opts?: { status?: TemplateStatus; category?: TemplateCategory }): Promise<TemplateWithFields[]>;

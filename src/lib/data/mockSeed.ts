@@ -1,3 +1,4 @@
+import type { BoxGradient } from "@/lib/engines/boxGradient";
 /**
  * Church Panels demo dataset — the Figma "EAJC" Sunday.
  *
@@ -60,6 +61,7 @@ export const SETTINGS_SEED = {
   defaultSlideHoldSeconds: 5,
   inboundEmail: "announcements@eajc.example.org",
   autoProcessInbound: true,
+  inboundAllowedSenders: [] as string[],
   safeZone: { x: 96, y: 640, width: 640, height: 360 },
   temporaryRetentionDays: 60,
 };
@@ -216,6 +218,15 @@ export const ASSET_SEEDS: AssetSeed[] = [
     height: 1080,
     color: "#3a2f10",
   },
+  {
+    slug: BRAND_ASSET_SLUGS.scripture,
+    nameEn: BRAND_ASSET_NAMES.scripture.nameEn,
+    nameFr: BRAND_ASSET_NAMES.scripture.nameFr,
+    category: "backgrounds",
+    width: 1920,
+    height: 1080,
+    color: "#8fa3b5",
+  },
 ];
 
 /**
@@ -284,6 +295,7 @@ export interface TemplateFieldSeed {
   defaultValue?: string;
   rotation?: number;
   boxColor?: string | null;
+  boxGradient?: BoxGradient | null;
   boxPadding?: number;
   frameColor?: string | null;
   frameWidth?: number;

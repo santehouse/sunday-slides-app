@@ -315,7 +315,7 @@ export async function previewRunSheet(runSheetId: string): Promise<RunSheetPrevi
     db.listMappings(),
     db.listTemplates(),
     db.listStructuralDefaults(),
-    db.listSlidesForSunday(runSheet.sundayId),
+    db.listSlidesForSunday(runSheet.sundayId, { section: "announcements" }),
   ]);
 
   const defaultTemplate = await resolveDefaultTemplate(db, templates);
@@ -379,7 +379,7 @@ async function applyPlanForSlides(db: Db, sundayId: string, plan: PlanApplyResul
 
   if (mode === "replace") {
     const inputs = await Promise.all(plan.inserts.map((insert) => toCreateSlideInput(db, sundayId, insert, firstColorId)));
-    await db.replaceSlidesForSunday(sundayId, inputs);
+    await db.replaceSlidesForSunday(sundayId, inputs, "announcements");
     return;
   }
 
@@ -397,7 +397,7 @@ async function applyPlanForSlides(db: Db, sundayId: string, plan: PlanApplyResul
   // `plan.ts` already assigns the correct final `sortOrder` to every kept/updated/inserted
   // slide — this just re-derives the id order from it and asks the Db to make it official
   // (contiguous, `updatedAt`-bumped) rather than trusting per-row writes alone.
-  const remaining = await db.listSlidesForSunday(sundayId);
+  const remaining = await db.listSlidesForSunday(sundayId, { section: "announcements" });
   const orderedIds = [...remaining].sort((a, b) => a.sortOrder - b.sortOrder).map((s) => s.id);
   await db.reorderSlides(sundayId, orderedIds);
 }
@@ -421,7 +421,7 @@ export async function applyRunSheet(runSheetId: string, mode: "merge" | "replace
     db.listMappings(),
     db.listTemplates(),
     db.listStructuralDefaults(),
-    db.listSlidesForSunday(sunday.id),
+    db.listSlidesForSunday(sunday.id, { section: "announcements" }),
   ]);
 
   const defaultTemplate = await resolveDefaultTemplate(db, templates);
@@ -442,7 +442,7 @@ export async function applyRunSheet(runSheetId: string, mode: "merge" | "replace
     await db.upsertMappingSuggestion(headline);
   }
 
-  const finalSlides = await db.listSlidesForSunday(sunday.id);
+  const finalSlides = await db.listSlidesForSunday(sunday.id, { section: "announcements" });
   const sundayStatus = finalSlides.some((s) => s.status === "needs_review") ? "needs_review" : "ready";
 
   // Previous "added_to_flow" run sheets for this Sunday are left exactly as they are —
@@ -539,7 +539,7 @@ export async function applyRunSheetToSunday(runSheetId: string, sundayId: string
   }
   if (!runSheet.parsedJson) return { ok: false };
 
-  const existing = await db.listSlidesForSunday(sundayId);
+  const existing = await db.listSlidesForSunday(sundayId, { section: "announcements" });
   const mode: "merge" | "replace" = existing.some((s) => s.manuallyEdited) ? "merge" : "replace";
   const result = await applyRunSheet(runSheetId, mode);
   return { ok: true, summary: result.summary };

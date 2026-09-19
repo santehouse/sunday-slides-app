@@ -1,3 +1,4 @@
+import type { BoxGradient } from "@/lib/engines/boxGradient";
 /**
  * Domain types — the shared contract between UI, data layer, engines, renderer and parsing.
  * These mirror the Supabase schema in supabase/migrations/0001_init.sql. Keep them in sync.
@@ -27,7 +28,12 @@ export type TemplateCategory =
   | "giving"
   | "welcome"
   | "theme"
-  | "closing";
+  | "closing"
+  /** Scripture-verse layouts — offered only in the queue's Scriptures view. */
+  | "scripture";
+/** Which half of the Sunday queue a slide lives in. Each section is its own ordered deck. */
+export type SlideSection = "announcements" | "scriptures";
+export const SLIDE_SECTIONS: readonly SlideSection[] = ["announcements", "scriptures"];
 export type BackgroundType = "color" | "image";
 export type OverlayColor = "none" | "black" | "white";
 
@@ -82,6 +88,11 @@ export interface AppSettings {
   defaultSlideHoldSeconds: number;
   inboundEmail: string | null;
   autoProcessInbound: boolean;
+  /**
+   * Who may email run sheets in: lower-cased full addresses or `@domain` entries.
+   * Empty means everyone. See `src/lib/engines/senderAllowlist.ts`.
+   */
+  inboundAllowedSenders: string[];
   safeZone: SafeZone;
   temporaryRetentionDays: number;
   updatedAt: string;
@@ -143,6 +154,8 @@ export interface ParsedAnnouncement {
   reviewReasons: string[];
 }
 
+export type { BoxGradient } from "@/lib/engines/boxGradient";
+
 export interface TemplateField {
   id: string;
   templateId: string;
@@ -177,6 +190,8 @@ export interface TemplateField {
   rotation: number;
   /** Solid box painted behind the text (hex), or null for none. */
   boxColor: string | null;
+  /** Gradient box fill (2–7 stops); when set it wins over `boxColor`. */
+  boxGradient: BoxGradient | null;
   /** Extra box size around the text on every side (px at 1920 scale) when `boxColor` is set. */
   boxPadding: number;
   /** Image fields only: a solid frame around the picture (hex), or null. */
@@ -278,6 +293,8 @@ export interface Slide {
   assetId: string | null;
   backgroundMode: SlideBackgroundMode;
   approvedColorId: string | null;
+  /** Announcements (the service flow, JPG + MP4) or Scriptures (sermon verses, JPG only). */
+  section: SlideSection;
   sortOrder: number;
   includeInVideo: boolean;
   status: SlideStatus;

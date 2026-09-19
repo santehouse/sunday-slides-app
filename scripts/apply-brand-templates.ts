@@ -35,6 +35,7 @@ const FALLBACK_COLOR: Record<string, string> = {
   [BRAND_ASSET_SLUGS.annualTheme]: "#4b6a86",
   [BRAND_ASSET_SLUGS.baptisms]: "#2f5a6b",
   [BRAND_ASSET_SLUGS.conference]: "#1d2a1c",
+  [BRAND_ASSET_SLUGS.scripture]: "#8fa3b5",
 };
 
 async function loadAssetIds(): Promise<Map<string, string>> {
@@ -128,6 +129,7 @@ async function applyTemplates(assetIdBySlug: Map<string, string>): Promise<Map<s
         default_value: f.defaultValue ?? "",
         rotation: f.rotation ?? 0,
         box_color: f.boxColor ?? null,
+        box_gradient: f.boxGradient ?? null,
         box_padding: f.boxPadding ?? 0,
         frame_color: f.frameColor ?? null,
         frame_width: f.frameWidth ?? 0,

@@ -28,6 +28,10 @@ export const BRAND_COLORS = {
   white: "#ffffff",
   black: "#000000",
   gold: "#ffc957",
+  /** Scripture panel: deep forest green, parchment text, warm sand seam beside the photo. */
+  forest: "#2f4a3b",
+  parchment: "#efe8d8",
+  sand: "#e5b78c",
 } as const;
 
 /** Background pictures the templates expect (uploaded once under Admin → Assets). */
@@ -35,12 +39,14 @@ export const BRAND_ASSET_SLUGS = {
   annualTheme: "brand-annual-theme-sky",
   baptisms: "brand-baptemes-water",
   conference: "brand-conference-gold",
+  scripture: "brand-scripture-sky",
 } as const;
 
 export const BRAND_ASSET_NAMES: Record<keyof typeof BRAND_ASSET_SLUGS, { nameEn: string; nameFr: string }> = {
   annualTheme: { nameEn: "Annual theme sky", nameFr: "Ciel du thème annuel" },
   baptisms: { nameEn: "Baptêmes water", nameFr: "Eau des baptêmes" },
   conference: { nameEn: "Conference gold", nameFr: "Or de la conférence" },
+  scripture: { nameEn: "Scripture sky", nameFr: "Ciel des Écritures" },
 };
 
 type FieldOverrides = Partial<TemplateFieldSeed> & Pick<TemplateFieldSeed, "fieldKey" | "x" | "y" | "width" | "height">;
@@ -844,6 +850,88 @@ function build(): TemplateSeed[] {
         }),
       ],
       allowedAssetSlugs: [BRAND_ASSET_SLUGS.conference],
+    },
+    // ------------------------------------------------- Scripture verse (YouVersion-style split)
+    // Full-bleed photo on the left; the right 53% is a forest-green panel, separated by a
+    // thin warm seam, carrying the verse in parchment serif and the reference in small caps.
+    // Fields `verse` + `headline` are what `src/lib/sunday/scripture.ts` fills in.
+    {
+      slug: "scripture-verse",
+      nameEn: "Scripture verse",
+      nameFr: "Verset biblique",
+      category: "scripture",
+      status: "published",
+      backgroundType: "image",
+      backgroundValue: BRAND_ASSET_SLUGS.scripture,
+      overlayColor: "none",
+      overlayOpacity: 0,
+      includeInVideoDefault: false,
+      allowTeamBackgroundChoice: false,
+      fields: [
+        locked({
+          fieldKey: "panel",
+          labelEn: "Green panel",
+          labelFr: "Panneau vert",
+          x: 907,
+          y: 0,
+          width: 1013,
+          height: 1080,
+          fontSize: 10,
+          boxColor: BRAND_COLORS.forest,
+          maxLines: 1,
+          defaultValue: "",
+        }),
+        locked({
+          fieldKey: "seam",
+          labelEn: "Warm seam",
+          labelFr: "Liseré chaud",
+          x: 893,
+          y: 0,
+          width: 14,
+          height: 1080,
+          fontSize: 10,
+          boxColor: BRAND_COLORS.sand,
+          boxGradient: { angle: 180, stops: ["#f7d6b3", "#e9b98a", "#f2cf8e"] },
+          maxLines: 1,
+          defaultValue: "",
+        }),
+        field({
+          fieldKey: "verse",
+          labelEn: "Verse",
+          labelFr: "Verset",
+          required: true,
+          x: 995,
+          y: 96,
+          width: 830,
+          height: 760,
+          fontFamily: BRAND_SERIF,
+          fontSize: 86,
+          minFontSize: 40,
+          lineHeight: 1.12,
+          letterSpacing: em(86, -0.01),
+          textColor: BRAND_COLORS.parchment,
+          maxLines: 10,
+          defaultValue: "Et mon juste vivra par la foi; mais, s’il se retire, mon âme ne prend pas plaisir en lui.",
+        }),
+        field({
+          fieldKey: "headline",
+          labelEn: "Reference",
+          labelFr: "Référence",
+          required: true,
+          x: 995,
+          y: 936,
+          width: 830,
+          height: 44,
+          fontSize: 30,
+          fontWeight: 700,
+          letterSpacing: em(30, 0.06),
+          textColor: BRAND_COLORS.parchment,
+          textTransform: "uppercase",
+          maxLines: 1,
+          defaultValue: "Hébreux 10:38",
+        }),
+      ],
+      allowedAssetSlugs: [BRAND_ASSET_SLUGS.scripture],
     },
   ];
   return templates;

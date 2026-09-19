@@ -106,6 +106,7 @@ function buildUserPrompt(input: ParseRunSheetInput): string {
 
   const templatesBlock = input.templates.length
     ? input.templates
+        .filter((t) => t.category !== "scripture")
         .map((t) => `- id: "${t.id}" | slug: "${t.slug}" | name: "${t.nameEn}" | category: "${t.category}"`)
         .join("\n")
     : "(no templates are configured yet)";

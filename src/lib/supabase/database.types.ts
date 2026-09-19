@@ -14,7 +14,7 @@ export type RunSheetParseStatusEnum =
   "queued" | "processing" | "ready_to_apply" | "added_to_flow" | "needs_review" | "failed";
 export type TemplateStatusEnum = "draft" | "published" | "archived";
 export type TemplateCategoryEnum =
-  "general" | "events" | "special" | "giving" | "welcome" | "theme" | "closing";
+  "general" | "events" | "special" | "giving" | "welcome" | "theme" | "closing" | "scripture";
 export type BackgroundTypeEnum = "color" | "image";
 export type OverlayColorEnum = "none" | "black" | "white";
 export type TextAlignmentEnum = "left" | "center" | "right";
@@ -61,6 +61,8 @@ export type AppSettingsRow = {
   default_slide_hold_seconds: number;
   inbound_email: string | null;
   auto_process_inbound: boolean;
+  /** Lower-cased addresses or `@domain` entries; empty accepts every sender. Added in 0004. */
+  inbound_allowed_senders: string[];
   pip_x: number;
   pip_y: number;
   pip_width: number;
@@ -157,6 +159,8 @@ export type TemplateFieldRow = {
   default_value: string;
   rotation: number;
   box_color: string | null;
+  /** Added in 0006; absent on rows read before the migration lands (mapper defaults it). */
+  box_gradient?: { angle: number; stops: string[] } | null;
   box_padding: number;
   frame_color: string | null;
   frame_width: number;
@@ -245,6 +249,8 @@ export type SlideRow = {
   asset_id: string | null;
   background_mode: SlideBackgroundModeEnum;
   approved_color_id: string | null;
+  /** Added in 0005; absent on rows read before the migration lands (mapper defaults it). */
+  section?: "announcements" | "scriptures";
   sort_order: number;
   include_in_video: boolean;
   status: SlideStatusEnum;

@@ -336,7 +336,7 @@ async function buildDocument(input: RenderSlideInput): Promise<string> {
         wrapper.style.transform = "rotate(" + field.rotation + "deg)";
         wrapper.style.transformOrigin = "center center";
       }
-      if (field.boxColor) {
+      if (field.boxColor || field.boxGradient) {
         var pad = field.boxPadding || 0;
         var box = document.createElement("div");
         box.style.position = "absolute";
@@ -344,7 +344,11 @@ async function buildDocument(input: RenderSlideInput): Promise<string> {
         box.style.top = -pad + "px";
         box.style.width = (field.width + pad * 2) + "px";
         box.style.height = (field.height + pad * 2) + "px";
-        box.style.backgroundColor = field.boxColor;
+        if (field.boxColor) box.style.backgroundColor = field.boxColor;
+        if (field.boxGradient) {
+          box.style.backgroundImage =
+            "linear-gradient(" + field.boxGradient.angle + "deg, " + field.boxGradient.stops.join(", ") + ")";
+        }
         wrapper.appendChild(box);
       }
       fieldResult.lines.forEach(function (line) {

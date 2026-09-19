@@ -16,6 +16,7 @@ import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge
 import { MessageState } from "@/components/ui/MessageState";
 import { useToast } from "@/components/ui/Toast";
 import { StudioCanvas, type ZoomLevel } from "@/components/admin/StudioCanvas";
+import { GradientEditor } from "@/components/admin/GradientEditor";
 import { saveTemplateAction, updateSafeZoneAction } from "./actions";
 import { clampBox, intersects, type Box } from "@/lib/engines/canvasGeometry";
 import type { CreateTemplateFieldInput, TemplateWithFields } from "@/lib/data";
@@ -55,7 +56,7 @@ function placeBelow(fields: FieldDraft[], box: Box): Box {
   const y = bottom > 0 ? bottom + NEW_FIELD_GAP : box.y;
   return clampBox({ ...box, y });
 }
-const CATEGORY_OPTIONS: TemplateCategory[] = ["general", "events", "special", "giving", "welcome", "theme", "closing"];
+const CATEGORY_OPTIONS: TemplateCategory[] = ["general", "events", "special", "giving", "welcome", "theme", "closing", "scripture"];
 const STATUS_OPTIONS: TemplateStatus[] = ["draft", "published", "archived"];
 const OVERLAY_OPTIONS: OverlayColor[] = ["none", "black", "white"];
 const ALIGN_OPTIONS: TextAlignment[] = ["left", "center", "right"];
@@ -279,6 +280,7 @@ export function StudioClient({
         defaultValue: f.defaultValue ?? "",
         rotation: f.rotation ?? 0,
         boxColor: f.boxColor ?? null,
+        boxGradient: f.boxGradient ?? null,
         boxPadding: f.boxPadding ?? 0,
         frameColor: f.frameColor ?? null,
         frameWidth: f.frameWidth ?? 0,
@@ -642,20 +644,61 @@ export function StudioClient({
                   </>
                 ) : (
                   <>
-                    <Input
-                      id="field-box-color"
-                      label={t("boxColor")}
-                      placeholder="#ffffff"
-                      value={selectedField.boxColor ?? ""}
-                      onChange={(e) => updateField(selectedField.key, { boxColor: e.target.value.trim() === "" ? null : e.target.value })}
-                    />
-                    <Input
-                      id="field-box-padding"
-                      type="number"
-                      label={t("boxPadding")}
-                      value={selectedField.boxPadding ?? 0}
-                      onChange={(e) => updateField(selectedField.key, { boxPadding: Number(e.target.value) })}
-                    />
+                    <div className="col-span-2 flex flex-col gap-1.5">
+                      <span className="text-caption font-bold text-fg-secondary">{t("boxFill")}</span>
+                      <SegmentedControl
+                        ariaLabel={t("boxFill")}
+                        size="md"
+                        variant="solid"
+                        equalWidth
+                        value={selectedField.boxGradient ? "gradient" : selectedField.boxColor ? "solid" : "none"}
+                        onChange={(fill) => {
+                          if (fill === "none") updateField(selectedField.key, { boxColor: null, boxGradient: null });
+                          else if (fill === "solid")
+                            updateField(selectedField.key, {
+                              boxColor: selectedField.boxColor ?? selectedField.boxGradient?.stops[0] ?? "#ffffff",
+                              boxGradient: null,
+                            });
+                          else
+                            updateField(selectedField.key, {
+                              boxGradient: selectedField.boxGradient ?? {
+                                angle: 180,
+                                stops: [selectedField.boxColor ?? "#ffffff", "#000000"],
+                              },
+                            });
+                        }}
+                        options={[
+                          { value: "none", label: t("boxFillNone") },
+                          { value: "solid", label: t("boxFillSolid") },
+                          { value: "gradient", label: t("boxFillGradient") },
+                        ]}
+                      />
+                    </div>
+                    {selectedField.boxGradient ? (
+                      <div className="col-span-2">
+                        <GradientEditor
+                          value={selectedField.boxGradient}
+                          onChange={(boxGradient) => updateField(selectedField.key, { boxGradient })}
+                        />
+                      </div>
+                    ) : selectedField.boxColor ? (
+                      <Input
+                        id="field-box-color"
+                        label={t("boxColor")}
+                        placeholder="#ffffff"
+                        value={selectedField.boxColor}
+                        onChange={(e) => updateField(selectedField.key, { boxColor: e.target.value.trim() === "" ? null : e.target.value })}
+                      />
+                    ) : null}
+                    {selectedField.boxColor || selectedField.boxGradient ? (
+                      <Input
+                        id="field-box-padding"
+                        type="number"
+                        label={t("boxPadding")}
+                        value={selectedField.boxPadding ?? 0}
+                        onChange={(e) => updateField(selectedField.key, { boxPadding: Number(e.target.value) })}
+                      />
+                    ) : null}
                   </>
                 )}
               </div>

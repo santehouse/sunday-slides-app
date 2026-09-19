@@ -42,6 +42,7 @@ function buildSampleSlide(template: Template, sampleContent?: ThumbnailSampleCon
     assetId: null,
     backgroundMode: template.backgroundType,
     approvedColorId: null,
+    section: "announcements",
     sortOrder: 0,
     includeInVideo: false,
     status: "ready",

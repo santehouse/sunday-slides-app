@@ -7,7 +7,7 @@ import "server-only";
  */
 import { getDb, normalizeAlias } from "@/lib/data";
 import { stripInlineMarkup } from "@/lib/renderer/engine";
-import type { Slide, SlideBackgroundMode, SlideContent, SlideStatus } from "@/lib/domain/types";
+import type { Slide, SlideBackgroundMode, SlideContent, SlideStatus, SlideSection } from "@/lib/domain/types";
 
 export type RemoveSlideResult = { ok: true } | { ok: false; error: "not_removable" };
 
@@ -18,7 +18,11 @@ export type RemoveSlideResult = { ok: true } | { ok: false; error: "not_removabl
  * until any required field is filled in (or immediately `ready` when the
  * template has no required fields at all).
  */
-export async function createSlideFromTemplate(sundayId: string, templateId: string): Promise<Slide> {
+export async function createSlideFromTemplate(
+  sundayId: string,
+  templateId: string,
+  section: SlideSection = "announcements",
+): Promise<Slide> {
   const db = getDb();
   const template = await db.getTemplate(templateId);
   if (!template) {
@@ -53,6 +57,7 @@ export async function createSlideFromTemplate(sundayId: string, templateId: stri
   return db.createSlide({
     sundayId,
     templateId,
+    section,
     headline: headlineField?.teamEditable ? stripInlineMarkup(headlineField.defaultValue) : "",
     content,
     assetId,
@@ -77,12 +82,15 @@ export async function duplicateSlide(slideId: string): Promise<Slide> {
     throw new Error(`duplicateSlide: slide ${slideId} not found`);
   }
 
-  const siblings = (await db.listSlidesForSunday(original.sundayId)).sort((a, b) => a.sortOrder - b.sortOrder);
+  const siblings = (await db.listSlidesForSunday(original.sundayId, { section: original.section })).sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  );
   const originalIndex = siblings.findIndex((s) => s.id === slideId);
 
   const created = await db.createSlide({
     sundayId: original.sundayId,
     templateId: original.templateId,
+    section: original.section,
     headline: original.headline,
     content: { ...original.content },
     assetId: original.assetId,
@@ -184,7 +192,7 @@ export async function removeSlide(slideId: string, opts: { force?: boolean } = {
   }
 
   await db.deleteSlide(slideId);
-  const remaining = await db.listSlidesForSunday(slide.sundayId);
+  const remaining = await db.listSlidesForSunday(slide.sundayId, { section: slide.section });
   await db.reorderSlides(
     slide.sundayId,
     remaining.map((s) => s.id),

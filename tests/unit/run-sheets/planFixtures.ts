@@ -98,6 +98,7 @@ export function makeSlide(overrides: Partial<Slide> & { id: string }): Slide {
     assetId: null,
     backgroundMode: "color",
     approvedColorId: null,
+    section: "announcements",
     sortOrder: 0,
     includeInVideo: true,
     status: "ready",

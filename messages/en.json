@@ -244,7 +244,8 @@
         "giving": "Giving",
         "welcome": "Welcome",
         "theme": "Theme",
-        "closing": "Closing"
+        "closing": "Closing",
+        "scripture": "Scripture"
       },
       "cardMeta": "{category} · {status}",
       "use": "Use {name}"
@@ -450,7 +451,14 @@
       "notInVideo": "Not shown in the video",
       "empty": "No slides yet. Import the announcements or add a slide.",
       "listLabel": "This service’s slides",
-      "untitledSlide": "Untitled slide"
+      "untitledSlide": "Untitled slide",
+      "sectionLabel": "Section",
+      "sections": {
+        "announcements": "Announcements",
+        "scriptures": "Scriptures"
+      },
+      "addScripture": "Add scripture",
+      "emptyScriptures": "No scripture slides yet. Add a passage or a slide."
     },
     "import": {
       "title": "Import announcements",
@@ -468,6 +476,25 @@
       "noFilesYet": "No files yet.",
       "emptyPreview": "Nothing to show yet.",
       "previewUnavailable": "This file can’t be previewed here."
+    },
+    "scripture": {
+      "title": "Add scripture",
+      "helper": "Verses come from the {translation}. Tick the ones you want; each becomes a slide on the chosen layout.",
+      "template": "Layout",
+      "book": "Book",
+      "chapter": "Chapter",
+      "verses": "Verses",
+      "perSlide": "Verses per slide",
+      "selectAll": "Select all",
+      "clearSelection": "Clear",
+      "loading": "Loading the chapter…",
+      "nothingSelected": "No verses selected yet.",
+      "selection": "{reference} · {count, plural, one {# slide} other {# slides}}",
+      "add": "{count, plural, =0 {Add slides} one {Add # slide} other {Add # slides}}",
+      "added": "{count, plural, one {# scripture slide added} other {# scripture slides added}}",
+      "addFailed": "The slides could not be added",
+      "noTemplateTitle": "No scripture layout yet",
+      "noTemplate": "An admin needs to publish a template in the Scripture category first (Admin → Templates)."
     }
   },
   "adminAuth": {
@@ -693,11 +720,33 @@
         "giving": "Giving",
         "welcome": "Welcome",
         "theme": "Theme",
-        "closing": "Closing"
+        "closing": "Closing",
+        "scripture": "Scripture"
       },
       "empty": "No templates match these filters.",
       "newTemplateName": "New template",
-      "noPublishedAssets": "No published assets yet."
+      "noPublishedAssets": "No published assets yet.",
+      "boxFill": "Box fill",
+      "boxFillNone": "None",
+      "boxFillSolid": "Solid",
+      "boxFillGradient": "Gradient",
+      "gradient": {
+        "angle": "Angle",
+        "topToBottom": "Top to bottom",
+        "leftToRight": "Left to right",
+        "bottomToTop": "Bottom to top",
+        "rightToLeft": "Right to left",
+        "stops": "Colours, first to last",
+        "max": "Up to {max} colours",
+        "add": "Add colour",
+        "stop": "Colour {n}",
+        "stopHex": "Colour {n} (hex)",
+        "invalidHex": "Not a hex colour",
+        "drag": "Colour {n} of {total}: drag, or press space then the arrow keys, to reorder",
+        "remove": "Remove colour",
+        "direction": "Direction",
+        "custom": "Custom angle"
+      }
     },
     "assets": {
       "title": "Asset library",
@@ -773,7 +822,17 @@
       "style": "Style",
       "styleNormal": "Normal",
       "styleItalic": "Italic",
-      "weightNames": { "100": "Thin", "200": "Extra light", "300": "Light", "400": "Regular", "500": "Medium", "600": "Semi-bold", "700": "Bold", "800": "Extra bold", "900": "Black" },
+      "weightNames": {
+        "100": "Thin",
+        "200": "Extra light",
+        "300": "Light",
+        "400": "Regular",
+        "500": "Medium",
+        "600": "Semi-bold",
+        "700": "Bold",
+        "800": "Extra bold",
+        "900": "Black"
+      },
       "fontSaved": "Font variant added",
       "variantExistsTitle": "That weight already exists",
       "variantExistsBody": "{family} already has a {weight} {style} variant. Pick another weight or style, or remove the family first.",
@@ -850,12 +909,27 @@
       "cannotDisableSelf": "You can’t disable your own account.",
       "saved": "Settings saved",
       "configured": "Configured",
-      "notConfigured": "Not configured"
+      "notConfigured": "Not configured",
+      "allowedSenders": "Allowed senders",
+      "allowedSendersHelper": "One email address or domain per line, for example pastor@eajc.org or @eajc.org. Leave empty to accept files from anyone. Mail from anyone else is ignored silently.",
+      "allowedSendersInvalid": "Not an address or domain: {entries}",
+      "autoReplyNote": "When an allowed sender's email has no Word or PDF file, or more than one, they get an automatic reply explaining what to send."
     }
   },
   "dev": {
     "kit": {
       "title": "Component kit"
+    }
+  },
+  "emails": {
+    "inboundRejected": {
+      "subject": "{churchName}: your file could not be received",
+      "greeting": "Hello,",
+      "intro": "Your email to {inboundEmail} reached {churchName}, but no run sheet could be taken from it.",
+      "unsupported": "It had no Word (.docx) or PDF attachment. Please send the announcements as a single .docx or .pdf file.",
+      "ambiguous": "It had {count} Word or PDF files. Please send just the one run sheet, or one email per file.",
+      "nextStep": "Nothing has been added to the panels. Reply to this message with the right file attached and it will appear in the team’s inbox.",
+      "signoff": "— {churchName} panels (automatic message)"
     }
   }
 }

@@ -16,10 +16,12 @@ export type SlideAddPanelProps = {
   /** Creates the slide for the picked template — the caller owns the server action and
       what happens next (the New slide modal swaps to the edit form). */
   onPick: (templateId: string) => Promise<void>;
+  /** The Scriptures deck lists only scripture layouts, so its chips would be noise. */
+  showCategories?: boolean;
 };
 
 /** Template picker — first step of the "New slide" modal. Picking a card creates the slide. */
-export function SlideAddPanel({ templates, assets, onPick }: SlideAddPanelProps) {
+export function SlideAddPanel({ templates, assets, onPick, showCategories = true }: SlideAddPanelProps) {
   const t = useTranslations("sunday.simple.add");
   const tCategories = useTranslations("sunday.addSlide.categories");
   const [category, setCategory] = useState<"all" | TemplateCategory>("all");
@@ -45,7 +47,9 @@ export function SlideAddPanel({ templates, assets, onPick }: SlideAddPanelProps)
     <div className="flex flex-col gap-3.5">
       <p className="text-caption text-fg-secondary">{t("helper")}</p>
 
-      <FilterChips options={options} value={category} onChange={(v) => setCategory(v as "all" | TemplateCategory)} aria-label={t("title")} />
+      {showCategories ? (
+        <FilterChips options={options} value={category} onChange={(v) => setCategory(v as "all" | TemplateCategory)} aria-label={t("title")} />
+      ) : null}
 
       {visible.length === 0 ? (
         <p className="text-label text-fg-secondary">{t("noTemplates")}</p>

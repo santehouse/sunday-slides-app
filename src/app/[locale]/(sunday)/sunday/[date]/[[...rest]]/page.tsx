@@ -14,10 +14,10 @@ export default async function LegacySundayRedirectPage({
   searchParams,
 }: {
   params: Promise<{ date: string; rest?: string[] }>;
-  searchParams: Promise<{ slide?: string; add?: string }>;
+  searchParams: Promise<{ slide?: string; add?: string; section?: string }>;
 }) {
   const { rest } = await params;
-  const { slide, add } = await searchParams;
+  const { slide, add, section } = await searchParams;
   const locale = await getLocale();
   const segments = rest ?? [];
 
@@ -33,6 +33,8 @@ export default async function LegacySundayRedirectPage({
   } else if (add === "1") {
     query = "?add=1";
   }
+
+  if (section === "scriptures") query += `${query ? "&" : "?"}section=scriptures`;
 
   redirect({ href: `/sunday${query}`, locale });
 }

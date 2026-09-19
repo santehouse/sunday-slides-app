@@ -13,6 +13,7 @@ export const maxDuration = 300;
 
 const exportRequestSchema = z.object({
   sundayId: z.string().min(1),
+  section: z.enum(["announcements", "scriptures"]).optional(),
   format: z.enum(["jpg", "mp4"]),
   scope: z.enum(["current", "all", "custom"]),
   slideNumbers: z.array(z.number().int()).optional(),

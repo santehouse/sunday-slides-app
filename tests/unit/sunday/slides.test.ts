@@ -40,7 +40,8 @@ describe("createSlideFromTemplate", () => {
     const db = getDb();
     const sunday = await db.getOrCreateSundayByDate("2026-11-08");
     const templates = await db.listTemplates({ status: "published" });
-    const template = templates[0]!;
+    // An announcement layout: scripture layouts pre-fill their reference as the headline.
+    const template = templates.find((t) => t.category !== "scripture")!;
 
     const slide = await createSlideFromTemplate(sunday.id, template.id);
 

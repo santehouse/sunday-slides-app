@@ -14,7 +14,7 @@ import { renderSlidesToJpegs } from "@/lib/renderer/server";
 import { fitSlide } from "@/lib/renderer/fitText";
 import { buildMp4 } from "@/lib/exports/mp4";
 import { keys, putObject } from "@/lib/r2/client";
-import type { ExportType, Slide } from "@/lib/domain/types";
+import type { ExportType, Slide, SlideSection } from "@/lib/domain/types";
 import type { TextMeasurer } from "@/lib/renderer/types";
 
 export type ExportFormat = "jpg" | "mp4";
@@ -22,6 +22,8 @@ export type ExportScope = "current" | "all" | "custom";
 
 export interface ExportRequest {
   sundayId: string;
+  /** Which deck: the announcement flow (default) or the sermon's scripture slides. */
+  section?: SlideSection;
   format: ExportFormat;
   scope: ExportScope;
   /** 1-based slide numbers in Sunday Flow order — required (and validated against the deck size) when scope is "custom". */
@@ -100,7 +102,8 @@ export async function runExport(req: ExportRequest): Promise<ExportResult> {
   const sunday = await db.getSundayById(req.sundayId);
   if (!sunday) return { ok: false, error: "nothing_to_export" };
 
-  const allSlides = (await db.listSlidesForSunday(req.sundayId)).sort((a, b) => a.sortOrder - b.sortOrder);
+  const section: SlideSection = req.section ?? "announcements";
+  const allSlides = (await db.listSlidesForSunday(req.sundayId, { section })).sort((a, b) => a.sortOrder - b.sortOrder);
   if (allSlides.length === 0) return { ok: false, error: "nothing_to_export" };
 
   const scoped = resolveScope(req, allSlides);
@@ -187,7 +190,7 @@ export async function runExport(req: ExportRequest): Promise<ExportResult> {
       const zip = new JSZip();
       for (const file of files) zip.file(file.name, file.bytes);
       bytes = await zip.generateAsync({ type: "uint8array" });
-      filename = `${exportDate}-slides.zip`;
+      filename = `${exportDate}-${section === "scriptures" ? "scriptures" : "slides"}.zip`;
       contentType = "application/zip";
       exportKey = keys.exportsZip(sunday.serviceDate, job.id);
     }
@@ -249,9 +252,9 @@ function approximateMeasurer(): TextMeasurer {
  * before exporting" banner) — never renders a single frame. `runExport`'s own
  * headless-Chromium fit check is the real, blocking gate at export time.
  */
-export async function checkDeckExportable(sundayId: string): Promise<DeckExportability> {
+export async function checkDeckExportable(sundayId: string, section: SlideSection = "announcements"): Promise<DeckExportability> {
   const db = getDb();
-  const slides = await db.listSlidesForSunday(sundayId);
+  const slides = await db.listSlidesForSunday(sundayId, { section });
   const measurer = approximateMeasurer();
 
   const blockedSlideIds: string[] = [];

@@ -3,6 +3,8 @@ import { Resend } from "resend";
 import { getDb } from "@/lib/data";
 import { env, isProduction } from "@/lib/env";
 import { ingestRunSheet } from "@/lib/sunday/intake";
+import { isSenderAllowed } from "@/lib/engines/senderAllowlist";
+import { sendInboundRejectionReply, type InboundRejectionReason } from "@/lib/resend/autoReply";
 import {
   pickRunSheetAttachment,
   resolveTargetSundayDate,
@@ -16,6 +18,10 @@ import {
  * quickly (Resend retries on non-2xx) — genuine problems are recorded as a
  * `system_checks` row rather than surfaced as an HTTP error, except an unverifiable
  * signature, which really is a request we should refuse.
+ *
+ * Senders outside the admin's allowlist (Settings → Run sheet intake) are dropped without
+ * a reply. An allowed sender whose email carries no usable attachment (or several) gets an
+ * automatic bilingual reply saying what to send instead.
  */
 export const runtime = "nodejs";
 
@@ -30,6 +36,10 @@ interface RawInboundAttachment {
 
 interface EmailReceivedData {
   email_id: string;
+  /** `From` header — may carry a display name (`Jane <jane@x.org>`). */
+  from?: string;
+  /** RFC 5322 Message-ID, used to thread the courtesy reply. */
+  message_id?: string | null;
   subject?: string;
   text?: string;
   created_at?: string;
@@ -105,6 +115,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true, runSheetId: existing.id });
   }
 
+  const settings = await db.getSettings();
+  const from = data.from ?? "";
+
+  if (!isSenderAllowed(from, settings.inboundAllowedSenders)) {
+    // Not one of ours: log for the admin, never reply (that would confirm the address to spammers).
+    await db.recordSystemCheck("inbound_sender_rejected", "warn", { emailId: data.email_id, from });
+    return NextResponse.json({ ok: true });
+  }
+
   const attachmentsMeta = data.attachments ?? [];
   const pickCandidates: InboundAttachment[] = attachmentsMeta.map((a) => ({
     filename: a.filename ?? "attachment",
@@ -114,15 +133,42 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const picked = pickRunSheetAttachment(pickCandidates);
 
   if (!picked.ok) {
+    const reason: InboundRejectionReason = picked.ambiguous ? "ambiguous" : "unsupported";
+    const candidateCount = picked.ambiguous ? picked.candidates.length : 0;
     if (picked.ambiguous) {
       await db.recordSystemCheck("inbound_ambiguous", "warn", {
         emailId: data.email_id,
+        from,
         candidates: picked.candidates.map((c) => c.filename),
       });
     } else {
-      await db.recordSystemCheck("inbound_unsupported", "warn", { emailId: data.email_id, attachmentCount: attachmentsMeta.length });
+      await db.recordSystemCheck("inbound_unsupported", "warn", {
+        emailId: data.email_id,
+        from,
+        attachmentCount: attachmentsMeta.length,
+      });
     }
-    return NextResponse.json({ ok: true });
+
+    let autoReply = "not_attempted";
+    try {
+      autoReply = await sendInboundRejectionReply({
+        to: from,
+        originalSubject: data.subject ?? "",
+        messageId: data.message_id,
+        reason,
+        candidateCount,
+        churchName: settings.churchName,
+        inboundEmail: settings.inboundEmail,
+      });
+    } catch (err) {
+      console.error("api/inbound/resend: auto-reply failed", err);
+      await db.recordSystemCheck("inbound_auto_reply_failed", "error", {
+        emailId: data.email_id,
+        message: err instanceof Error ? err.message : String(err),
+      });
+      autoReply = "failed";
+    }
+    return NextResponse.json({ ok: true, rejected: reason, autoReply });
   }
 
   const chosenIndex = pickCandidates.indexOf(picked.attachment);
@@ -140,7 +186,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true });
   }
 
-  const settings = await db.getSettings();
   const targetDate = resolveTargetSundayDate(
     data.subject ?? "",
     data.text ?? "",

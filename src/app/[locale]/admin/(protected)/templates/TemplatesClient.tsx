@@ -20,6 +20,7 @@ const CATEGORY_FILTERS: (TemplateCategory | "all")[] = [
   "welcome",
   "theme",
   "closing",
+  "scripture",
 ];
 
 // Figma 8:317 shows the lifecycle state as coloured text under the category, not a pill.
