@@ -16,7 +16,8 @@
 ## Retention
 Temporary objects (run sheets, exports, tmp) expire from R2 after `temporary_retention_days` (default 60) via bucket lifecycle rules. Templates, assets and fonts never expire. Metadata stays in Supabase.
 
-## Migrations pending on production
+## Migrations on production
+Applied through 0006 (2026-09-19). Listed here with what each unlocks:
 - `0002_run_sheet_opened_at.sql` (Import modal "new" dot)
 - `0003_template_field_layers.sql` (image fields, default text, rotated/boxed labels) — then run `scripts/apply-brand-templates.ts` (see docs/HANDOFF.md).
 - `0004_inbound_allowed_senders.sql` (Settings → Run sheet intake → Allowed senders). Until it is applied the allowlist reads as empty (everyone accepted) and saving Settings fails.
