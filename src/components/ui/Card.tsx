@@ -39,7 +39,8 @@ export function CardHeader({ title, action, className }: CardHeaderProps) {
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-3", className)}>
       <h3 className="text-h3 font-bold text-fg">{title}</h3>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {/* Capped at the card width so a long action row wraps on phones instead of overflowing. */}
+      {action ? <div className="max-w-full shrink-0">{action}</div> : null}
     </div>
   );
 }
