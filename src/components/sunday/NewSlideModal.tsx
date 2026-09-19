@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import type { Slide, Template } from "@/lib/domain/types";
+import type { Slide, SlideSection, Template } from "@/lib/domain/types";
 import type { TemplateWithFields } from "@/lib/data";
 import type { ResolvedAsset } from "@/lib/renderer/types";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +14,8 @@ import { createSlideFromTemplateAction } from "@/app/[locale]/(sunday)/sunday/ac
 export type NewSlideModalProps = {
   open: boolean;
   sundayId: string;
+  /** The deck the new slide joins; `templates` are already filtered for it. */
+  section: SlideSection;
   templates: TemplateWithFields[];
   assets: ResolvedAsset[];
   assetsByTemplateId: Record<string, ResolvedAsset[]>;
@@ -33,6 +35,7 @@ export type NewSlideModalProps = {
 export function NewSlideModal({
   open,
   sundayId,
+  section,
   templates,
   assets,
   assetsByTemplateId,
@@ -60,7 +63,7 @@ export function NewSlideModal({
   }, [open]);
 
   async function handlePick(templateId: string) {
-    const slide = await createSlideFromTemplateAction(sundayId, templateId);
+    const slide = await createSlideFromTemplateAction(sundayId, templateId, section);
     setCreatedSlide(slide);
     onCreated(slide);
   }
@@ -105,7 +108,7 @@ export function NewSlideModal({
           onDuplicated={onDuplicated}
         />
       ) : (
-        <SlideAddPanel templates={templates} assets={assets} onPick={handlePick} />
+        <SlideAddPanel templates={templates} assets={assets} onPick={handlePick} showCategories={section !== "scriptures"} />
       )}
     </Dialog>
   );

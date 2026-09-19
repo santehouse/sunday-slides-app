@@ -29,6 +29,7 @@ export function makeRenderableSlide(init: RenderableSlideInit): Slide {
     assetId: init.assetId ?? null,
     backgroundMode: init.backgroundMode ?? "color",
     approvedColorId: null,
+    section: "announcements",
     sortOrder: 0,
     includeInVideo: init.includeInVideo ?? true,
     status: init.status ?? "ready",

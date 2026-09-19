@@ -52,6 +52,7 @@ function makeSolidColorInput(hex: string): RenderSlideInput {
     assetId: null,
     backgroundMode: "color",
     approvedColorId: null,
+    section: "announcements",
     sortOrder: 0,
     includeInVideo: true,
     status: "ready",

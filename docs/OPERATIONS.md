@@ -20,6 +20,10 @@ Temporary objects (run sheets, exports, tmp) expire from R2 after `temporary_ret
 - `0002_run_sheet_opened_at.sql` (Import modal "new" dot)
 - `0003_template_field_layers.sql` (image fields, default text, rotated/boxed labels) — then run `scripts/apply-brand-templates.ts` (see docs/HANDOFF.md).
 - `0004_inbound_allowed_senders.sql` (Settings → Run sheet intake → Allowed senders). Until it is applied the allowlist reads as empty (everyone accepted) and saving Settings fails.
+- `0005_slide_sections_and_scripture.sql` (Scriptures deck: `slides.section`, `template_category` gains `scripture`) — then run `scripts/apply-brand-templates.ts` again so the "Scripture verse" template exists. Upload a 1920×1080 photo named **Scripture sky** under Admin → Assets (publish it) and re-run the script to bind it; until then the template uses a solid fallback.
+
+## Scriptures deck
+The Sunday queue has two decks behind the Announcements / Scriptures toggle (`?section=scriptures`). Each keeps its own order; "Clear queue" and downloads act on the deck on screen. Scripture downloads are JPG only. Verses come from the bundled Louis Segond 1910 (`src/lib/bible`, public domain, rebuilt by `node scripts/import-lsg1910.mjs`); no API or key is involved.
 
 ## Inbound email rules
 Only senders on the allowlist get through (empty list = everyone). Strangers are dropped and logged as `inbound_sender_rejected`. An allowed sender whose email has no `.docx`/`.pdf`, or several, gets a bilingual auto-reply from `RESEND_FROM_EMAIL` (needs `RESEND_API_KEY`); automated senders (no-reply, mailer-daemon, our own addresses) never get one.

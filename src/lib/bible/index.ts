@@ -1,7 +1,15 @@
 import { LSG1910_BOOKS } from "./lsg1910";
 import { getBibleBook, type BibleBookId } from "./books";
 
-export { BIBLE_BOOKS, formatReference, getBibleBook, isBibleBookId, type BibleBook, type BibleBookId } from "./books";
+export {
+  BIBLE_BOOKS,
+  BIBLE_TRANSLATION_NAME,
+  formatReference,
+  getBibleBook,
+  isBibleBookId,
+  type BibleBook,
+  type BibleBookId,
+} from "./books";
 
 export interface BibleVerse {
   verse: number;
@@ -13,8 +21,6 @@ export interface BibleVerse {
  * offline, in mock mode, and without a third-party API. One JSON module per book is
  * loaded on demand and then kept in memory.
  */
-export const BIBLE_TRANSLATION = { id: "LSG", name: "Louis Segond 1910" } as const;
-
 const cache = new Map<BibleBookId, Promise<string[][]>>();
 
 function loadBook(bookId: BibleBookId): Promise<string[][]> {

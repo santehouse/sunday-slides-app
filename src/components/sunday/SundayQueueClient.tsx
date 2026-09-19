@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Inbox, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, BookOpen, Inbox, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { Slide, Template } from "@/lib/domain/types";
+import type { Slide, SlideSection, Template } from "@/lib/domain/types";
 import { resolveSlideBackgroundHex } from "@/lib/sunday/background";
 import type { TemplateWithFields } from "@/lib/data";
 import type { ResolvedAsset } from "@/lib/renderer/types";
@@ -12,6 +12,7 @@ import { buildCheckItems } from "@/lib/sunday/checklist";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/Dialog";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { SafeZonesAction } from "@/components/ui/SafeZonesAction";
 import { useToast } from "@/components/ui/Toast";
 import { QueueList } from "@/components/sunday/QueueList";
@@ -20,6 +21,7 @@ import { SlideEditModal } from "@/components/sunday/SlideEditModal";
 import { NewSlideModal } from "@/components/sunday/NewSlideModal";
 import { ImportModal, type RecentRunSheetData } from "@/components/sunday/ImportModal";
 import { ExportMenu } from "@/components/sunday/ExportMenu";
+import { ScripturePickerDialog } from "@/components/sunday/ScripturePickerDialog";
 import type { ApprovedColorOption } from "@/components/sunday/SlideEditForm";
 import { clearQueueAction, reorderSlidesAction, updateHoldSecondsAction } from "@/app/[locale]/(sunday)/sunday/actions";
 
@@ -42,9 +44,12 @@ export type SundayQueueClientProps = {
   assetsByTemplateId: Record<string, ResolvedAsset[]>;
   safeZone: { x: number; y: number; width: number; height: number };
   recentFiles: RecentRunSheetData[];
+  /** Which deck is on screen; `slides` and `publishedTemplates` are already scoped to it. */
+  section: SlideSection;
   initialSelectedSlideId: string | null;
   initialAdd: boolean;
   initialImport: boolean;
+  initialScripture: boolean;
 };
 
 export function SundayQueueClient({
@@ -59,10 +64,13 @@ export function SundayQueueClient({
   assetsByTemplateId,
   safeZone,
   recentFiles,
+  section,
   initialSelectedSlideId,
   initialAdd,
   initialImport,
+  initialScripture,
 }: SundayQueueClientProps) {
+  const isScriptures = section === "scriptures";
   const t = useTranslations("sunday.queue");
   const tCheck = useTranslations("sunday.simple.check");
   const { showToast } = useToast();
@@ -73,6 +81,7 @@ export function SundayQueueClient({
   const [editingSlideId, setEditingSlideId] = useState<string | null>(initialSelectedSlideId);
   const [newSlideOpen, setNewSlideOpen] = useState(initialAdd);
   const [importOpen, setImportOpen] = useState(initialImport);
+  const [scriptureOpen, setScriptureOpen] = useState(initialScripture);
   const [previewId, setPreviewId] = useState<string | null>(initialSelectedSlideId ?? slides[0]?.id ?? null);
   const [showSafeZone, setShowSafeZone] = useState(false);
   const [confirmingClear, setConfirmingClear] = useState(false);
@@ -90,19 +99,31 @@ export function SundayQueueClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slides]);
 
-  function syncUrl(next: { slide?: string | null; add?: boolean; import?: boolean }) {
+  function syncUrl(next: { slide?: string | null; add?: boolean; import?: boolean; scripture?: boolean }) {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("slide");
     params.delete("add");
     params.delete("import");
+    params.delete("scripture");
     const slideId = next.slide !== undefined ? next.slide : editingSlideId;
     const add = next.add !== undefined ? next.add : newSlideOpen;
     const imp = next.import !== undefined ? next.import : importOpen;
+    const scr = next.scripture !== undefined ? next.scripture : scriptureOpen;
     if (slideId) params.set("slide", slideId);
     if (add) params.set("add", "1");
     if (imp) params.set("import", "1");
+    if (scr) params.set("scripture", "1");
     const query = params.toString();
     window.history.replaceState(window.history.state, "", query ? `${pathname}?${query}` : pathname);
+  }
+
+  /** Switching decks is a real navigation: the server re-reads the other section's slides. */
+  function switchSection(next: SlideSection) {
+    if (next === section) return;
+    const params = new URLSearchParams();
+    if (next === "scriptures") params.set("section", "scriptures");
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
   }
 
   function openEdit(id: string) {
@@ -129,6 +150,14 @@ export function SundayQueueClient({
     setImportOpen(false);
     syncUrl({ import: false });
   }
+  function openScripture() {
+    setScriptureOpen(true);
+    syncUrl({ scripture: true });
+  }
+  function closeScripture() {
+    setScriptureOpen(false);
+    syncUrl({ scripture: false });
+  }
 
   function handleSelect(id: string) {
     setPreviewId(id);
@@ -151,7 +180,7 @@ export function SundayQueueClient({
   async function handleClearQueue() {
     setClearing(true);
     try {
-      await clearQueueAction(sundayId);
+      await clearQueueAction(sundayId, section);
       setConfirmingClear(false);
       showToast({ state: "success", title: t("cleared"), message: "" });
       router.refresh();
@@ -173,11 +202,21 @@ export function SundayQueueClient({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-3">
           <h1 className="text-[28px] font-bold leading-tight text-fg">{t("title")}</h1>
+          <SegmentedControl
+            ariaLabel={t("sectionLabel")}
+            value={section}
+            onChange={switchSection}
+            options={[
+              { value: "announcements", label: t("sections.announcements") },
+              { value: "scriptures", label: t("sections.scriptures") },
+            ]}
+          />
         </div>
         <ExportMenu
           sundayId={sundayId}
+          section={section}
           slides={slides}
           templatesById={templatesById}
           colorHexById={colorHexById}
@@ -203,12 +242,25 @@ export function SundayQueueClient({
           {t("clear")}
         </Button>
         <div className="flex items-center gap-2.5">
-          <Button variant="secondary" leadingIcon={Inbox} onClick={openImport}>
-            {t("importAnnouncements")}
-          </Button>
-          <Button variant="primary" leadingIcon={Plus} onClick={openNewSlide}>
-            {t("newSlide")}
-          </Button>
+          {isScriptures ? (
+            <>
+              <Button variant="secondary" leadingIcon={Plus} onClick={openNewSlide}>
+                {t("newSlide")}
+              </Button>
+              <Button variant="primary" leadingIcon={BookOpen} onClick={openScripture}>
+                {t("addScripture")}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="secondary" leadingIcon={Inbox} onClick={openImport}>
+                {t("importAnnouncements")}
+              </Button>
+              <Button variant="primary" leadingIcon={Plus} onClick={openNewSlide}>
+                {t("newSlide")}
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -234,14 +286,27 @@ export function SundayQueueClient({
 
       {slides.length === 0 ? (
         <Card padding="md" className="flex flex-col items-center gap-4 py-12 text-center">
-          <p className="text-label text-fg-secondary">{t("empty")}</p>
+          <p className="text-label text-fg-secondary">{isScriptures ? t("emptyScriptures") : t("empty")}</p>
           <div className="flex items-center gap-2.5">
-            <Button variant="secondary" leadingIcon={Inbox} onClick={openImport}>
-              {t("importAnnouncements")}
-            </Button>
-            <Button variant="primary" leadingIcon={Plus} onClick={openNewSlide}>
-              {t("newSlide")}
-            </Button>
+            {isScriptures ? (
+              <>
+                <Button variant="secondary" leadingIcon={Plus} onClick={openNewSlide}>
+                  {t("newSlide")}
+                </Button>
+                <Button variant="primary" leadingIcon={BookOpen} onClick={openScripture}>
+                  {t("addScripture")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="secondary" leadingIcon={Inbox} onClick={openImport}>
+                  {t("importAnnouncements")}
+                </Button>
+                <Button variant="primary" leadingIcon={Plus} onClick={openNewSlide}>
+                  {t("newSlide")}
+                </Button>
+              </>
+            )}
           </div>
         </Card>
       ) : (
@@ -304,6 +369,7 @@ export function SundayQueueClient({
       <NewSlideModal
         open={newSlideOpen}
         sundayId={sundayId}
+        section={section}
         templates={publishedTemplates}
         assets={assets}
         assetsByTemplateId={assetsByTemplateId}
@@ -319,6 +385,17 @@ export function SundayQueueClient({
           router.refresh();
         }}
         onDuplicated={() => router.refresh()}
+      />
+
+      <ScripturePickerDialog
+        open={scriptureOpen}
+        sundayId={sundayId}
+        templates={publishedTemplates}
+        onClose={closeScripture}
+        onAdded={() => {
+          closeScripture();
+          router.refresh();
+        }}
       />
 
       <ImportModal

@@ -27,7 +27,12 @@ export type TemplateCategory =
   | "giving"
   | "welcome"
   | "theme"
-  | "closing";
+  | "closing"
+  /** Scripture-verse layouts — offered only in the queue's Scriptures view. */
+  | "scripture";
+/** Which half of the Sunday queue a slide lives in. Each section is its own ordered deck. */
+export type SlideSection = "announcements" | "scriptures";
+export const SLIDE_SECTIONS: readonly SlideSection[] = ["announcements", "scriptures"];
 export type BackgroundType = "color" | "image";
 export type OverlayColor = "none" | "black" | "white";
 
@@ -283,6 +288,8 @@ export interface Slide {
   assetId: string | null;
   backgroundMode: SlideBackgroundMode;
   approvedColorId: string | null;
+  /** Announcements (the service flow, JPG + MP4) or Scriptures (sermon verses, JPG only). */
+  section: SlideSection;
   sortOrder: number;
   includeInVideo: boolean;
   status: SlideStatus;

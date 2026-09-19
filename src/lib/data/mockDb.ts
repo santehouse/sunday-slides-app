@@ -23,6 +23,7 @@ import type {
   Sunday,
   Template,
   TemplateField,
+  SlideSection,
 } from "@/lib/domain/types";
 import {
   ADMIN_USER_SEED,
@@ -304,6 +305,7 @@ function buildInitialStore(): MockStore {
         approvedColorId: slide.approvedColorName
           ? (approvedColors.find((c) => c.nameEn === slide.approvedColorName)?.id ?? null)
           : null,
+        section: "announcements",
         sortOrder: slide.sortOrder,
         includeInVideo: slide.includeInVideo ?? templates.find((t) => t.id === templateId)?.includeInVideoDefault ?? true,
         status: slide.status ?? "ready",
@@ -399,6 +401,7 @@ function buildSlide(store: MockStore, input: CreateSlideInput, fallbackSortOrder
     assetId: input.assetId ?? null,
     backgroundMode: input.backgroundMode ?? "color",
     approvedColorId: input.approvedColorId ?? null,
+    section: input.section ?? "announcements",
     sortOrder: input.sortOrder ?? fallbackSortOrder,
     includeInVideo: input.includeInVideo ?? template?.includeInVideoDefault ?? true,
     status: input.status ?? "ready",
@@ -642,10 +645,10 @@ export function createMockDb(): Db {
     },
 
     // ---------- slides ----------
-    async listSlidesForSunday(sundayId: string) {
+    async listSlidesForSunday(sundayId: string, opts: { section?: SlideSection } = {}) {
       return clone(
         getStore()
-          .slides.filter((s) => s.sundayId === sundayId)
+          .slides.filter((s) => s.sundayId === sundayId && (!opts.section || s.section === opts.section))
           .sort((a, b) => a.sortOrder - b.sortOrder),
       );
     },
@@ -655,7 +658,8 @@ export function createMockDb(): Db {
     },
     async createSlide(input: CreateSlideInput) {
       const store = getStore();
-      const fallbackSortOrder = store.slides.filter((s) => s.sundayId === input.sundayId).length;
+      const section = input.section ?? "announcements";
+      const fallbackSortOrder = store.slides.filter((s) => s.sundayId === input.sundayId && s.section === section).length;
       const created = buildSlide(store, input, fallbackSortOrder);
       store.slides.push(created);
       return clone(created);
@@ -663,7 +667,8 @@ export function createMockDb(): Db {
     async createSlides(inputs: CreateSlideInput[]) {
       const store = getStore();
       const results: Slide[] = [];
-      let nextSortOrder = store.slides.filter((s) => s.sundayId === inputs[0]?.sundayId).length;
+      const section = inputs[0]?.section ?? "announcements";
+      let nextSortOrder = store.slides.filter((s) => s.sundayId === inputs[0]?.sundayId && s.section === section).length;
       for (const input of inputs) {
         const created = buildSlide(store, input, nextSortOrder);
         store.slides.push(created);
@@ -698,11 +703,11 @@ export function createMockDb(): Db {
         store.slides.filter((s) => s.sundayId === sundayId).sort((a, b) => a.sortOrder - b.sortOrder),
       );
     },
-    async replaceSlidesForSunday(sundayId: string, inputs: CreateSlideInput[]) {
+    async replaceSlidesForSunday(sundayId: string, inputs: CreateSlideInput[], section: SlideSection = "announcements") {
       const store = getStore();
-      store.slides = store.slides.filter((s) => s.sundayId !== sundayId);
+      store.slides = store.slides.filter((s) => !(s.sundayId === sundayId && s.section === section));
       const created = inputs.map((input, i) => {
-        const slide = buildSlide(store, { ...input, sundayId }, i);
+        const slide = buildSlide(store, { ...input, sundayId, section }, i);
         store.slides.push(slide);
         return slide;
       });

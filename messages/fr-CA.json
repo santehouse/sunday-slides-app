@@ -244,7 +244,8 @@
         "giving": "Dons",
         "welcome": "Bienvenue",
         "theme": "Thème",
-        "closing": "Clôture"
+        "closing": "Clôture",
+        "scripture": "Écriture"
       },
       "cardMeta": "{category} · {status}",
       "use": "Utiliser {name}"
@@ -450,7 +451,14 @@
       "notInVideo": "Pas affichée dans la vidéo",
       "empty": "Aucune diapositive pour l’instant. Importez les annonces ou ajoutez une diapositive.",
       "listLabel": "Diapositives de ce culte",
-      "untitledSlide": "Diapositive sans titre"
+      "untitledSlide": "Diapositive sans titre",
+      "sectionLabel": "Section",
+      "sections": {
+        "announcements": "Annonces",
+        "scriptures": "Écritures"
+      },
+      "addScripture": "Ajouter un passage",
+      "emptyScriptures": "Aucune diapositive d’Écriture pour l’instant. Ajoutez un passage ou une diapositive."
     },
     "import": {
       "title": "Importer les annonces",
@@ -468,6 +476,25 @@
       "noFilesYet": "Aucun fichier pour l’instant.",
       "emptyPreview": "Rien à afficher pour l’instant.",
       "previewUnavailable": "Ce fichier ne peut pas être prévisualisé ici."
+    },
+    "scripture": {
+      "title": "Ajouter un passage",
+      "helper": "Les versets viennent de la {translation}. Cochez ceux que vous voulez; chacun devient une diapositive sur la mise en page choisie.",
+      "template": "Mise en page",
+      "book": "Livre",
+      "chapter": "Chapitre",
+      "verses": "Versets",
+      "perSlide": "Versets par diapositive",
+      "selectAll": "Tout sélectionner",
+      "clearSelection": "Effacer",
+      "loading": "Chargement du chapitre…",
+      "nothingSelected": "Aucun verset sélectionné.",
+      "selection": "{reference} · {count, plural, one {# diapositive} other {# diapositives}}",
+      "add": "{count, plural, =0 {Ajouter} one {Ajouter # diapositive} other {Ajouter # diapositives}}",
+      "added": "{count, plural, one {# diapositive d’Écriture ajoutée} other {# diapositives d’Écriture ajoutées}}",
+      "addFailed": "Les diapositives n’ont pas pu être ajoutées",
+      "noTemplateTitle": "Aucune mise en page d’Écriture",
+      "noTemplate": "Un administrateur doit d’abord publier un modèle de la catégorie Écriture (Admin → Modèles)."
     }
   },
   "adminAuth": {
@@ -693,7 +720,8 @@
         "giving": "Dons",
         "welcome": "Bienvenue",
         "theme": "Thème",
-        "closing": "Clôture"
+        "closing": "Clôture",
+        "scripture": "Écriture"
       },
       "empty": "Aucun modèle ne correspond à ces filtres.",
       "newTemplateName": "Nouveau modèle",

@@ -260,6 +260,7 @@ export function slideFromRow(row: SlideRow): Slide {
     assetId: row.asset_id,
     backgroundMode: row.background_mode,
     approvedColorId: row.approved_color_id,
+    section: row.section ?? "announcements",
     sortOrder: row.sort_order,
     includeInVideo: row.include_in_video,
     status: row.status,
@@ -291,10 +292,12 @@ export function slideToRow(slide: {
   mappingId?: string | null;
   sourceAnnouncement?: Slide["sourceAnnouncement"];
   manuallyEdited?: boolean;
+  section?: Slide["section"];
 }): Partial<SlideRow> {
   return {
     sunday_id: slide.sundayId,
     template_id: slide.templateId,
+    ...(slide.section !== undefined ? { section: slide.section } : {}),
     ...(slide.headline !== undefined ? { headline: slide.headline } : {}),
     ...(slide.content !== undefined ? { content_json: slide.content as unknown as Json } : {}),
     ...(slide.assetId !== undefined ? { asset_id: slide.assetId } : {}),
@@ -331,9 +334,11 @@ export function slidePatchToRow(patch: {
   mappingId?: string | null;
   sourceAnnouncement?: Slide["sourceAnnouncement"];
   manuallyEdited?: boolean;
+  section?: Slide["section"];
 }): Partial<SlideRow> {
   const row: Partial<SlideRow> = {};
   if (patch.templateId !== undefined) row.template_id = patch.templateId;
+  if (patch.section !== undefined) row.section = patch.section;
   if (patch.headline !== undefined) row.headline = patch.headline;
   if (patch.content !== undefined) row.content_json = patch.content as unknown as Json;
   if (patch.assetId !== undefined) row.asset_id = patch.assetId;

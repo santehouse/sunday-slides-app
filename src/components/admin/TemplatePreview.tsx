@@ -84,6 +84,7 @@ export function TemplatePreview({
       assetId: hasImage ? "preview-asset" : null,
       backgroundMode: backgroundType,
       approvedColorId: null,
+      section: "announcements",
       sortOrder: 0,
       includeInVideo: true,
       status: "ready",

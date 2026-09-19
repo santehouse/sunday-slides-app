@@ -217,6 +217,15 @@ export const ASSET_SEEDS: AssetSeed[] = [
     height: 1080,
     color: "#3a2f10",
   },
+  {
+    slug: BRAND_ASSET_SLUGS.scripture,
+    nameEn: BRAND_ASSET_NAMES.scripture.nameEn,
+    nameFr: BRAND_ASSET_NAMES.scripture.nameFr,
+    category: "backgrounds",
+    width: 1920,
+    height: 1080,
+    color: "#8fa3b5",
+  },
 ];
 
 /**

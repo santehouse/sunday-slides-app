@@ -55,7 +55,7 @@ function placeBelow(fields: FieldDraft[], box: Box): Box {
   const y = bottom > 0 ? bottom + NEW_FIELD_GAP : box.y;
   return clampBox({ ...box, y });
 }
-const CATEGORY_OPTIONS: TemplateCategory[] = ["general", "events", "special", "giving", "welcome", "theme", "closing"];
+const CATEGORY_OPTIONS: TemplateCategory[] = ["general", "events", "special", "giving", "welcome", "theme", "closing", "scripture"];
 const STATUS_OPTIONS: TemplateStatus[] = ["draft", "published", "archived"];
 const OVERLAY_OPTIONS: OverlayColor[] = ["none", "black", "white"];
 const ALIGN_OPTIONS: TextAlignment[] = ["left", "center", "right"];

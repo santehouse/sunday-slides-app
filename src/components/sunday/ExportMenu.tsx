@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { ChevronDown, Film, Images } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { Slide, Template } from "@/lib/domain/types";
+import type { Slide, SlideSection, Template } from "@/lib/domain/types";
 import { resolveSlideBackgroundHex } from "@/lib/sunday/background";
 import type { ResolvedAsset } from "@/lib/renderer/types";
 import type { ExportBlocked } from "@/lib/sunday/contracts";
@@ -21,6 +21,8 @@ import { SlidePreview } from "@/components/sunday/SlidePreview";
 
 export type ExportMenuProps = {
   sundayId: string;
+  /** Scriptures are a JPG-only deck: the video row and format switch disappear. */
+  section: SlideSection;
   slides: Slide[];
   templatesById: Record<string, Template>;
   colorHexById: Record<string, string>;
@@ -40,7 +42,8 @@ function extractFilename(contentDisposition: string | null, fallback: string): s
 }
 
 /** Canva-like Export dropdown: quick pictures/video downloads + an Advanced disclosure with custom range. */
-export function ExportMenu({ sundayId, slides, templatesById, colorHexById, assets, holdSeconds, onHoldSecondsChange }: ExportMenuProps) {
+export function ExportMenu({ sundayId, section, slides, templatesById, colorHexById, assets, holdSeconds, onHoldSecondsChange }: ExportMenuProps) {
+  const jpgOnly = section === "scriptures";
   const t = useTranslations("sunday.simple.download");
   const tErrors = useTranslations("sunday.export");
   const tCommon = useTranslations("common");
@@ -117,7 +120,7 @@ export function ExportMenu({ sundayId, slides, templatesById, colorHexById, asse
   async function handleQuickDownload(format: Format) {
     setDownloadingFormat(format);
     try {
-      await downloadBlob({ sundayId, format, scope: "all" });
+      await downloadBlob({ sundayId, section, format, scope: "all" });
     } finally {
       setDownloadingFormat(null);
     }
@@ -166,7 +169,7 @@ export function ExportMenu({ sundayId, slides, templatesById, colorHexById, asse
   async function handleAdvancedDownload() {
     setAdvDownloading(true);
     try {
-      const body: Record<string, unknown> = { sundayId, format: advFormat, scope };
+      const body: Record<string, unknown> = { sundayId, section, format: jpgOnly ? "jpg" : advFormat, scope };
       if (scope === "custom") body.slideNumbers = selectedNumbers;
       await downloadBlob(body);
     } finally {
@@ -215,6 +218,7 @@ export function ExportMenu({ sundayId, slides, templatesById, colorHexById, asse
             ) : null}
           </button>
 
+          {jpgOnly ? null : (
           <button
             type="button"
             onClick={() => handleQuickDownload("mp4")}
@@ -240,10 +244,13 @@ export function ExportMenu({ sundayId, slides, templatesById, colorHexById, asse
               </span>
             ) : null}
           </button>
+          )}
 
+          {jpgOnly ? null : (
           <div className="border-t border-border pt-3">
             <DurationStepper value={localHoldSeconds} onChange={handleHoldChange} size="md" label={tErrors("secondsPerSlide")} />
           </div>
+          )}
 
           <button
             type="button"
@@ -257,6 +264,7 @@ export function ExportMenu({ sundayId, slides, templatesById, colorHexById, asse
 
           {advancedOpen ? (
             <div className="flex flex-col gap-4 rounded-[10px] border border-border p-3.5">
+              {jpgOnly ? null : (
               <div className="flex flex-col gap-1.5">
                 <p className="text-[11px] leading-4 text-fg-secondary">{t("format")}</p>
                 <SegmentedControl
@@ -272,6 +280,7 @@ export function ExportMenu({ sundayId, slides, templatesById, colorHexById, asse
                   ]}
                 />
               </div>
+              )}
 
               <div role="radiogroup" aria-label={t("allSlides")} className="flex flex-col gap-1">
                 {(["all", "custom"] as const).map((option) => (

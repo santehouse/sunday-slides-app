@@ -35,6 +35,7 @@ const FALLBACK_COLOR: Record<string, string> = {
   [BRAND_ASSET_SLUGS.annualTheme]: "#4b6a86",
   [BRAND_ASSET_SLUGS.baptisms]: "#2f5a6b",
   [BRAND_ASSET_SLUGS.conference]: "#1d2a1c",
+  [BRAND_ASSET_SLUGS.scripture]: "#8fa3b5",
 };
 
 async function loadAssetIds(): Promise<Map<string, string>> {

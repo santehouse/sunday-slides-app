@@ -4,6 +4,9 @@
  * Book names are scripture content, not UI copy (rule 8), so they are not translated.
  */
 
+/** The bundled translation, named on slides and in the picker. Public domain. */
+export const BIBLE_TRANSLATION_NAME = "Louis Segond 1910";
+
 export interface BibleBook {
   id: BibleBookId;
   /** French display name, e.g. "Hébreux". */

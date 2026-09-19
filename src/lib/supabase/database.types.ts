@@ -14,7 +14,7 @@ export type RunSheetParseStatusEnum =
   "queued" | "processing" | "ready_to_apply" | "added_to_flow" | "needs_review" | "failed";
 export type TemplateStatusEnum = "draft" | "published" | "archived";
 export type TemplateCategoryEnum =
-  "general" | "events" | "special" | "giving" | "welcome" | "theme" | "closing";
+  "general" | "events" | "special" | "giving" | "welcome" | "theme" | "closing" | "scripture";
 export type BackgroundTypeEnum = "color" | "image";
 export type OverlayColorEnum = "none" | "black" | "white";
 export type TextAlignmentEnum = "left" | "center" | "right";
@@ -247,6 +247,8 @@ export type SlideRow = {
   asset_id: string | null;
   background_mode: SlideBackgroundModeEnum;
   approved_color_id: string | null;
+  /** Added in 0005; absent on rows read before the migration lands (mapper defaults it). */
+  section?: "announcements" | "scriptures";
   sort_order: number;
   include_in_video: boolean;
   status: SlideStatusEnum;

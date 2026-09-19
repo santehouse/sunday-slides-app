@@ -28,6 +28,7 @@ import type {
   SystemCheck,
   Sunday,
   Template,
+  SlideSection,
 } from "@/lib/domain/types";
 import {
   adminUserFromRow,
@@ -361,12 +362,10 @@ export function createSupabaseDb(): Db {
     },
 
     // ---------- slides ----------
-    async listSlidesForSunday(sundayId: string): Promise<Slide[]> {
-      const { data, error } = await db
-        .from("slides")
-        .select("*")
-        .eq("sunday_id", sundayId)
-        .order("sort_order", { ascending: true });
+    async listSlidesForSunday(sundayId: string, opts: { section?: SlideSection } = {}): Promise<Slide[]> {
+      let query = db.from("slides").select("*").eq("sunday_id", sundayId);
+      if (opts.section) query = query.eq("section", opts.section);
+      const { data, error } = await query.order("sort_order", { ascending: true });
       if (error) throw new Error(`listSlidesForSunday: ${error.message}`);
       return (data ?? []).map(slideFromRow);
     },
@@ -381,7 +380,8 @@ export function createSupabaseDb(): Db {
         const { count } = await db
           .from("slides")
           .select("id", { count: "exact", head: true })
-          .eq("sunday_id", input.sundayId);
+          .eq("sunday_id", input.sundayId)
+          .eq("section", input.section ?? "announcements");
         sortOrder = count ?? 0;
       }
       const row = slideToRow({ ...input, sortOrder });
@@ -409,11 +409,15 @@ export function createSupabaseDb(): Db {
       );
       return this.listSlidesForSunday(sundayId);
     },
-    async replaceSlidesForSunday(sundayId: string, inputs: CreateSlideInput[]): Promise<Slide[]> {
-      const { error: deleteError } = await db.from("slides").delete().eq("sunday_id", sundayId);
+    async replaceSlidesForSunday(
+      sundayId: string,
+      inputs: CreateSlideInput[],
+      section: SlideSection = "announcements",
+    ): Promise<Slide[]> {
+      const { error: deleteError } = await db.from("slides").delete().eq("sunday_id", sundayId).eq("section", section);
       if (deleteError) throw new Error(`replaceSlidesForSunday (delete): ${deleteError.message}`);
       if (inputs.length === 0) return [];
-      return this.createSlides(inputs.map((input) => ({ ...input, sundayId })));
+      return this.createSlides(inputs.map((input) => ({ ...input, sundayId, section })));
     },
 
     // ---------- templates ----------

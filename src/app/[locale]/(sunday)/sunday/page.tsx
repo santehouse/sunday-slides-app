@@ -14,6 +14,7 @@ import { SundayShell } from "@/components/shell/SundayShell";
 import { SundayQueueClient } from "@/components/sunday/SundayQueueClient";
 import { ToastProvider } from "@/components/ui/Toast";
 import type { RecentRunSheetData } from "@/components/sunday/ImportModal";
+import type { SlideSection } from "@/lib/domain/types";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -35,25 +36,30 @@ export default async function SundayQueuePage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ slide?: string; add?: string; import?: string }>;
+  searchParams: Promise<{ slide?: string; add?: string; import?: string; section?: string; scripture?: string }>;
 }) {
   const { locale } = await params;
-  const { slide, add, import: importParam } = await searchParams;
+  const { slide, add, import: importParam, section: sectionParam, scripture } = await searchParams;
   setRequestLocale(locale);
+  // Two decks on one screen: `?section=scriptures` shows the sermon verses instead of the flow.
+  const section: SlideSection = sectionParam === "scriptures" ? "scriptures" : "announcements";
 
   const db = getDb();
   const settings = await db.getSettings();
   const today = todayInTimezone(settings.timezone);
   const sunday = await db.getNextSunday(today, { create: true });
 
-  const [slides, allTemplates, published, allColors, enabledColors, recentRunSheets] = await Promise.all([
-    db.listSlidesForSunday(sunday!.id),
+  const [slides, allTemplates, publishedAll, allColors, enabledColors, recentRunSheets] = await Promise.all([
+    db.listSlidesForSunday(sunday!.id, { section }),
     db.listTemplates(),
     db.listTemplates({ status: "published" }),
     db.listApprovedColors(),
     db.listApprovedColors({ enabledOnly: true }),
     db.listRecentRunSheets(RECENT_RUN_SHEETS_LIMIT),
   ]);
+
+  // Scripture layouts only appear in the Scriptures view, and never in the announcement flow.
+  const published = publishedAll.filter((tpl) => (tpl.category === "scripture") === (section === "scriptures"));
 
   // The Edit/New-slide template pickers only ever offer Published templates — but a slide
   // already on a since-unpublished template still needs its own template present so the
@@ -108,9 +114,11 @@ export default async function SundayQueuePage({
           assetsByTemplateId={assetsByTemplateId}
           safeZone={settings.safeZone}
           recentFiles={recentFiles}
+          section={section}
           initialSelectedSlideId={slide ?? null}
           initialAdd={add === "1"}
           initialImport={importParam === "1"}
+          initialScripture={scripture === "1"}
         />
       </ToastProvider>
     </SundayShell>
