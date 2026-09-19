@@ -111,7 +111,7 @@ export function MappingsClient({
           <h1 className="text-h1 font-bold text-fg">{t("title")}</h1>
           <p className="mt-1.5 text-caption text-fg-secondary">{t("subtitle")}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="secondary"
             onClick={() => {

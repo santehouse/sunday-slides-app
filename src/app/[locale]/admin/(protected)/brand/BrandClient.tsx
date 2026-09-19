@@ -541,7 +541,7 @@ function ApprovedColorsList({ colors }: { colors: ApprovedColor[] }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-caption font-bold text-fg-secondary">{t("approvedColors")}</span>
         <Button variant="ghost" size="sm" onClick={handleAdd} disabled={isPending}>
           {t("addColor")}
