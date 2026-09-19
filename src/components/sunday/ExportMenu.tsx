@@ -190,7 +190,7 @@ export function ExportMenu({ sundayId, section, slides, templatesById, colorHexB
           </Button>
         );
       }}
-      panelClassName="w-[400px] max-h-[80vh] overflow-y-auto"
+      panelClassName="w-[400px] max-h-[80dvh] overflow-y-auto overscroll-contain"
     >
       {() => (
         <div className="flex flex-col gap-4">
@@ -309,7 +309,8 @@ export function ExportMenu({ sundayId, section, slides, templatesById, colorHexB
                     onChange={(event) => applyRangeText(event.target.value)}
                     error={rangeErrorMessage}
                   />
-                  <div className="grid grid-cols-4 gap-x-2 gap-y-2.5">
+                  {/* Three 76px thumbs is the widest row that fits a phone-width popover. */}
+                  <div className="grid grid-cols-3 gap-x-2 gap-y-2.5 sm:grid-cols-4">
                     {slides.map((slide, index) => {
                       const number = index + 1;
                       const selected = selectedNumbers.includes(number);

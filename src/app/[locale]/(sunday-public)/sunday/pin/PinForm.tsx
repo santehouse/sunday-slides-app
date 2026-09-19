@@ -71,7 +71,7 @@ export function PinForm({ pinLength }: { pinLength: number }) {
   const errorKey = state.error ? ERROR_MESSAGE_KEY[state.error] : null;
 
   return (
-    <Card padding="none" className="w-full max-w-[460px] p-[34px]">
+    <Card padding="none" className="w-full max-w-[460px] p-5 sm:p-[34px]">
       {/* Figma 4:34 — card content is left-aligned, 28px between groups. */}
       <form ref={formRef} action={formAction} className="flex flex-col items-start gap-7">
         <div className="flex flex-col gap-2">
@@ -79,7 +79,9 @@ export function PinForm({ pinLength }: { pinLength: number }) {
           <p className="text-[15px] leading-[22px] text-fg-secondary">{t("description", { digits: pinLength })}</p>
         </div>
 
-        <div className="flex gap-3" role="group" aria-label={t("title")}>
+        {/* The boxes share the row instead of holding a fixed 72px: five fixed boxes are
+            wider than a small phone and used to push the last digits off-screen. */}
+        <div className="flex w-full gap-2 sm:gap-3" role="group" aria-label={t("title")}>
           {digits.map((digit, index) => (
             <input
               key={index}
@@ -94,7 +96,8 @@ export function PinForm({ pinLength }: { pinLength: number }) {
               value={digit}
               aria-label={t("inputLabel", { index: index + 1 })}
               className={cn(
-                "h-16 w-[72px] rounded-md border border-border bg-transparent text-center text-[24px] font-bold text-fg",
+                "h-16 w-full min-w-0 max-w-[72px] flex-1 rounded-md border border-border bg-transparent text-center text-[24px] font-bold text-fg",
+                "sm:w-[72px] sm:flex-none",
                 "focus-visible:border-border-focus",
               )}
               onChange={(e) => handleChange(index, e.target.value)}

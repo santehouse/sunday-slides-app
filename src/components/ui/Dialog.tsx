@@ -7,11 +7,18 @@ import { Button } from "./Button";
 
 export type DialogSize = "md" | "lg";
 
+// Mobile-first: `cn()` is plain clsx (no class-conflict resolution), so every size string
+// states the phone value unprefixed and the desktop value behind `sm:` — never the reverse.
 const SIZE_CLASSES: Record<DialogSize, string> = {
-  md: "max-w-[480px]",
+  md: "m-auto max-w-[480px] rounded-lg p-5 sm:p-6",
   // Near-full-screen: the simplified Sunday IA's Import / New slide / Edit modals
   // (Figma "Modal shell — large"). Scrolls internally rather than the page behind it.
-  lg: "max-w-[1100px] w-[calc(100vw-64px)] max-h-[85vh] flex flex-col overflow-hidden",
+  // On a phone it takes the whole (dynamic) viewport — `dvh`, not `vh`, so the sticky
+  // footer can't hide behind the browser's collapsing address bar.
+  lg: [
+    "m-0 flex h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col overflow-hidden rounded-none p-4",
+    "sm:m-auto sm:h-auto sm:max-h-[85dvh] sm:w-[calc(100vw-64px)] sm:max-w-[1100px] sm:rounded-lg sm:p-6",
+  ].join(" "),
 };
 
 export type DialogProps = {
@@ -73,7 +80,7 @@ export function Dialog({ open, onClose, title, children, actions, className, siz
         if (event.target === ref.current) onClose();
       }}
       className={cn(
-        "m-auto rounded-lg border border-border bg-surface p-6 cp-page-enter",
+        "border border-border bg-surface cp-page-enter",
         "[&::backdrop]:bg-overlay",
         SIZE_CLASSES[size],
         className,
@@ -84,12 +91,14 @@ export function Dialog({ open, onClose, title, children, actions, className, siz
       </h2>
       {children ? (
         bareBody ? (
-          <div className="mt-3 min-h-0 flex-1 overflow-y-auto">{children}</div>
+          <div className="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
         ) : (
           <div className="mt-3 text-label text-fg-secondary">{children}</div>
         )
       ) : null}
-      {actions ? <div className="mt-6 flex shrink-0 items-center justify-end gap-2.5">{actions}</div> : null}
+      {/* Wraps rather than overflows: three buttons with long fr-CA labels don't fit one
+          phone-width row, and an unwrapped row would push Save outside `overflow-hidden`. */}
+      {actions ? <div className="mt-4 flex shrink-0 flex-wrap items-center justify-end gap-2.5 sm:mt-6">{actions}</div> : null}
     </dialog>
   );
 }
